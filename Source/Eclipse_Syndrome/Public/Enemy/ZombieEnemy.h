@@ -4,10 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "Enemy/EnemyInterface.h"
 #include "ZombieEnemy.generated.h"
 
 UCLASS()
-class ECLIPSE_SYNDROME_API AZombieEnemy : public ACharacter
+class ECLIPSE_SYNDROME_API AZombieEnemy : public ACharacter, public UEnemyInterface
 {
 	GENERATED_BODY()
 
