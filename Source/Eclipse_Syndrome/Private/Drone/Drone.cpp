@@ -11,6 +11,8 @@ ADrone::ADrone()
 	: MoveForce(300000.f)
 	, AntiForce(980.f)
 	, AirResistance(0.9f)
+	, MaxTiltAngle(20.0f)
+	, InterpSpeed(1.0f)
 {
 	PrimaryActorTick.bCanEverTick = true;
 	ComponentInit();
@@ -31,6 +33,9 @@ void ADrone::Tick(float DeltaTime)
 		AddAntiGravity();
 		AddAirResistance();
 	}
+
+	TiltDrone(DeltaTime);
+	MoveInput = FVector::ZeroVector;
 }
 
 void ADrone::ComponentInit()
@@ -40,16 +45,19 @@ void ADrone::ComponentInit()
 	CapsuleComp->SetCollisionProfileName("Pawn");
 	CapsuleComp->SetSimulatePhysics(true);
 
-	SceneComp = CreateDefaultSubobject<USceneComponent>(TEXT("Scene"));
-	SceneComp->SetupAttachment(CapsuleComp);
+	CameraSceneComp = CreateDefaultSubobject<USceneComponent>(TEXT("CameraScene"));
+	CameraSceneComp->SetupAttachment(CapsuleComp);
+
+	TiltSceneComp = CreateDefaultSubobject<USceneComponent>(TEXT("TiltScene"));
+	TiltSceneComp->SetupAttachment(CameraSceneComp);
 
 	SkeletalMeshComp = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SkeletalMesh"));
-	SkeletalMeshComp->SetupAttachment(SceneComp);
+	SkeletalMeshComp->SetupAttachment(TiltSceneComp);
 	
 	PhysicsHandleComp = CreateDefaultSubobject<UPhysicsHandleComponent>(TEXT("PhysicsHandle"));
 
 	SpringArmComp = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
-	SpringArmComp->SetupAttachment(SceneComp);
+	SpringArmComp->SetupAttachment(CameraSceneComp);
 	SpringArmComp->TargetArmLength = 400;
 	SpringArmComp->bUsePawnControlRotation = false;
 
@@ -90,25 +98,22 @@ void ADrone::Move(const FInputActionValue& Value)
 {
 	if (!Controller) return;
 
-	const FVector MoveInput = Value.Get<FVector>();
+	MoveInput = Value.Get<FVector>();
 
 	FVector MoveToForce = FVector::ZeroVector;
 	FVector MoveToDirection = FVector::ZeroVector;
 
 	if (!FMath::IsNearlyZero(MoveInput.X))
 	{
-		//MoveToDirection += GetActorForwardVector() * MoveInput.X;
-		MoveToDirection += SceneComp->GetForwardVector() * MoveInput.X;
+		MoveToDirection += CameraSceneComp->GetForwardVector() * MoveInput.X;
 	}
 	if (!FMath::IsNearlyZero(MoveInput.Y))
 	{
-		//MoveToDirection += GetActorRightVector() * MoveInput.Y;
-		MoveToDirection += SceneComp->GetRightVector() * MoveInput.Y;
+		MoveToDirection += CameraSceneComp->GetRightVector() * MoveInput.Y;
 	}
 	if (!FMath::IsNearlyZero(MoveInput.Z))
 	{
-		//MoveToDirection += GetActorUpVector() * MoveInput.Z;
-		MoveToDirection += SceneComp->GetUpVector() * MoveInput.Z;
+		MoveToDirection += CameraSceneComp->GetUpVector() * MoveInput.Z;
 	}
 
 	MoveToDirection = MoveToDirection.GetSafeNormal();
@@ -120,16 +125,34 @@ void ADrone::Look(const FInputActionValue& Value)
 {
 	const FVector2d LookInput = Value.Get<FVector2d>();
 
-	float LookSensitivity = 1.0f;
+	const FRotator NewYawRotation(0.0f, LookInput.X, 0.0f);
+	CameraSceneComp->AddRelativeRotation(NewYawRotation);
 
-	FRotator NewYawRotation(0.0f, LookInput.X * LookSensitivity, 0.0f);
-	SceneComp->AddRelativeRotation(NewYawRotation);
-	
-	const float PitchLimit = 80.0f;
+	constexpr float PitchLimit = 80.0f;
 	const FRotator CurrentRotation = SpringArmComp->GetRelativeRotation();
-	const float NewPitch = FMath::Clamp(CurrentRotation.Pitch + LookInput.Y * LookSensitivity, -PitchLimit, PitchLimit);
+	const float NewPitch = FMath::Clamp(CurrentRotation.Pitch + LookInput.Y, -PitchLimit, PitchLimit);
     
 	SpringArmComp->SetRelativeRotation(FRotator(NewPitch, 0.0f, 0.0f));
+}
+
+void ADrone::TiltDrone(float DeltaTime)
+{
+	float TargetRoll = MoveInput.Y * MaxTiltAngle;
+	float TargetPitch = -MoveInput.X * MaxTiltAngle;
+	
+	if (FMath::IsNearlyZero(MoveInput.Size()))
+	{
+		TargetRoll = 0.0f;
+		TargetPitch = 0.0f;
+	}
+	
+	const FRotator CurrentRotation = TiltSceneComp->GetRelativeRotation();
+	
+	InterpSpeed = 1.0f;
+	const float NewRoll = FMath::FInterpTo(CurrentRotation.Roll, TargetRoll, DeltaTime, InterpSpeed);
+	const float NewPitch = FMath::FInterpTo(CurrentRotation.Pitch, TargetPitch, DeltaTime, InterpSpeed);
+
+	TiltSceneComp->SetRelativeRotation(FRotator(NewPitch, CurrentRotation.Yaw, NewRoll));
 }
 
 void ADrone::AddAntiGravity() const
