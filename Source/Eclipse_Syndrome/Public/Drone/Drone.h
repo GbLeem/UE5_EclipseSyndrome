@@ -23,7 +23,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Drone|Component")
 	TObjectPtr<UCapsuleComponent> CapsuleComp;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Drone|Component")
-	TObjectPtr<USceneComponent> SceneComp;
+	TObjectPtr<USceneComponent> CameraSceneComp;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Drone|Component")
+	TObjectPtr<USceneComponent> TiltSceneComp;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Drone|Component")
 	TObjectPtr<USpringArmComponent> SpringArmComp;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Drone|Component")
@@ -37,7 +39,13 @@ protected:
 	float AntiForce;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DroneMovement|Property")
 	float AirResistance; // 감속 비율 0 ~ 1
-	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DroneMovement|Property")
+	float MaxTiltAngle;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DroneMovement|Property")
+	float InterpSpeed;
+
+private:
+	FVector MoveInput;
 	
 public:
 	ADrone();
@@ -58,6 +66,7 @@ protected:
 
 private:
 	void ComponentInit();
+	void TiltDrone(float DeltaTime);
 	void AddAntiGravity() const;
 	void AddAirResistance() const;
 };
