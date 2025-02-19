@@ -1,27 +1,60 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "Weapon/Weapon.h"
+#include "Engine/Engine.h"
+#include "Components/StaticMeshComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "DrawDebugHelpers.h"
 
-// Sets default values
 AWeapon::AWeapon()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	GunMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("GunMesh"));
+	RootComponent = GunMesh;
 
+	// 기본 값 설정
+	FireRate = 0.2f;
+	MaxAmmo = 30;
+	CurrentAmmo = MaxAmmo;
+	FireRange = 5000.f;
+	Damage = 10.f;
 }
 
-// Called when the game starts or when spawned
 void AWeapon::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
-// Called every frame
-void AWeapon::Tick(float DeltaTime)
+void AWeapon::Fire()
 {
-	Super::Tick(DeltaTime);
+    if (CurrentAmmo <= 0)
+    {
+        return;
+    }
 
+    // 총구 위치 가져오기
+    FVector MuzzleLocation = GunMesh->GetComponentLocation();
+    FRotator MuzzleRotation = GunMesh->GetComponentRotation();
+
+    // 트레이스
+    FHitResult HitResult;
+    FVector EndLocation = MuzzleLocation + MuzzleRotation.Vector() * FireRange;  // 사거리 변수 사용
+
+    FCollisionQueryParams Params;
+    Params.AddIgnoredActor(this);  // 총기 자신은 무시
+
+    if (GetWorld()->LineTraceSingleByChannel(HitResult, MuzzleLocation, EndLocation, ECC_Visibility, Params))
+    {
+        if (HitResult.GetActor())
+        {
+            UGameplayStatics::ApplyPointDamage(HitResult.GetActor(), Damage, HitResult.ImpactNormal, HitResult, nullptr, this, nullptr);
+        }
+    }
+
+    // 탄약 감소
+    CurrentAmmo--;
+}
+
+// 재장전 기능
+void AWeapon::Reload()
+{
+    CurrentAmmo = MaxAmmo;
 }
 
