@@ -7,6 +7,7 @@
 class USpringArmComponent;
 class UCameraComponent;
 struct FInputActionValue;
+class ABaseItem;
 
 UCLASS()
 class ECLIPSE_SYNDROME_API APlayerCharacter : public ACharacter
@@ -16,8 +17,19 @@ class ECLIPSE_SYNDROME_API APlayerCharacter : public ACharacter
 public:
 	APlayerCharacter();
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	UFUNCTION()
+	void Shoot();
+	void ResetShoot() { bCanFire = true; }
+	UFUNCTION()
+	void Reloading();
+	UFUNCTION()
+	void PickUpItem();
+
+	//call item's activate Item
+	void SetCanPickUpItem(ABaseItem* Item);
 
 protected:
+	//for input action
 	UFUNCTION()
 	void Move(const FInputActionValue& value);
 	UFUNCTION()
@@ -33,20 +45,53 @@ protected:
 	UFUNCTION()
 	void Reload(const FInputActionValue& value);
 	UFUNCTION()
-	void Shoot(const FInputActionValue& value);
+	void StartShoot(const FInputActionValue& value);
+	UFUNCTION()
+	void StartShootAuto(const FInputActionValue& value);
+	UFUNCTION()
+	void StopShoot(const FInputActionValue& value);
 	UFUNCTION()
 	void PickUp(const FInputActionValue& value);
 
 //variables
 public:
+	//components
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Component")
 	TObjectPtr<USpringArmComponent> SpringArmComp;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Component")
 	TObjectPtr<UCameraComponent> CameraComp;
 
+	//for character speed
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 	float SprintSpeed;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 	float NormalSpeed;
 
+	//for character health
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health")
+	float MaxHealth;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health")
+	float CurrentHealth;
+
+	//for character item (inventory ammo)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
+	int32 CurrentAmmos;
+
+	//for test
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon")
+	float FireRate; //from gun class
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon")
+	bool bAutoFire; //from gun class
+
+private:
+	bool bCanFire;  //character flag
+	bool bCanReload; //for reloading animation
+
+	//for test
+	int32 GunCurrentAmmo;//from gun class
+	int32 GunMaxAmmo;//from gun class
+
+	FTimerHandle FireRateTimerHandle;
+	TArray<ABaseItem*> Inventory;
+	ABaseItem* CanPickUpItem;
 };
