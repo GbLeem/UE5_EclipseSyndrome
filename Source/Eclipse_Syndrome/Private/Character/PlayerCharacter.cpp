@@ -22,6 +22,7 @@ APlayerCharacter::APlayerCharacter()
 	,GunCurrentAmmo(20)
 	,GunMaxAmmo(20)
 	,FireRate(0.5f)
+	,PeekingItem(nullptr)
 {
 	PrimaryActorTick.bCanEverTick = false;
 
@@ -137,14 +138,57 @@ void APlayerCharacter::Reloading()
 
 void APlayerCharacter::PickUpItem()
 {
-	if (CanPickUpItem)
-		Inventory.Add(CanPickUpItem);
+	if (PeekingItem)
+		Inventory.Add(PeekingItem);
 }
 
-void APlayerCharacter::SetCanPickUpItem(ABaseItem* Item)
+void APlayerCharacter::BeginTraceForPickItem()
 {
-	CanPickUpItem = Item;
+	//trace 하기
+	APlayerCharacterController* PlayerController = Cast<APlayerCharacterController>(GetController());
+	if (PlayerController)
+	{
+		int32 ScreenWidth;
+		int32 ScreenHeight;
+
+		PlayerController->GetViewportSize(ScreenWidth, ScreenHeight);
+		const FVector2D ScreenCenter(ScreenWidth * 0.5f, ScreenHeight * 0.5f);
+
+		FVector WorldLocation;
+		FVector WorldDirection;
+		if (PlayerController->DeprojectScreenPositionToWorld(ScreenCenter.X, ScreenCenter.Y, WorldLocation, WorldDirection))
+		{
+			FVector TraceStart = WorldLocation + WorldDirection*100.f;
+			FVector TraceEnd = TraceStart + (WorldDirection * 10000.f);
+
+			FHitResult HitResult;
+			FCollisionQueryParams TraceParams;
+			TraceParams.AddIgnoredActor(this);
+
+			bool bHit = GetWorld()->LineTraceSingleByChannel(HitResult, TraceStart, TraceEnd, ECC_Visibility, TraceParams);
+
+			FColor LineColor = bHit ? FColor::Red : FColor::Blue;
+			DrawDebugLine(GetWorld(), TraceStart, TraceEnd, LineColor, false, 2.0f, 0, 2.0f);
+
+			if (bHit)
+			{
+				GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Green,
+					FString::Printf(TEXT("Hit: %s"), *HitResult.GetActor()->GetName()));
+
+				// 맞은 지점에 구 표시
+				DrawDebugSphere(GetWorld(), HitResult.ImpactPoint, 10.0f, 12, FColor::Red, false, 2.0f);
+			}
+		}
+	}
 }
+
+void APlayerCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+
+	//BeginTraceForPickItem();
+}
+
 
 void APlayerCharacter::Move(const FInputActionValue& value)
 {
@@ -213,6 +257,8 @@ void APlayerCharacter::Reload(const FInputActionValue& value)
 void APlayerCharacter::StartShoot(const FInputActionValue& value)
 {	
 	Shoot();
+	BeginTraceForPickItem();
+
 }
 
 void APlayerCharacter::StartShootAuto(const FInputActionValue& value)
