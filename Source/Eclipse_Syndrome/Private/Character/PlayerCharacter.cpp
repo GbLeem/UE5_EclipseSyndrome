@@ -1,15 +1,27 @@
 #include "Character/PlayerCharacter.h"
 
 #include "Character/PlayerCharacterController.h"
+#include "Item/BaseItem.h"
 
 #include "Camera/CameraComponent.h"
 #include "EnhancedInputComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Kismet/GameplayStatics.h"
+
 
 APlayerCharacter::APlayerCharacter()
 	:SprintSpeed(800.f)
-	, NormalSpeed(500.f)
+	,NormalSpeed(500.f)
+	,MaxHealth(100.f)
+	,CurrentHealth(100.f)
+	,CurrentAmmos(40)
+	,bCanFire(true)
+	,bAutoFire(true)
+	,bCanReload(false)
+	,GunCurrentAmmo(20)
+	,GunMaxAmmo(20)
+	,FireRate(0.5f)
 {
 	PrimaryActorTick.bCanEverTick = false;
 
@@ -20,8 +32,6 @@ APlayerCharacter::APlayerCharacter()
 	CameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	CameraComp->SetupAttachment(SpringArmComp);
 	CameraComp->bUsePawnControlRotation = false;
-
-
 }
 
 void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -42,7 +52,7 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 				EnhancedInputComponent->BindAction(PlayerController->LookAction,
 					ETriggerEvent::Triggered, this, &APlayerCharacter::Look);
 			}
-			if (PlayerController->JumpAction)
+			if (PlayerController->JumpAction)	
 			{
 				EnhancedInputComponent->BindAction(PlayerController->JumpAction,
 					ETriggerEvent::Triggered, this, &APlayerCharacter::StartJump);
@@ -61,24 +71,87 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 			}
 			if (PlayerController->ShootAction)
 			{
-				//TODO
+				if (!bAutoFire)
+				{
+					EnhancedInputComponent->BindAction(PlayerController->ShootAction,
+						ETriggerEvent::Started, this, &APlayerCharacter::StartShoot);
+				}
+				if (bAutoFire)
+				{
+					EnhancedInputComponent->BindAction(PlayerController->ShootAction,
+						ETriggerEvent::Triggered, this, &APlayerCharacter::StartShootAuto);
+				}
+					
+				EnhancedInputComponent->BindAction(PlayerController->ShootAction,
+					ETriggerEvent::Completed, this, &APlayerCharacter::StopShoot);
+
 			}
 			if (PlayerController->ReloadAction)
 			{
-				//TODO
+				EnhancedInputComponent->BindAction(PlayerController->ReloadAction,
+					ETriggerEvent::Started, this, &APlayerCharacter::Reloading);
+			}
+			if (PlayerController->PickUpAction)
+			{
+				EnhancedInputComponent->BindAction(PlayerController->PickUpAction,
+					ETriggerEvent::Started, this, &APlayerCharacter::PickUp);
 			}
 		}
 	}
+}
+
+void APlayerCharacter::Shoot()
+{
+	//TODO : fire rate
+	if (GunCurrentAmmo <= 0)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Black, FString::Printf(TEXT("you need to reload!")));
+		return;
+	}
+	if (!bCanFire)
+		return;
+	bCanFire = false;
+	GunCurrentAmmo--;
+	GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Black, FString::Printf(TEXT("shoot %d"), GunCurrentAmmo));
+
+	GetWorld()->GetTimerManager().SetTimer(FireRateTimerHandle, this, &APlayerCharacter::ResetShoot, FireRate, false);
+
+}
+
+void APlayerCharacter::Reloading()
+{
+	int PlusAmmo = GunMaxAmmo - GunCurrentAmmo;
+	if (CurrentAmmos <= 0)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("not enough ammo")));
+		return;
+	}
+	if (PlusAmmo > 0)
+	{
+		PlusAmmo = FMath::Min(PlusAmmo, CurrentAmmos);
+		GunCurrentAmmo += PlusAmmo;
+		CurrentAmmos -= PlusAmmo;
+		GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("current : %d plus : %d"), GunCurrentAmmo, PlusAmmo));
+	}
+}
+
+void APlayerCharacter::PickUpItem()
+{
+	if (CanPickUpItem)
+		Inventory.Add(CanPickUpItem);
+}
+
+void APlayerCharacter::SetCanPickUpItem(ABaseItem* Item)
+{
+	CanPickUpItem = Item;
 }
 
 void APlayerCharacter::Move(const FInputActionValue& value)
 {
 	if (!Controller)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("No Controller")));
 		return;
 	}
-	GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Blue, FString::Printf(TEXT("character speed : %lf"), GetCharacterMovement()->Velocity.Length()));
 
 	const FVector2D MoveInput = value.Get<FVector2D>();
 	if (!FMath::IsNearlyZero(MoveInput.X))
@@ -120,7 +193,6 @@ void APlayerCharacter::StartSprint(const FInputActionValue& value)
 	if (GetCharacterMovement())
 	{
 		GetCharacterMovement()->MaxWalkSpeed = SprintSpeed;
-		GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Blue, FString::Printf(TEXT("character speed : %lf"), GetCharacterMovement()->Velocity.Length()));
 	}
 }
 
@@ -134,14 +206,32 @@ void APlayerCharacter::StopSprint(const FInputActionValue& value)
 
 void APlayerCharacter::Reload(const FInputActionValue& value)
 {
-	//TODO
+	//TODO		
+	Reloading();	
 }
 
-void APlayerCharacter::Shoot(const FInputActionValue& value)
+void APlayerCharacter::StartShoot(const FInputActionValue& value)
+{	
+	Shoot();
+}
+
+void APlayerCharacter::StartShootAuto(const FInputActionValue& value)
 {
-	//TODO
+	Shoot();
+}
+
+void APlayerCharacter::StopShoot(const FInputActionValue& value)
+{
+	if (!value.Get<bool>())
+	{
+		//maybe animation ?
+		GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Blue, FString::Printf(TEXT("Stop Fire")));
+	}
 }
 
 void APlayerCharacter::PickUp(const FInputActionValue& value)
 {
+	//empty
+	if (Inventory.Num() != 0)
+		PickUpItem();
 }

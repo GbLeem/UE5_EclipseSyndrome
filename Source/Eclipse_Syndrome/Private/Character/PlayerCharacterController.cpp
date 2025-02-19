@@ -49,6 +49,11 @@ APlayerCharacterController::APlayerCharacterController()
 	{
 		ReloadAction = IA_Reload.Object;
 	}
+	static ConstructorHelpers::FObjectFinder<UInputAction> IA_PickUp(TEXT("/Game/HJ/Input/IA_PickUp.IA_PickUp"));
+	if (IA_PickUp.Succeeded())
+	{
+		PickUpAction = IA_PickUp.Object;
+	}
 }
 
 void APlayerCharacterController::BeginPlay()
