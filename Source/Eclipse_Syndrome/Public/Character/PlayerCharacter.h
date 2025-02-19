@@ -26,8 +26,9 @@ public:
 	void PickUpItem();
 
 	//call item's activate Item
-	void SetCanPickUpItem(ABaseItem* Item);
+	void BeginTraceForPickItem();
 
+	virtual void BeginPlay() override;
 protected:
 	//for input action
 	UFUNCTION()
@@ -93,5 +94,5 @@ private:
 
 	FTimerHandle FireRateTimerHandle;
 	TArray<ABaseItem*> Inventory;
-	ABaseItem* CanPickUpItem;
+	ABaseItem* PeekingItem;
 };
