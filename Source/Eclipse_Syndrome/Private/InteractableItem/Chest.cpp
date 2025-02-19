@@ -3,21 +3,10 @@
 
 AChest::AChest()
 {
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
+	SceneRootComp = CreateDefaultSubobject<USceneComponent>(TEXT("SceneRoot"));
+	SetRootComponent(SceneRootComp);
 
+	SkeletalMeshComp = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SkeletalMesh"));
+	SkeletalMeshComp->SetupAttachment(SceneRootComp);
 }
-
-
-void AChest::BeginPlay()
-{
-	Super::BeginPlay();
-	
-}
-
-
-void AChest::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
-}
-

@@ -13,9 +13,9 @@ public:
 	AChest();
 
 protected:
-	virtual void BeginPlay() override;
-
-public:	
-	virtual void Tick(float DeltaTime) override;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chest")
+	USceneComponent* SceneRootComp;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chest")
+	USkeletalMeshComponent* SkeletalMeshComp;
 
 };
