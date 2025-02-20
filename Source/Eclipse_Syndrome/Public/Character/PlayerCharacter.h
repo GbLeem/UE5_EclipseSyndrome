@@ -90,16 +90,18 @@ public:
 	float FireRate; //from gun class
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon")
 	bool bAutoFire; //from gun class
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
+	int32 BlendPoseVariable;
 
 private:
 	bool bCanFire;  //character flag
 	bool bCanReload; //for reloading animation
 	bool bCanTraceForItemPeeking;
+	bool bIsWeaponEquipped; //for change character animation(idle<->weapon)
 
 	//for test
 	int32 GunCurrentAmmo;//from gun class
 	int32 GunMaxAmmo;//from gun class
-	int32 BlendPoseVariable;
 
 	FTimerHandle FireRateTimerHandle;
 	TArray<ABaseItem*> Inventory;
