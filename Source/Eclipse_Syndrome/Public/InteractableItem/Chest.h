@@ -34,10 +34,11 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Animation")
 	UAnimationAsset* OpenAnimation;
 
-
 	//check if player is in range
 	bool bPlayerInRange = false;
 	
+
+
 	//Player Overlap
 	UFUNCTION()
 	virtual void OnPlayerOverlapBegin(
