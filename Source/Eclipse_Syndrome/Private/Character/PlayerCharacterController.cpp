@@ -54,6 +54,11 @@ APlayerCharacterController::APlayerCharacterController()
 	{
 		PickUpAction = IA_PickUp.Object;
 	}
+	static ConstructorHelpers::FObjectFinder<UInputAction> IA_EquipWeapon1(TEXT("/Game/HJ/Input/IA_EquipWeapon1.IA_EquipWeapon1"));
+	if (IA_EquipWeapon1.Succeeded())
+	{
+		EquipWeapon1Action = IA_EquipWeapon1.Object;
+	}	
 }
 
 void APlayerCharacterController::BeginPlay()

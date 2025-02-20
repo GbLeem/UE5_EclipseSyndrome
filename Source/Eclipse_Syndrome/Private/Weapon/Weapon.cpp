@@ -1,20 +1,41 @@
 #include "Weapon/Weapon.h"
-#include "Engine/Engine.h"
+
+#include "Character/PlayerCharacter.h"
+
 #include "Components/StaticMeshComponent.h"
-#include "Kismet/GameplayStatics.h"
+#include "Components/SphereComponent.h"
 #include "DrawDebugHelpers.h"
+#include "Engine/Engine.h"
+#include "Kismet/GameplayStatics.h"
 
 AWeapon::AWeapon()
 {
+    PrimaryActorTick.bCanEverTick = false;
+
 	GunMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("GunMesh"));
 	RootComponent = GunMesh;
 
-	// ±âº» °ª ¼³Á¤
+    CollisionComp = CreateDefaultSubobject<USphereComponent>(TEXT("Sphere Collision"));
+    CollisionComp->SetupAttachment(RootComponent);
+    CollisionComp->SetCollisionProfileName(TEXT("OverlapAllDynamics"));
+    CollisionComp->SetSphereRadius(150.f);
+    
+    static ConstructorHelpers::FObjectFinder<UStaticMesh>StaticMeshAsset(TEXT("/Game/HJ/Assets/QuantumCharacter/Mesh/Rifle/SM_Rifle_Olive.SM_Rifle_Olive"));
+    if (StaticMeshAsset.Succeeded())
+    {
+        GunMesh->SetStaticMesh(StaticMeshAsset.Object);
+    }
+	// ê¸°ë³¸ ê°’ ì„¤ì •
 	FireRate = 0.2f;
 	MaxAmmo = 30;
 	CurrentAmmo = MaxAmmo;
 	FireRange = 5000.f;
 	Damage = 10.f;
+
+    CollisionComp->OnComponentBeginOverlap.AddDynamic(this, &AWeapon::OnItemOverlap);
+    CollisionComp->OnComponentEndOverlap.AddDynamic(this, &AWeapon::OnItemEndOverlap);
+    
+    Tags.Add("Weapon");
 }
 
 void AWeapon::BeginPlay()
@@ -29,16 +50,16 @@ void AWeapon::Fire()
         return;
     }
 
-    // ÃÑ±¸ À§Ä¡ °¡Á®¿À±â
+    // ì´êµ¬ ìœ„ì¹˜ ê°€ì ¸ì˜¤ê¸°
     FVector MuzzleLocation = GunMesh->GetComponentLocation();
     FRotator MuzzleRotation = GunMesh->GetComponentRotation();
 
-    // Æ®·¹ÀÌ½º
+    // íŠ¸ë ˆì´ìŠ¤
     FHitResult HitResult;
-    FVector EndLocation = MuzzleLocation + MuzzleRotation.Vector() * FireRange;  // »ç°Å¸® º¯¼ö »ç¿ë
+    FVector EndLocation = MuzzleLocation + MuzzleRotation.Vector() * FireRange;  // ì‚¬ê±°ë¦¬ ë³€ìˆ˜ ì‚¬ìš©
 
     FCollisionQueryParams Params;
-    Params.AddIgnoredActor(this);  // ÃÑ±â ÀÚ½ÅÀº ¹«½Ã
+    Params.AddIgnoredActor(this);  // ì´ê¸° ìžì‹ ì€ ë¬´ì‹œ
 
     if (GetWorld()->LineTraceSingleByChannel(HitResult, MuzzleLocation, EndLocation, ECC_Visibility, Params))
     {
@@ -48,13 +69,44 @@ void AWeapon::Fire()
         }
     }
 
-    // Åº¾à °¨¼Ò
+    // íƒ„ì•½ ê°ì†Œ
     CurrentAmmo--;
 }
 
-// ÀçÀåÀü ±â´É
+// ìž¬ìž¥ì „ ê¸°ëŠ¥
 void AWeapon::Reload()
 {
     CurrentAmmo = MaxAmmo;
+}
+
+void AWeapon::DestroyItem()
+{
+    Destroy();
+}
+
+void AWeapon::OnItemOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+    if (OtherActor && OtherActor->ActorHasTag("Player"))
+    {
+        APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(OtherActor);
+
+        if (PlayerCharacter)
+        {
+            PlayerCharacter->StartPeek();
+        }
+    }
+}
+
+void AWeapon::OnItemEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+    if (OtherActor && OtherActor->ActorHasTag("Player"))
+    {
+        APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(OtherActor);
+
+        if (PlayerCharacter)
+        {
+            PlayerCharacter->StopPeek();
+        }
+    }
 }
 

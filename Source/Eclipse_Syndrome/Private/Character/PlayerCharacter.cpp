@@ -2,6 +2,7 @@
 
 #include "Character/PlayerCharacterController.h"
 #include "Item/BaseItem.h"
+#include "Weapon/Weapon.h"
 
 #include "Camera/CameraComponent.h"
 #include "EnhancedInputComponent.h"
@@ -16,15 +17,17 @@ APlayerCharacter::APlayerCharacter()
 	,MaxHealth(100.f)
 	,CurrentHealth(100.f)
 	,CurrentAmmos(40)
-	,bCanFire(true)
+	,bCanFire(false)
 	,bAutoFire(true)
 	,bCanReload(false)
+	, bCanTraceForItemPeeking(false)
 	,GunCurrentAmmo(20)
 	,GunMaxAmmo(20)
+	,BlendPoseVariable(0)
 	,FireRate(0.5f)
 	,PeekingItem(nullptr)
 {
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
 
 	SpringArmComp = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
 	SpringArmComp->SetupAttachment(RootComponent);
@@ -33,6 +36,8 @@ APlayerCharacter::APlayerCharacter()
 	CameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	CameraComp->SetupAttachment(SpringArmComp);
 	CameraComp->bUsePawnControlRotation = false;
+
+	Tags.Add("Player");
 }
 
 void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -97,13 +102,23 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 				EnhancedInputComponent->BindAction(PlayerController->PickUpAction,
 					ETriggerEvent::Started, this, &APlayerCharacter::PickUp);
 			}
+			if (PlayerController->EquipWeapon1Action)
+			{
+				EnhancedInputComponent->BindAction(PlayerController->EquipWeapon1Action,
+					ETriggerEvent::Started, this, &APlayerCharacter::EquipWeapon1);
+			}
 		}
 	}
 }
 
-void APlayerCharacter::Shoot()
+void APlayerCharacter::Tick(float DeltaTime)
 {
-	//TODO : fire rate
+	if (bCanTraceForItemPeeking)
+		BeginTraceForPickItem();
+}
+
+void APlayerCharacter::Shoot()
+{	
 	if (GunCurrentAmmo <= 0)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Black, FString::Printf(TEXT("you need to reload!")));
@@ -115,8 +130,8 @@ void APlayerCharacter::Shoot()
 	GunCurrentAmmo--;
 	GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Black, FString::Printf(TEXT("shoot %d"), GunCurrentAmmo));
 
+	//fire rate
 	GetWorld()->GetTimerManager().SetTimer(FireRateTimerHandle, this, &APlayerCharacter::ResetShoot, FireRate, false);
-
 }
 
 void APlayerCharacter::Reloading()
@@ -141,6 +156,7 @@ void APlayerCharacter::PickUpItem()
 	if (PeekingItem)
 		Inventory.Add(PeekingItem);
 }
+
 
 void APlayerCharacter::BeginTraceForPickItem()
 {
@@ -171,22 +187,37 @@ void APlayerCharacter::BeginTraceForPickItem()
 			DrawDebugLine(GetWorld(), TraceStart, TraceEnd, LineColor, false, 2.0f, 0, 2.0f);
 
 			if (bHit)
-			{
-				GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Green,
-					FString::Printf(TEXT("Hit: %s"), *HitResult.GetActor()->GetName()));
-
-				// 맞은 지점에 구 표시
-				DrawDebugSphere(GetWorld(), HitResult.ImpactPoint, 10.0f, 12, FColor::Red, false, 2.0f);
+			{				
+				//if trace hit weapon
+				//destroy origin weapon
+				//spawn new weapon and attach to character
+				if(Cast<AWeapon>(HitResult.GetActor()))
+				{						
+					AWeapon* AttachWeapon = GetWorld()->SpawnActor<AWeapon>();
+					AttachWeapon->SetActorEnableCollision(false);
+					FName WeaponSocket(TEXT("back_socket"));
+					AttachWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponSocket);
+					CurrentWeapon = AttachWeapon;
+					Cast<AWeapon>(HitResult.GetActor())->DestroyItem();
+				}
 			}
 		}
 	}
 }
 
+void APlayerCharacter::StartPeek()
+{
+	bCanTraceForItemPeeking = true;
+}
+
+void APlayerCharacter::StopPeek()
+{
+	bCanTraceForItemPeeking = false;
+}
+
 void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-
-	//BeginTraceForPickItem();
 }
 
 
@@ -257,7 +288,7 @@ void APlayerCharacter::Reload(const FInputActionValue& value)
 void APlayerCharacter::StartShoot(const FInputActionValue& value)
 {	
 	Shoot();
-	BeginTraceForPickItem();
+	//BeginTraceForPickItem();
 
 }
 
@@ -271,7 +302,7 @@ void APlayerCharacter::StopShoot(const FInputActionValue& value)
 	if (!value.Get<bool>())
 	{
 		//maybe animation ?
-		GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Blue, FString::Printf(TEXT("Stop Fire")));
+		//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Blue, FString::Printf(TEXT("Stop Fire")));
 	}
 }
 
@@ -280,4 +311,16 @@ void APlayerCharacter::PickUp(const FInputActionValue& value)
 	//empty
 	if (Inventory.Num() != 0)
 		PickUpItem();
+}
+
+void APlayerCharacter::EquipWeapon1(const FInputActionValue& value)
+{
+	//equip weapon 
+	//[TODO] change animation and can attak
+	if(IsValid(CurrentWeapon))
+	{
+		BlendPoseVariable = 1; //for animation
+		bCanFire = true; // for attack
+	}
+	GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("blend po var: %d"), BlendPoseVariable));
 }
