@@ -13,8 +13,10 @@ class ECLIPSE_SYNDROME_API AHealItem : public ABaseItem
 public:
 	AHealItem();
 
+	//힐 아이템 사용시, 힐 정도
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
 	float HealAmount;
+
 
 	virtual void ActivateItem(AActor* Activator) override;
 };

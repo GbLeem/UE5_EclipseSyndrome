@@ -13,9 +13,10 @@ class ECLIPSE_SYNDROME_API ABulletItem : public ABaseItem
 public:
 	ABulletItem();
 
-	//ÃÑ¾ËÀÇ °³¼ö
+	//num of bullet
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
 	float NumOfBullet;
+	
 
 	virtual void ActivateItem(AActor* Activator) override;
 	
