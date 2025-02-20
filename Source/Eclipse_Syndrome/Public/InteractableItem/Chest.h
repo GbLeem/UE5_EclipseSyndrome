@@ -33,6 +33,10 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Animation")
 	UAnimationAsset* OpenAnimation;
 
+	UPROPERTY(EditAnywhere, Category="Item Floating")
+	UCurveFloat* FloatCurve;
+
+
 	//check if player is in range
 	bool bPlayerInRange = false;
 	
