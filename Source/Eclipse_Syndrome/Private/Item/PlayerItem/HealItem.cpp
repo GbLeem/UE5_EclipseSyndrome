@@ -1,4 +1,5 @@
 #include "Item/PlayerItem/HealItem.h"
+#include "Components/BoxComponent.h"
 
 AHealItem::AHealItem()
 {

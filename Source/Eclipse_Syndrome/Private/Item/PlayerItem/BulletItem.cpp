@@ -1,7 +1,10 @@
 #include "Item/PlayerItem/BulletItem.h"
+#include "Components/BoxComponent.h"
+
 
 ABulletItem::ABulletItem()
 {
+	
 	ItemType = "Bullet";
 }
 
