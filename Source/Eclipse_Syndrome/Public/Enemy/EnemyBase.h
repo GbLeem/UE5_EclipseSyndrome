@@ -24,6 +24,8 @@ public:
 	float MaxHealth;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy")
 	float Damage;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy")
+	float AttackRange;
 
 protected:
 	// Called when the game starts or when spawned

@@ -13,6 +13,7 @@ AEnemyBase::AEnemyBase()
 	MaxHealth = 100.0f;
 	Health = MaxHealth;
 	Damage = 10.0f;
+	AttackRange = 150.0f;
 }
 
 // Called when the game starts or when spawned
