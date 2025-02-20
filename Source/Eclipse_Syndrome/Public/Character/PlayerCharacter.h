@@ -8,6 +8,7 @@ class USpringArmComponent;
 class UCameraComponent;
 struct FInputActionValue;
 class ABaseItem;
+class AWeapon;
 
 UCLASS()
 class ECLIPSE_SYNDROME_API APlayerCharacter : public ACharacter
@@ -17,6 +18,8 @@ class ECLIPSE_SYNDROME_API APlayerCharacter : public ACharacter
 public:
 	APlayerCharacter();
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	virtual void Tick(float DeltaTime) override;
+
 	UFUNCTION()
 	void Shoot();
 	void ResetShoot() { bCanFire = true; }
@@ -27,6 +30,8 @@ public:
 
 	//call item's activate Item
 	void BeginTraceForPickItem();
+	void StartPeek();
+	void StopPeek();
 
 	virtual void BeginPlay() override;
 protected:
@@ -53,6 +58,8 @@ protected:
 	void StopShoot(const FInputActionValue& value);
 	UFUNCTION()
 	void PickUp(const FInputActionValue& value);
+	UFUNCTION()
+	void EquipWeapon1(const FInputActionValue& value);
 
 //variables
 public:
@@ -87,12 +94,15 @@ public:
 private:
 	bool bCanFire;  //character flag
 	bool bCanReload; //for reloading animation
+	bool bCanTraceForItemPeeking;
 
 	//for test
 	int32 GunCurrentAmmo;//from gun class
 	int32 GunMaxAmmo;//from gun class
+	int32 BlendPoseVariable;
 
 	FTimerHandle FireRateTimerHandle;
 	TArray<ABaseItem*> Inventory;
 	ABaseItem* PeekingItem;
+	AWeapon* CurrentWeapon;
 };

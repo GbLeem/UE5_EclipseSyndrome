@@ -36,4 +36,6 @@ public:
 	TObjectPtr<UInputAction> ReloadAction;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputAction> PickUpAction;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> EquipWeapon1Action;
 };
