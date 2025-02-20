@@ -59,6 +59,11 @@ APlayerCharacterController::APlayerCharacterController()
 	{
 		EquipWeapon1Action = IA_EquipWeapon1.Object;
 	}	
+	static ConstructorHelpers::FObjectFinder<UInputAction> IA_Grapple(TEXT("/Game/HJ/Input/IA_Grapple.IA_Grapple"));
+	if (IA_Grapple.Succeeded())
+	{
+		GrappleAction = IA_Grapple.Object;
+	}
 }
 
 void APlayerCharacterController::BeginPlay()

@@ -4,12 +4,15 @@
 #include "Item/BaseItem.h"
 #include "Weapon/Weapon.h"
 
+#include "CableComponent.h"
 #include "Camera/CameraComponent.h"
+#include "Components/MeshComponent.h"
 #include "EnhancedInputComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Kismet/GameplayStatics.h"
-
+#include "Kismet/KismetSystemLibrary.h"
+#include "Kismet/KismetMathLibrary.h"
 
 APlayerCharacter::APlayerCharacter()
 	:SprintSpeed(800.f)
@@ -21,12 +24,15 @@ APlayerCharacter::APlayerCharacter()
 	,bAutoFire(true)
 	,bCanReload(false)
 	, bCanTraceForItemPeeking(false)
+	, bCanGrapple(false)
 	, bIsWeaponEquipped(false)
 	,GunCurrentAmmo(20)
 	,GunMaxAmmo(20)
 	,BlendPoseVariable(0)
 	,FireRate(0.5f)
 	,PeekingItem(nullptr)
+	,CurrentWeapon(nullptr)
+	,GrappleEndTime(0.5f) //fix
 {
 	PrimaryActorTick.bCanEverTick = true;
 
@@ -38,6 +44,16 @@ APlayerCharacter::APlayerCharacter()
 	CameraComp->SetupAttachment(SpringArmComp);
 	CameraComp->bUsePawnControlRotation = false;
 
+	CableComp = CreateDefaultSubobject<UCableComponent>(TEXT("Hook"));
+	CableComp->SetupAttachment(GetMesh());	
+	FName HandSocket(TEXT("hand_l_socket"));
+	CableComp->SetupAttachment(GetMesh(), HandSocket);
+	//CableComp->bAttachEnd = false;
+	CableComp->CableWidth = 5.f;
+	CableComp->NumSegments = 2;
+	CableComp->SetVisibility(false);
+
+	OriginRootRotator = RootComponent->GetComponentRotation();
 	Tags.Add("Player");
 }
 
@@ -107,6 +123,11 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 			{
 				EnhancedInputComponent->BindAction(PlayerController->EquipWeapon1Action,
 					ETriggerEvent::Started, this, &APlayerCharacter::EquipWeapon1);
+			}
+			if (PlayerController->GrappleAction)
+			{
+				EnhancedInputComponent->BindAction(PlayerController->GrappleAction,
+					ETriggerEvent::Started, this, &APlayerCharacter::Grapple);
 			}
 		}
 	}
@@ -215,9 +236,31 @@ void APlayerCharacter::StopPeek()
 	bCanTraceForItemPeeking = false;
 }
 
-void APlayerCharacter::BeginPlay()
+//character move
+void APlayerCharacter::GrappleStart()
 {
-	Super::BeginPlay();
+	if (bCanGrapple && !bIsWeaponEquipped)
+	{
+		FLatentActionInfo LatentInfo;
+		LatentInfo.CallbackTarget = this;
+		FRotator ResultRotator = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), GrappleHitPoint.ImpactPoint);
+		UKismetSystemLibrary::MoveComponentTo(RootComponent, GrappleHitPoint.ImpactPoint, FRotator::ZeroRotator,/*ResultRotator,*/ false, false, 0.5f, false, EMoveComponentAction::Type::Move, LatentInfo);
+		
+		CableComp->SetAttachEndToComponent(RootComponent);
+		CableComp->SetVisibility(false);
+		GetWorld()->GetTimerManager().SetTimer(FireRateTimerHandle, this, &APlayerCharacter::ResetShoot, FireRate, false);
+
+		//GetWorldTimerManager().SetTimer(GrappleTimerHandle, this, &APlayerCharacter::GrappleEnd, GrappleEndTime, false);
+	}
+}
+
+void APlayerCharacter::GrappleEnd()
+{
+	bCanGrapple = false;
+	
+	//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("%f %f %f"), OriginRootRotator.Yaw, OriginRootRotator.Pitch, OriginRootRotator.Roll));	
+	//RootComponent->SetWorldRotation(FRotator::ZeroRotator);
+	
 }
 
 
@@ -291,7 +334,8 @@ void APlayerCharacter::Reload(const FInputActionValue& value)
 
 void APlayerCharacter::StartShoot(const FInputActionValue& value)
 {	
-	//Shoot();
+	//Shoot();	
+	GrappleStart();
 	if (CurrentWeapon)
 	{
 		CurrentWeapon->Fire();
@@ -301,6 +345,8 @@ void APlayerCharacter::StartShoot(const FInputActionValue& value)
 void APlayerCharacter::StartShootAuto(const FInputActionValue& value)
 {
 	//Shoot();
+	GrappleStart();
+
 	if (CurrentWeapon)
 	{
 		CurrentWeapon->Fire();
@@ -353,4 +399,27 @@ void APlayerCharacter::EquipWeapon1(const FInputActionValue& value)
 		CurrentWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponSocket);
 	}
 	//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("blend po var: %d"), BlendPoseVariable));
+}
+
+void APlayerCharacter::Grapple(const FInputActionValue& value)
+{	
+	if (!bIsWeaponEquipped)
+	{
+
+		FVector Start = UGameplayStatics::GetPlayerCameraManager(GetWorld(), 0)->GetCameraLocation();	
+		FVector End = Start + UKismetMathLibrary::GetForwardVector(UGameplayStatics::GetPlayerCameraManager(GetWorld(), 0)->GetCameraRotation()) * 1500.f;
+		TArray<AActor*> ActorsToIgnore;
+		auto Channel = UEngineTypes::ConvertToTraceType(ECollisionChannel::ECC_GameTraceChannel1);
+		bool bHit = UKismetSystemLibrary::SphereTraceSingle(GetWorld(), Start, End, 25.f, Channel, false,
+			ActorsToIgnore, EDrawDebugTrace::Type::ForDuration, GrappleHitPoint, true);
+
+		if (bHit)
+		{
+			CableComp->SetVisibility(true);
+			//bIsGrapple = true;
+			bCanGrapple = true;
+			//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, GrappleHitPoint.GetComponent()->GetName());
+			CableComp->SetAttachEndToComponent(GrappleHitPoint.GetComponent());
+		}
+	}
 }

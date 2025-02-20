@@ -9,6 +9,7 @@ class UCameraComponent;
 struct FInputActionValue;
 class ABaseItem;
 class AWeapon;
+class UCableComponent;
 
 UCLASS()
 class ECLIPSE_SYNDROME_API APlayerCharacter : public ACharacter
@@ -32,8 +33,9 @@ public:
 	void BeginTraceForPickItem();
 	void StartPeek();
 	void StopPeek();
-
-	virtual void BeginPlay() override;
+	void GrappleStart();
+	UFUNCTION(BlueprintCallable)
+	void GrappleEnd();
 protected:
 	//for input action
 	UFUNCTION()
@@ -60,6 +62,8 @@ protected:
 	void PickUp(const FInputActionValue& value);
 	UFUNCTION()
 	void EquipWeapon1(const FInputActionValue& value);
+	UFUNCTION()
+	void Grapple(const FInputActionValue& value);
 
 //variables
 public:
@@ -68,6 +72,8 @@ public:
 	TObjectPtr<USpringArmComponent> SpringArmComp;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Component")
 	TObjectPtr<UCameraComponent> CameraComp;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Component")
+	TObjectPtr<UCableComponent> CableComp;
 
 	//for character speed
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
@@ -90,21 +96,29 @@ public:
 	float FireRate; //from gun class
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon")
 	bool bAutoFire; //from gun class
+	//for animation
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
 	int32 BlendPoseVariable;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
+	bool bIsWeaponEquipped; //for change character animation(idle<->weapon)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
+	bool bCanGrapple; //can move character(attach to grapple actor)
 
 private:
 	bool bCanFire;  //character flag
 	bool bCanReload; //for reloading animation
 	bool bCanTraceForItemPeeking;
-	bool bIsWeaponEquipped; //for change character animation(idle<->weapon)
 
 	//for test
 	int32 GunCurrentAmmo;//from gun class
 	int32 GunMaxAmmo;//from gun class
 
 	FTimerHandle FireRateTimerHandle;
+	FTimerHandle GrappleTimerHandle;
 	TArray<ABaseItem*> Inventory;
 	ABaseItem* PeekingItem;
 	AWeapon* CurrentWeapon;
+	FHitResult GrappleHitPoint; //grapple target actor point
+	float GrappleEndTime;
+	FRotator OriginRootRotator;
 };
