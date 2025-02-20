@@ -51,6 +51,7 @@ void AChest::OnPlayerOverlapBegin(
 
 		////Only for test. need to be deleted when connect with F key 
 		//OpenChest();
+		//UMG 추가 예정
 
 	}
 }
@@ -119,7 +120,9 @@ void AChest::SpawnRandomItem()
 		{
 			FVector SpawnLocation = GetActorLocation() + FVector(0, 0, 110);
 			FRotator SpawnRotation = FRotator::ZeroRotator;
-
+			
+			
+			//If Bullet Item Spawned,
 			if (SelectedItemClass->GetName().Contains("BulletItem"))
 			{
 				int32 BulletCount = FMath::RandRange(1, 3);
@@ -134,7 +137,8 @@ void AChest::SpawnRandomItem()
 				}
 				UE_LOG(LogTemp, Warning, TEXT("Spawned %d BulletItems"), BulletCount);
 			}
-			else 
+			else
+			//If Healitem Item Spawned,
 			{
 				GetWorld()->SpawnActor<AActor>(SelectedItemClass, SpawnLocation, SpawnRotation);
 				UE_LOG(LogTemp, Warning, TEXT("Spawned 1 HealItem"));
