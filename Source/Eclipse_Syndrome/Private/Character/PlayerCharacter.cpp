@@ -21,6 +21,7 @@ APlayerCharacter::APlayerCharacter()
 	,bAutoFire(true)
 	,bCanReload(false)
 	, bCanTraceForItemPeeking(false)
+	, bIsWeaponEquipped(false)
 	,GunCurrentAmmo(20)
 	,GunMaxAmmo(20)
 	,BlendPoseVariable(0)
@@ -95,7 +96,7 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 			if (PlayerController->ReloadAction)
 			{
 				EnhancedInputComponent->BindAction(PlayerController->ReloadAction,
-					ETriggerEvent::Started, this, &APlayerCharacter::Reloading);
+					ETriggerEvent::Started, this, &APlayerCharacter::Reload);
 			}
 			if (PlayerController->PickUpAction)
 			{
@@ -193,11 +194,10 @@ void APlayerCharacter::BeginTraceForPickItem()
 				//spawn new weapon and attach to character
 				if(Cast<AWeapon>(HitResult.GetActor()))
 				{						
-					AWeapon* AttachWeapon = GetWorld()->SpawnActor<AWeapon>();
-					AttachWeapon->SetActorEnableCollision(false);
+					CurrentWeapon = GetWorld()->SpawnActor<AWeapon>();
+					CurrentWeapon->SetActorEnableCollision(false);
 					FName WeaponSocket(TEXT("back_socket"));
-					AttachWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponSocket);
-					CurrentWeapon = AttachWeapon;
+					CurrentWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponSocket);					
 					Cast<AWeapon>(HitResult.GetActor())->DestroyItem();
 				}
 			}
@@ -282,19 +282,29 @@ void APlayerCharacter::StopSprint(const FInputActionValue& value)
 void APlayerCharacter::Reload(const FInputActionValue& value)
 {
 	//TODO		
-	Reloading();	
+	//Reloading();	
+	if (CurrentWeapon)
+	{
+		CurrentWeapon->Reload();
+	}
 }
 
 void APlayerCharacter::StartShoot(const FInputActionValue& value)
 {	
-	Shoot();
-	//BeginTraceForPickItem();
-
+	//Shoot();
+	if (CurrentWeapon)
+	{
+		CurrentWeapon->Fire();
+	}
 }
 
 void APlayerCharacter::StartShootAuto(const FInputActionValue& value)
 {
-	Shoot();
+	//Shoot();
+	if (CurrentWeapon)
+	{
+		CurrentWeapon->Fire();
+	}
 }
 
 void APlayerCharacter::StopShoot(const FInputActionValue& value)
@@ -313,14 +323,34 @@ void APlayerCharacter::PickUp(const FInputActionValue& value)
 		PickUpItem();
 }
 
+//equip weapon
 void APlayerCharacter::EquipWeapon1(const FInputActionValue& value)
 {
-	//equip weapon 
-	//[TODO] change animation and can attak
-	if(IsValid(CurrentWeapon))
+	//equip -> idle
+	if (bIsWeaponEquipped)
+	{
+		BlendPoseVariable = 0;
+		bCanFire = false;
+		bIsWeaponEquipped = false;
+
+		if (CurrentWeapon)
+		{
+			FName WeaponSocket(TEXT("back_socket"));
+			CurrentWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponSocket);
+		}
+
+		return;
+	}
+
+	//idle->equip
+	if(!bIsWeaponEquipped && IsValid(CurrentWeapon))
 	{
 		BlendPoseVariable = 1; //for animation
 		bCanFire = true; // for attack
+		bIsWeaponEquipped = true;
+
+		FName WeaponSocket(TEXT("hand_socket"));
+		CurrentWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponSocket);
 	}
-	GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("blend po var: %d"), BlendPoseVariable));
+	//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("blend po var: %d"), BlendPoseVariable));
 }
