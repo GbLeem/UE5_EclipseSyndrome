@@ -10,7 +10,12 @@ AChest::AChest()
 	InteractionBox = CreateDefaultSubobject<UBoxComponent>(TEXT("InteractionBox"));
 	InteractionBox->SetupAttachment(RootComponent);
 	InteractionBox->SetBoxExtent(FVector(200.f, 200.f, 200.f)); //Collision range
-	InteractionBox->SetCollisionProfileName(TEXT("Trigger"));
+	InteractionBox->SetCollisionEnabled(ECollisionEnabled::QueryOnly); //overlap only
+	InteractionBox->SetCollisionObjectType(ECC_WorldDynamic);
+	InteractionBox->SetCollisionResponseToAllChannels(ECR_Ignore);
+	InteractionBox->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+
+
 
 	InteractionBox->OnComponentBeginOverlap.AddDynamic(this, &AChest::OnPlayerOverlapBegin);
 	InteractionBox->OnComponentEndOverlap.AddDynamic(this, &AChest::OnPlayerOverlapEnd);

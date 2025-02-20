@@ -17,13 +17,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
 	float HealAmount;
 
-	//mesh¿ë
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
-	USceneComponent* SceneRootComp;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
-	UStaticMeshComponent* StaticMeshComp;
-
-
 
 	virtual void ActivateItem(AActor* Activator) override;
 };
