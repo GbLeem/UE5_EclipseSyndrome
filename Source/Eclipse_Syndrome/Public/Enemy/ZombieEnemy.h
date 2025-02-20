@@ -3,27 +3,25 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Character.h"
+#include "Enemy/EnemyBase.h"
 #include "ZombieEnemy.generated.h"
 
+/**
+ * 
+ */
 UCLASS()
-class ECLIPSE_SYNDROME_API AZombieEnemy : public ACharacter
+class ECLIPSE_SYNDROME_API AZombieEnemy : public AEnemyBase
 {
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this character's properties
 	AZombieEnemy();
 
-protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
+	
 
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-
-	// Called to bind functionality to input
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
+	// Interface Function
+	void OnDeath() override;
+	float TakeDamage() override;
+	void Attack() override;
+	
 };

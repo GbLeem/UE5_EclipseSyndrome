@@ -5,10 +5,6 @@
 
 AZombieEnemy::AZombieEnemy()
 {
-	Name = "ZombieEnemy";
-	MaxHealth = 100.0f;
-	Health = MaxHealth;
-	Damage = 10.0f;
 }
 
 void AZombieEnemy::OnDeath()
