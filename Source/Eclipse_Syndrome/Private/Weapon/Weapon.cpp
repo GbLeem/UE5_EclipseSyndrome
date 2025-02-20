@@ -15,6 +15,10 @@ AWeapon::AWeapon()
 	GunMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("GunMesh"));
 	RootComponent = GunMesh;
 
+    //Test Muzzlepoint
+    Muzzlepoint = CreateDefaultSubobject<USceneComponent>(TEXT("Muzzlepoint"));
+    Muzzlepoint->SetupAttachment(GunMesh);
+
     CollisionComp = CreateDefaultSubobject<USphereComponent>(TEXT("Sphere Collision"));
     CollisionComp->SetupAttachment(RootComponent);
     CollisionComp->SetCollisionProfileName(TEXT("OverlapAllDynamics"));
@@ -50,9 +54,9 @@ void AWeapon::Fire()
         return;
     }
 
-    // 총구 위치 가져오기
-    FVector MuzzleLocation = GunMesh->GetComponentLocation();
-    FRotator MuzzleRotation = GunMesh->GetComponentRotation();
+    // 총구 위치 가져오기 (GunMegh -> Muzzlepoint)
+    FVector MuzzleLocation = Muzzlepoint->GetComponentLocation();
+    FRotator MuzzleRotation = Muzzlepoint->GetComponentRotation();
 
     // 트레이스
     FHitResult HitResult;
