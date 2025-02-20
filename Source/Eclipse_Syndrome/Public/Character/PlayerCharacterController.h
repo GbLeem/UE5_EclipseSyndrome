@@ -38,4 +38,6 @@ public:
 	TObjectPtr<UInputAction> PickUpAction;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputAction> EquipWeapon1Action;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> GrappleAction;
 };
