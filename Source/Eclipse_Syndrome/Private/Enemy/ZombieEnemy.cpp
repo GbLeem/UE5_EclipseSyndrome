@@ -2,33 +2,30 @@
 
 
 #include "Enemy/ZombieEnemy.h"
+#include "Enemy/ZombieAIController.h"
 
-// Sets default values
 AZombieEnemy::AZombieEnemy()
 {
- 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	Name = "ZombieEnemy";
+	MaxHealth = 100.0f;
+	Health = MaxHealth;
+	Damage = 10.0f;
 
+	// AI
+	AIControllerClass = AZombieAIController::StaticClass();
+	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 }
 
-// Called when the game starts or when spawned
-void AZombieEnemy::BeginPlay()
+void AZombieEnemy::OnDeath()
 {
-	Super::BeginPlay();
-	
+
 }
 
-// Called every frame
-void AZombieEnemy::Tick(float DeltaTime)
+float AZombieEnemy::TakeDamage()
 {
-	Super::Tick(DeltaTime);
-
+	return 0.0f;
 }
 
-// Called to bind functionality to input
-void AZombieEnemy::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+void AZombieEnemy::Attack()
 {
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
-
 }
-
