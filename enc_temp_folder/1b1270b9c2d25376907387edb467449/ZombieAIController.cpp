@@ -18,6 +18,9 @@ void AZombieAIController::UpdateAttackRange()
 	float Distance = FVector::Dist(ControlledPawn->GetActorLocation(), Player->GetActorLocation());
 
 	bool bInRange = Distance <= AttackRange;
+
+	GetBlackboardComponent()->GetValueAsBool(TEXT("IsInAttackRange"));
+	UE_LOG(LogTemp, Warning, TEXT("%.2f"), Distance);
 	GetBlackboardComponent()->SetValueAsBool(TEXT("IsInAttackRange"), bInRange);
 }
 
