@@ -20,9 +20,12 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
 	FName ItemType;
 
+	//for picking up item after pressing key
+	bool bCanPickUp = false;
+
 	//Collision Box for line tracing
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Item")
-	UBoxComponent* CollisionBox;
+	USceneComponent* SceneRootComp;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
 	UStaticMeshComponent* StaticMeshComp;
 
@@ -45,6 +48,7 @@ protected:
 		UPrimitiveComponent* OtherComp,
 		int32 OtherBodyIndex);
 
+	virtual void CollectItem(AActor* Collector) override;
 	virtual void ActivateItem(AActor* Activator) override;
 	virtual FName GetItemType() const override;
 	

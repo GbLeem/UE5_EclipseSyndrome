@@ -16,6 +16,7 @@ class ECLIPSE_SYNDROME_API IItemInterface
 	GENERATED_BODY()
 
 public:
+	virtual void CollectItem(AActor* Collector) = 0;
 	virtual void ActivateItem(AActor* Activator) = 0;
 	virtual FName GetItemType() const = 0;
 };

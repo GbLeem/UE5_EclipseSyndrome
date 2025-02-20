@@ -20,6 +20,11 @@ AChest::AChest()
 	InteractionBox->OnComponentBeginOverlap.AddDynamic(this, &AChest::OnPlayerOverlapBegin);
 	InteractionBox->OnComponentEndOverlap.AddDynamic(this, &AChest::OnPlayerOverlapEnd);
 
+	//Only for test
+	InteractionBox->SetHiddenInGame(false);
+	InteractionBox->SetVisibility(true);
+
+
 	SkeletalMeshComp = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SkeletalMesh"));
 	SkeletalMeshComp->SetupAttachment(InteractionBox);
 
@@ -34,16 +39,18 @@ void AChest::OnPlayerOverlapBegin(
 	UPrimitiveComponent* OtherComp,
 	int32 OtherBodyIndex,
 	bool bFromSweep,
-	const FHitResult& SweepResult
-)
+	const FHitResult& SweepResult)
 {
-	UE_LOG(LogTemp, Warning, TEXT("OnPlayerOverlapBegin executed!"));
+	
 	if (OtherActor && OtherActor->IsA(APlayerCharacter::StaticClass()))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Player in range!"));
+		
 		bPlayerInRange = true;
-		//need to connect with F key
-		OpenChest();
+		bCanOpenChest = true;
+		UE_LOG(LogTemp, Warning, TEXT("Press F"));
+
+		////Only for test. need to be deleted when connect with F key 
+		//OpenChest();
 
 	}
 }
@@ -59,9 +66,10 @@ void AChest::OnPlayerOverlapEnd(
 {
 	if (OtherActor && OtherActor->IsA(APlayerCharacter::StaticClass()))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Player out of Range"));
+		UE_LOG(LogTemp, Warning, TEXT("Player out of Range. Delete Message"));
 		bPlayerInRange = false; 
-		CloseChest();
+		bCanOpenChest = false;
+
 	}
 }
 
@@ -104,13 +112,33 @@ void AChest::SpawnRandomItem()
 	if (PossibleItems.Num() > 0)
 	{
 		//random temporary(about to fix)
-		int32 RandomIndex = FMath::RandRange(0, PossibleItems.Num() - 1);
+		int32 RandomIndex = FMath::RandRange(0, 1);
 		TSubclassOf<AActor> SelectedItemClass = PossibleItems[RandomIndex];
 
 		if (SelectedItemClass)
 		{
 			FVector SpawnLocation = GetActorLocation() + FVector(0, 0, 110);
 			FRotator SpawnRotation = FRotator::ZeroRotator;
+
+			if (SelectedItemClass->GetName().Contains("BulletItem"))
+			{
+				int32 BulletCount = FMath::RandRange(1, 3);
+				//for space between bullet
+				float Spacing = 20.0f;
+
+				for (int32 i = 0; i < BulletCount; i++)
+				{
+
+					FVector BulletSpawnLocation = SpawnLocation + FVector(i*Spacing, 0, 0);
+					GetWorld()->SpawnActor<AActor>(SelectedItemClass, BulletSpawnLocation, SpawnRotation);
+				}
+				UE_LOG(LogTemp, Warning, TEXT("Spawned %d BulletItems"), BulletCount);
+			}
+			else 
+			{
+				GetWorld()->SpawnActor<AActor>(SelectedItemClass, SpawnLocation, SpawnRotation);
+				UE_LOG(LogTemp, Warning, TEXT("Spawned 1 HealItem"));
+			}
 
 			//Spawn PlayerItem on Chest
 			GetWorld()->SpawnActor<AActor>(
@@ -125,17 +153,3 @@ void AChest::SpawnRandomItem()
 	}
 }
 
-
-void AChest::CloseChest()
-{
-	if (OpenAnimation)
-	{
-		SkeletalMeshComp->PlayAnimation(OpenAnimation, false);
-		SkeletalMeshComp->SetPlayRate(-1.0f);
-		UE_LOG(LogTemp, Warning, TEXT("Chest Closed!"));
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("OpenAnimation is not set!"));
-	}
-}

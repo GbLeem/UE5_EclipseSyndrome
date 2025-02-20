@@ -19,8 +19,7 @@ public:
 
 	UFUNCTION()
 	void OpenChest();
-	UFUNCTION()
-	void CloseChest();
+
 
 	//if F key, pressed
 	void interact();
@@ -37,7 +36,7 @@ protected:
 	//check if player is in range
 	bool bPlayerInRange = false;
 	
-
+	bool bCanOpenChest = false;
 
 	//Player Overlap
 	UFUNCTION()

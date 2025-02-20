@@ -6,18 +6,17 @@ ABaseItem::ABaseItem()
 {
 	PrimaryActorTick.bCanEverTick = false;
 
-	CollisionBox = CreateDefaultSubobject<UBoxComponent>(TEXT("CollisionBox"));
-	RootComponent = CollisionBox;
-	CollisionBox->SetBoxExtent(FVector(50.0f, 50.0f, 50.0f));
-	CollisionBox->SetCollisionProfileName(TEXT("OverlapAllDynamic"));
+	SceneRootComp = CreateDefaultSubobject<USceneComponent>(TEXT("SceneRoot"));
+	SetRootComponent(SceneRootComp);
 
 	StaticMeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMesh"));
-	StaticMeshComp->SetupAttachment(CollisionBox);
+	StaticMeshComp->SetupAttachment(SceneRootComp);
 
-	CollisionBox->OnComponentBeginOverlap.AddDynamic(this, &ABaseItem::OnPlayerOverlapBegin);
-	CollisionBox->OnComponentEndOverlap.AddDynamic(this, &ABaseItem::OnPlayerOverlapEnd);
 }
 
+
+
+//Overlap + UMG(coming soon..)
 void ABaseItem::OnPlayerOverlapBegin(
 	UPrimitiveComponent* OverlappedComponent,
 	AActor* OtherActor,
@@ -29,10 +28,10 @@ void ABaseItem::OnPlayerOverlapBegin(
 {
 	if (OtherActor && OtherActor->IsA(APlayerCharacter::StaticClass()))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Player is inside the Item range"));
+		bCanPickUp = true;
+		UE_LOG(LogTemp, Warning, TEXT("Press F to collect Item"));
 	}
 }
-
 
 
 
@@ -44,14 +43,31 @@ void ABaseItem::OnPlayerOverlapEnd(
 {
 	if (OtherActor && OtherActor->IsA(APlayerCharacter::StaticClass()))
 	{
+		bCanPickUp = false;
 		UE_LOG(LogTemp, Warning, TEXT("Item Player out of range!"));
 	}
 }
 
+//Called when player grabbed the Item
+void ABaseItem::CollectItem(AActor* Collector)
+{
 
+	APlayerCharacter* Player = Cast<APlayerCharacter>(Collector);
+	if(Player)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Gained item: %s"), *ItemType.ToString());
+		DestroyItem();
+		//Inventory add code here?
+	}
+
+}
+
+//Called when player used the Item
 void ABaseItem::ActivateItem(AActor* Activator)
 {
+		UE_LOG(LogTemp, Warning, TEXT("Used Item: %s"), *ItemType.ToString());
 }
+
 FName ABaseItem::GetItemType() const
 {
 	return ItemType;
