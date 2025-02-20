@@ -2,6 +2,7 @@
 
 
 #include "Enemy/ZombieEnemy.h"
+#include "Enemy/ZombieAIController.h"
 
 AZombieEnemy::AZombieEnemy()
 {
@@ -9,10 +10,15 @@ AZombieEnemy::AZombieEnemy()
 	MaxHealth = 100.0f;
 	Health = MaxHealth;
 	Damage = 10.0f;
+
+	// AI
+	AIControllerClass = AZombieAIController::StaticClass();
+	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 }
 
 void AZombieEnemy::OnDeath()
 {
+
 }
 
 float AZombieEnemy::TakeDamage()
