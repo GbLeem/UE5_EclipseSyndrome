@@ -48,6 +48,10 @@ private:
     UPROPERTY(EditDefaultsOnly, Category = "Components")
     UStaticMeshComponent* GunMesh;
 
+	//TEST Muzzlepoint
+	UPROPERTY(EditDefaultsOnly, Category = "Components")
+	USceneComponent* Muzzlepoint;
+	
 	//TEST
 	UPROPERTY(EditDefaultsOnly, Category = "Components")
 	TObjectPtr<USphereComponent> CollisionComp;
