@@ -68,6 +68,7 @@ void AWeapon::Fire()
             UGameplayStatics::ApplyPointDamage(HitResult.GetActor(), Damage, HitResult.ImpactNormal, HitResult, nullptr, this, nullptr);
         }
     }
+    GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("fire!!")));
 
     // 탄약 감소
     CurrentAmmo--;
@@ -75,7 +76,8 @@ void AWeapon::Fire()
 
 // 재장전 기능
 void AWeapon::Reload()
-{
+{	
+    GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("reloading!!")));
     CurrentAmmo = MaxAmmo;
 }
 
