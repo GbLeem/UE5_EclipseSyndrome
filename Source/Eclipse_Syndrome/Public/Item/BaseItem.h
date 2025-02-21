@@ -3,6 +3,8 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Item/ItemInterface.h"
+#include "NiagaraComponent.h"
+#include "NiagaraFunctionLibrary.h"
 #include "BaseItem.generated.h"
 
 
@@ -28,32 +30,42 @@ protected:
 	USceneComponent* SceneRootComp;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
 	UStaticMeshComponent* StaticMeshComp;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
+	UNiagaraComponent* GlowEffect;
 
 
-	//Player Overlap
-	UFUNCTION()
-	virtual void OnPlayerOverlapBegin(
-		UPrimitiveComponent* OverlappedComponent,
-		AActor* OtherActor,
-		UPrimitiveComponent* OtherComp,
-		int32 OtherBodyIndex,
-		bool bFromSweep,
-		const FHitResult& SweepResult
-	);
+	////currently not working
+	////-> will be deleted when this code is completely useless
+	////Player Overlap
+	//UFUNCTION()
+	//virtual void OnPlayerOverlapBegin(
+	//	UPrimitiveComponent* OverlappedComponent,
+	//	AActor* OtherActor,
+	//	UPrimitiveComponent* OtherComp,
+	//	int32 OtherBodyIndex,
+	//	bool bFromSweep,
+	//	const FHitResult& SweepResult
+	//);
+	////currently not working
+	////-> will be deleted when this code is completely useless
+	//UFUNCTION()
+	//virtual void OnPlayerOverlapEnd(
+	//	UPrimitiveComponent* OverlappedComponent,
+	//	AActor* OtherActor,
+	//	UPrimitiveComponent* OtherComp,
+	//	int32 OtherBodyIndex);
 
-	UFUNCTION()
-	virtual void OnPlayerOverlapEnd(
-		UPrimitiveComponent* OverlappedComponent,
-		AActor* OtherActor,
-		UPrimitiveComponent* OtherComp,
-		int32 OtherBodyIndex);
-
+	
 	virtual void CollectItem(AActor* Collector) override;
+	/*virtual void TestCollectItem() override;*/
+
 	virtual void ActivateItem(AActor* Activator) override;
 	virtual FName GetItemType() const override;
 	
 	
 	virtual void DestroyItem();
-	
-	
+
+
+	////for test
+	//void BeginPlay();
 };
