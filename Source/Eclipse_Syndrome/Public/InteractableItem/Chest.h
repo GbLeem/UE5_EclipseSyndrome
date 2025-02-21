@@ -75,4 +75,7 @@ protected:
 	
 	//Spawn random item(Bullet / HealItem)
 	void SpawnRandomItem();
+
+private:
+	bool bIsOpened = false;
 };

@@ -98,7 +98,7 @@ void AChest::OpenChest()
 {
 	
 	//about to add chest open animation here
-	if (OpenAnimation)
+	if (OpenAnimation && !bIsOpened)
 	{
 		SkeletalMeshComp->PlayAnimation(OpenAnimation, false);
 		UE_LOG(LogTemp, Warning, TEXT("Chest Opened!"));
@@ -110,10 +110,11 @@ void AChest::OpenChest()
 		FTimerHandle SpawnItemTimerHandle;
 		float SpawnTime = FMath::Max(0.1f, AnimationDuration - 1.3f);
 		GetWorld()->GetTimerManager().SetTimer(SpawnItemTimerHandle, this, &AChest::SpawnRandomItem, SpawnTime, false);
+		bIsOpened = true;
 	}
 	else
 	{
-		UE_LOG(LogTemp, Error, TEXT("OpenAnimation is not set!"));
+		UE_LOG(LogTemp, Error, TEXT("Chest was already Opened! or OpenAnimation is not set!"));
 	}
 	
 }
