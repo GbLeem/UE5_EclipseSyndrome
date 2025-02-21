@@ -9,8 +9,16 @@ public class Eclipse_Syndrome : ModuleRules
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 	
 
-		PublicDependencyModuleNames.AddRange(new string[] { "CableComponent", "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput" });
-        PublicDependencyModuleNames.AddRange(new string[] { "Niagara" });
+		PublicDependencyModuleNames.AddRange(new string[] {
+			"CableComponent",
+            "Core",
+            "CoreUObject",
+            "Engine",
+            "InputCore",
+            "EnhancedInput",
+            "Niagara",
+            "ProceduralMeshComponent"
+		});
 
         PrivateDependencyModuleNames.AddRange(new string[] {  });
 
