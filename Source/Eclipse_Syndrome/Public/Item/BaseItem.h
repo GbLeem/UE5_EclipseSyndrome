@@ -3,8 +3,8 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Item/ItemInterface.h"
-//#include "NiagaraComponent.h"
-//#include "NiagaraFunctionLibrary.h"
+#include "NiagaraComponent.h"
+#include "NiagaraFunctionLibrary.h"
 #include "BaseItem.generated.h"
 
 
@@ -30,6 +30,9 @@ protected:
 	USceneComponent* SceneRootComp;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
 	UStaticMeshComponent* StaticMeshComp;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
+	UNiagaraComponent* GlowEffect;
+
 
 
 	//Player Overlap
@@ -56,6 +59,4 @@ protected:
 	
 	
 	virtual void DestroyItem();
-	
-	
 };
