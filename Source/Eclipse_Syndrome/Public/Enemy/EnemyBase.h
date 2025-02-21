@@ -7,6 +7,8 @@
 #include "EnemyInterface.h"
 #include "EnemyBase.generated.h"
 
+class APatrolPath;
+
 UCLASS()
 class ECLIPSE_SYNDROME_API AEnemyBase : public ACharacter, public IEnemyInterface
 {
@@ -26,6 +28,8 @@ public:
 	float Damage;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy")
 	float AttackRange;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="PatrolPath")
+	APatrolPath* PatrolPath;
 
 protected:
 	// Called when the game starts or when spawned
