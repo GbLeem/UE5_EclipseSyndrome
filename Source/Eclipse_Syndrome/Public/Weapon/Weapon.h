@@ -14,15 +14,14 @@ class ECLIPSE_SYNDROME_API AWeapon : public AActor
 public:	
 	AWeapon();
 
-protected:
-	virtual void BeginPlay() override;
-
 public:
 	UFUNCTION(BlueprintCallable)
 	void Fire();
 	UFUNCTION(BlueprintCallable)
 	void Reload();
 	void DestroyItem();
+	// TEST  Crosshair
+	bool GetAimHitResult(FHitResult& OutHitResult);
 
 	//TEST
 	UFUNCTION()
@@ -51,7 +50,9 @@ private:
 	//TEST Muzzlepoint
 	UPROPERTY(EditDefaultsOnly, Category = "Components")
 	USceneComponent* Muzzlepoint;
-	
+	//TEST MuzzleFlash
+	UPROPERTY(EditDefaultsOnly, Category = "Effects")
+	UParticleSystem* MuzzleFlash;
 	//TEST
 	UPROPERTY(EditDefaultsOnly, Category = "Components")
 	TObjectPtr<USphereComponent> CollisionComp;
