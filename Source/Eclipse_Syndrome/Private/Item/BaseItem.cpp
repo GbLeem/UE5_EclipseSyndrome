@@ -12,6 +12,10 @@ ABaseItem::ABaseItem()
 	StaticMeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMesh"));
 	StaticMeshComp->SetupAttachment(SceneRootComp);
 
+
+	GlowEffect = CreateDefaultSubobject<UNiagaraComponent>(TEXT("GlowEffect"));
+	GlowEffect->SetupAttachment(RootComponent);
+
 }
 
 
