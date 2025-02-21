@@ -44,7 +44,7 @@ public:
 	virtual int32 GetHealth() const override;
 	virtual float GetDamage() const override;
 	virtual void OnDeath() override;
-	virtual float TakeDamage() override;
+	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 	virtual void Attack() override;
 
 };

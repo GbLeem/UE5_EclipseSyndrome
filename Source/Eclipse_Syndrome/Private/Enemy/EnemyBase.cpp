@@ -49,9 +49,18 @@ void AEnemyBase::OnDeath()
 {
 }
 
-float AEnemyBase::TakeDamage()
+float AEnemyBase::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
-	return 0.0f;
+	float ActualDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+
+	Health = FMath::Clamp(Health - DamageAmount, 0.0f, MaxHealth);
+	UE_LOG(LogTemp, Warning, TEXT("Enemy Health decreased to : %f"), Health);
+
+	if (Health <= 0.0f)
+	{
+		OnDeath();
+	}
+	return ActualDamage;
 }
 
 void AEnemyBase::Attack()

@@ -17,11 +17,7 @@ class ECLIPSE_SYNDROME_API AZombieEnemy : public AEnemyBase
 public:
 	AZombieEnemy();
 
-	
-
 	// Interface Function
 	void OnDeath() override;
-	float TakeDamage() override;
-	void Attack() override;
-	
+	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 };

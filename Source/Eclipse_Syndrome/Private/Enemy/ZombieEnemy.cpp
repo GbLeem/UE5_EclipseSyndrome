@@ -19,14 +19,13 @@ AZombieEnemy::AZombieEnemy()
 
 void AZombieEnemy::OnDeath()
 {
-
+	// Play Dead Animation
+	// Stop Move
+	// Destroy
 }
 
-float AZombieEnemy::TakeDamage()
+float AZombieEnemy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
-	return 0.0f;
-}
-
-void AZombieEnemy::Attack()
-{
+	float ActualDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+	return ActualDamage;
 }
