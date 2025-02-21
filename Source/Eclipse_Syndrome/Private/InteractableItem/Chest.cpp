@@ -1,6 +1,8 @@
 #include "InteractableItem/Chest.h"
 #include "Components/BoxComponent.h"
 #include "Character/PlayerCharacter.h"
+#include "Components/TimelineComponent.h"
+
 
 AChest::AChest()
 {
@@ -49,8 +51,9 @@ void AChest::OnPlayerOverlapBegin(
 		bCanOpenChest = true;
 		UE_LOG(LogTemp, Warning, TEXT("Press F"));
 
-		////Only for test. need to be deleted when connect with F key 
-		//OpenChest();
+		//Only for test. need to be deleted when connect with F key 
+		OpenChest();
+		//UMG 추가 예정
 
 	}
 }
@@ -97,12 +100,17 @@ void AChest::OpenChest()
 	{
 		SkeletalMeshComp->PlayAnimation(OpenAnimation, false);
 		UE_LOG(LogTemp, Warning, TEXT("Chest Opened!"));
+
+		float AnimationDuration = OpenAnimation->GetPlayLength();
+		FTimerHandle SpawnItemTimerHandle;
+		float SpawnTime = FMath::Max(0.1f, AnimationDuration - 1.3f);
+		GetWorld()->GetTimerManager().SetTimer(SpawnItemTimerHandle, this, &AChest::SpawnRandomItem, SpawnTime, false);
 	}
 	else
 	{
 		UE_LOG(LogTemp, Error, TEXT("OpenAnimation is not set!"));
 	}
-	SpawnRandomItem();
+	
 }
 
 
@@ -111,45 +119,41 @@ void AChest::SpawnRandomItem()
 {
 	if (PossibleItems.Num() > 0)
 	{
-		//random temporary(about to fix)
-		int32 RandomIndex = FMath::RandRange(0, 1);
+		int32 RandomIndex = FMath::RandRange(0, PossibleItems.Num() - 1);
 		TSubclassOf<AActor> SelectedItemClass = PossibleItems[RandomIndex];
 
 		if (SelectedItemClass)
 		{
-			FVector SpawnLocation = GetActorLocation() + FVector(0, 0, 110);
+			FVector SpawnLocation = GetActorLocation() + FVector(-10, 0, 110);
 			FRotator SpawnRotation = FRotator::ZeroRotator;
-
+			
+			
+			//If Bullet Item Spawned,
 			if (SelectedItemClass->GetName().Contains("BulletItem"))
 			{
-				int32 BulletCount = FMath::RandRange(1, 3);
+				int32 BulletCount = FMath::RandRange(1, 5);
 				//for space between bullet
-				float Spacing = 20.0f;
+				float Spacing = 23.0f;
 
 				for (int32 i = 0; i < BulletCount; i++)
 				{
 
 					FVector BulletSpawnLocation = SpawnLocation + FVector(i*Spacing, 0, 0);
-					GetWorld()->SpawnActor<AActor>(SelectedItemClass, BulletSpawnLocation, SpawnRotation);
+					AActor* SpawnedBullet = GetWorld()->SpawnActor<AActor>(SelectedItemClass, BulletSpawnLocation, SpawnRotation);
+				
 				}
 				UE_LOG(LogTemp, Warning, TEXT("Spawned %d BulletItems"), BulletCount);
 			}
-			else 
+			else
+			//If Healitem Item Spawned,
 			{
-				GetWorld()->SpawnActor<AActor>(SelectedItemClass, SpawnLocation, SpawnRotation);
+				AActor* SpawnedHealItem = GetWorld()->SpawnActor<AActor>(SelectedItemClass, SpawnLocation, SpawnRotation);
+				
 				UE_LOG(LogTemp, Warning, TEXT("Spawned 1 HealItem"));
 			}
-
-			//Spawn PlayerItem on Chest
-			GetWorld()->SpawnActor<AActor>(
-				SelectedItemClass,
-				SpawnLocation,
-				SpawnRotation
-			);
 
 			UE_LOG(LogTemp, Warning, TEXT("Spawned Item: %s"), *SelectedItemClass->GetName());
 
 		}
 	}
 }
-

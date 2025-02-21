@@ -2,12 +2,10 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Components/TimelineComponent.h"
 #include "Chest.generated.h"
 
-
 class UBoxComponent;
-
-
 
 UCLASS()
 class ECLIPSE_SYNDROME_API AChest : public AActor
@@ -17,12 +15,8 @@ class ECLIPSE_SYNDROME_API AChest : public AActor
 public:	
 	AChest();
 
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable, Category="Chest")
 	void OpenChest();
-
-
-	//if F key, pressed
-	void interact();
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chest")
@@ -33,6 +27,12 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Animation")
 	UAnimationAsset* OpenAnimation;
 
+	UPROPERTY(EditAnywhere, Category="Item Floating")
+	UCurveFloat* FloatCurve;
+
+	UPROPERTY()
+	FTimeline FloatTimeline;
+	
 	//check if player is in range
 	bool bPlayerInRange = false;
 	
@@ -61,14 +61,18 @@ protected:
 	virtual void InteractWithChest();
 
 
+
+
+
 	//Store Random Spawnable Items
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chest")
 	TArray<TSubclassOf<AActor>> PossibleItems;
 
-
+	
 	//Spawn random item(Bullet / HealItem)
 	void SpawnRandomItem();
 
+	
 
-
+	void UpdateFloating(float Value, AActor* TargetItem);
 };
