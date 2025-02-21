@@ -34,29 +34,38 @@ protected:
 	UNiagaraComponent* GlowEffect;
 
 
+	////currently not working
+	////-> will be deleted when this code is completely useless
+	////Player Overlap
+	//UFUNCTION()
+	//virtual void OnPlayerOverlapBegin(
+	//	UPrimitiveComponent* OverlappedComponent,
+	//	AActor* OtherActor,
+	//	UPrimitiveComponent* OtherComp,
+	//	int32 OtherBodyIndex,
+	//	bool bFromSweep,
+	//	const FHitResult& SweepResult
+	//);
+	////currently not working
+	////-> will be deleted when this code is completely useless
+	//UFUNCTION()
+	//virtual void OnPlayerOverlapEnd(
+	//	UPrimitiveComponent* OverlappedComponent,
+	//	AActor* OtherActor,
+	//	UPrimitiveComponent* OtherComp,
+	//	int32 OtherBodyIndex);
 
-	//Player Overlap
-	UFUNCTION()
-	virtual void OnPlayerOverlapBegin(
-		UPrimitiveComponent* OverlappedComponent,
-		AActor* OtherActor,
-		UPrimitiveComponent* OtherComp,
-		int32 OtherBodyIndex,
-		bool bFromSweep,
-		const FHitResult& SweepResult
-	);
-
-	UFUNCTION()
-	virtual void OnPlayerOverlapEnd(
-		UPrimitiveComponent* OverlappedComponent,
-		AActor* OtherActor,
-		UPrimitiveComponent* OtherComp,
-		int32 OtherBodyIndex);
-
+	
 	virtual void CollectItem(AActor* Collector) override;
+	/*virtual void TestCollectItem() override;*/
+
 	virtual void ActivateItem(AActor* Activator) override;
 	virtual FName GetItemType() const override;
 	
 	
 	virtual void DestroyItem();
+
+
+	////for test
+	//void BeginPlay();
 };

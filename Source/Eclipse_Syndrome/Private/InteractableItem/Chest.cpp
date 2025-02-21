@@ -51,9 +51,11 @@ void AChest::OnPlayerOverlapBegin(
 		bCanOpenChest = true;
 		UE_LOG(LogTemp, Warning, TEXT("Press F"));
 
-		//Only for test. need to be deleted when connect with F key 
+		//Only for test
+		//For Player Test
+		//( When player enters Box Collision of the Chest, 
+		//  OpenChest function will activate and random items will be spawned )
 		OpenChest();
-		//UMG 추가 예정
 
 	}
 }
@@ -102,6 +104,9 @@ void AChest::OpenChest()
 		UE_LOG(LogTemp, Warning, TEXT("Chest Opened!"));
 
 		float AnimationDuration = OpenAnimation->GetPlayLength();
+
+		CheckChestOpened();
+
 		FTimerHandle SpawnItemTimerHandle;
 		float SpawnTime = FMath::Max(0.1f, AnimationDuration - 1.3f);
 		GetWorld()->GetTimerManager().SetTimer(SpawnItemTimerHandle, this, &AChest::SpawnRandomItem, SpawnTime, false);
