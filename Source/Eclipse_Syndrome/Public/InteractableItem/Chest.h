@@ -15,8 +15,12 @@ class ECLIPSE_SYNDROME_API AChest : public AActor
 public:	
 	AChest();
 
-	UFUNCTION(BlueprintCallable, Category="Chest")
+	UFUNCTION()
 	void OpenChest();
+
+	//To check if the chest is opened(only for BP animation)
+	UFUNCTION(BlueprintImplementableEvent)
+	void CheckChestOpened();
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chest")
@@ -71,8 +75,4 @@ protected:
 	
 	//Spawn random item(Bullet / HealItem)
 	void SpawnRandomItem();
-
-	
-
-	void UpdateFloating(float Value, AActor* TargetItem);
 };
