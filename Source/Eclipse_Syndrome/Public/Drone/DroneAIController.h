@@ -45,6 +45,17 @@ private:
 	FVector IntegralError;
 	FVector PreviousError;
 	FVector DesiredTarget;
+
+	float CurrentAngle = 0.0f;
+	float CircleRadius = 180.0f;
+	UPROPERTY(editAnywhere, Category="IdleRotation")
+	float RotationSpeed = 0.4f;
+	UPROPERTY(editAnywhere, Category="IdleRotation")
+	float HeightNoiseSpeed = 0.3f; // 0.2 ~ 0.5
+	UPROPERTY(editAnywhere, Category="IdleRotation")
+	float MaxHeightVariation = 50.0f;
+	UPROPERTY(editAnywhere, Category="IdleRotation")
+	float DistanceScaleFactor = 0.7; // Perspective correction strength (0.3 ~ 0.5)
 	
 	ADroneAIController();
 	void ApplyPIDControl(float DeltaTime);
@@ -61,6 +72,8 @@ protected:
 	void FollowPath(float DeltaTime);
 	void UpdatePath();
 	void UpdateDesiredTarget(const TObjectPtr<APawn>& PlayerPawn);
+
+	void UpdateIdleMovement(const TObjectPtr<APawn>& PlayerPawn, float DeltaTime);
 
 public:
 	virtual  void Tick(float DeltaTime) override;

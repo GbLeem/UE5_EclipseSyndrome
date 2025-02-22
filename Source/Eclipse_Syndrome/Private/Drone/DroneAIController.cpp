@@ -1,4 +1,6 @@
 #include "Drone/DroneAIController.h"
+
+#include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Drone/Drone.h"
@@ -22,6 +24,8 @@ ADroneAIController::ADroneAIController()
 void ADroneAIController::BeginPlay()
 {
 	Super::BeginPlay();
+
+	CircleRadius = (BaseDroneOffset - FVector(0.0f, 0.0f, 100.0f)).Length();
 }
 
 void ADroneAIController::Tick(float DeltaTime)
@@ -29,20 +33,22 @@ void ADroneAIController::Tick(float DeltaTime)
     Super::Tick(DeltaTime);
     
 	const TObjectPtr<APawn> PlayerPawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
-	UpdateDesiredTarget(PlayerPawn);
-	
-	if (bShowDebug)
-	{
-		DrawDebugSphere(GetWorld(), DesiredTarget, 30, 30, FColor::Green);
-	}
-	
-	UpdatePath();
-	FollowPath(DeltaTime);
-	
-	if (bShowDebug)
-	{
-		DrawDebugPath();
-	}
+	//UpdateDesiredTarget(PlayerPawn);
+	//
+	//if (bShowDebug)
+	//{
+	//	DrawDebugSphere(GetWorld(), DesiredTarget, 30, 30, FColor::Green);
+	//}
+	//
+	//UpdatePath();
+	//FollowPath(DeltaTime);
+	//
+	//if (bShowDebug)
+	//{
+	//	DrawDebugPath();
+	//}
+
+	UpdateIdleMovement(PlayerPawn, DeltaTime);
 	
     TargetLocation = FMath::VInterpTo(TargetLocation, PathTargetLocation, DeltaTime, 5.0f);
     DroneRotation(PlayerPawn);
@@ -114,6 +120,53 @@ void ADroneAIController::UpdateDesiredTarget(const TObjectPtr<APawn>& PlayerPawn
 	{
 		DesiredTarget = PlayerPawn->GetActorLocation() + RotatedOffset;
 	}
+}
+
+void ADroneAIController::UpdateIdleMovement(const TObjectPtr<APawn>& PlayerPawn, float DeltaTime)
+{
+	FVector PlayerLocation = PlayerPawn->GetActorLocation() + FVector(0.0f, 0.0f, 100.0f);
+
+	// 카메라와 플레이어의 방향 벡터
+	FVector CameraForward = PlayerPawn->GetComponentByClass<UCameraComponent>()->GetForwardVector();
+	
+	// 시간 기반 각도 계산 (속도 조절 가능)
+	float AngleSpeed = RotationSpeed;
+	//CurrentAngle += RotationSpeed * DeltaTime;
+
+	// 각도 -> 원형 좌표 변환
+	FVector Offset = FVector(
+		FMath::Cos(CurrentAngle) * CircleRadius,
+		FMath::Sin(CurrentAngle) * CircleRadius,
+		0.0f // 필요하면 높이 조절
+	);
+	
+	FVector PlayerToDrone = Offset.GetSafeNormal();
+
+	// 드론이 플레이어 앞에 있을 때만 거리 조정
+	float DotProduct = FVector::DotProduct(CameraForward, PlayerToDrone);
+	float AdjustedRadius = CircleRadius;
+
+	if (DotProduct > 0) // 앞쪽일 때만 보정
+	{
+		float RadiusFactor = (1.0f - DotProduct * DistanceScaleFactor);
+		AdjustedRadius *= RadiusFactor;
+
+		// 반지름이 작아질수록 회전 속도 증가 (속도 역보정)
+		AngleSpeed /= FMath::Max(RadiusFactor, 0.1f);
+	}
+	
+	PathTargetLocation = PlayerLocation + Offset.GetSafeNormal() * AdjustedRadius;
+	
+	// Perlin 노이즈로 자연스러운 높이 변화
+	float TimeScale = GetWorld()->GetTimeSeconds() * HeightNoiseSpeed;
+	float NoiseValue = FMath::PerlinNoise1D(TimeScale) * MaxHeightVariation;
+
+	//FVector TargetLocation = PlayerLocation + Offset + FVector(0.0f, 0.0f, NoiseValue);
+	
+	PathTargetLocation.Z += NoiseValue;
+
+	// 회전 각도 업데이트 (속도 보정 포함)
+	CurrentAngle += AngleSpeed * DeltaTime;
 }
 
 void ADroneAIController::FollowPath(float DeltaTime)
