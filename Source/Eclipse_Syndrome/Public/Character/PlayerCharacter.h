@@ -55,8 +55,6 @@ protected:
 	UFUNCTION()
 	void StartShoot(const FInputActionValue& value);
 	UFUNCTION()
-	void StartShootAuto(const FInputActionValue& value);
-	UFUNCTION()
 	void StopShoot(const FInputActionValue& value);
 	UFUNCTION()
 	void PickUp(const FInputActionValue& value);
@@ -89,13 +87,8 @@ public:
 
 	//for character item (inventory ammo)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
-	int32 CurrentAmmos;
+	int32 CurrentInventoryAmmos;
 
-	//for test
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon")
-	float FireRate; //from gun class
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon")
-	bool bAutoFire; //from gun class
 	//for animation
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
 	int32 BlendPoseVariable;
@@ -108,10 +101,6 @@ private:
 	bool bCanFire;  //character flag
 	bool bCanReload; //for reloading animation
 	bool bCanTraceForItemPeeking;
-
-	//for test
-	int32 GunCurrentAmmo;//from gun class
-	int32 GunMaxAmmo;//from gun class
 
 	FTimerHandle FireRateTimerHandle;
 	FTimerHandle GrappleTimerHandle;

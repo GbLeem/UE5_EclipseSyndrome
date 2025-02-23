@@ -1,5 +1,6 @@
 #include "Character/PlayerCharacterController.h"
 
+#include "Blueprint/UserWidget.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputMappingContext.h"
 
@@ -64,6 +65,12 @@ APlayerCharacterController::APlayerCharacterController()
 	{
 		GrappleAction = IA_Grapple.Object;
 	}
+
+	static ConstructorHelpers::FClassFinder<UUserWidget>HUDWidget(TEXT("/Game/HJ/UI/WBP_HUD.WBP_HUD_C"));
+	if (HUDWidget.Succeeded())
+	{
+		HUDWidgetClass = HUDWidget.Class;
+	}
 }
 
 void APlayerCharacterController::BeginPlay()
@@ -78,6 +85,15 @@ void APlayerCharacterController::BeginPlay()
 			{
 				SubSystem->AddMappingContext(DefaultInputMappingContext, 0);
 			}
+		}
+	}
+
+	if (HUDWidgetClass)
+	{
+		HUDWidgetInstance = CreateWidget<UUserWidget>(this, HUDWidgetClass);
+		if (HUDWidgetInstance)
+		{
+			HUDWidgetInstance->AddToViewport();
 		}
 	}
 }
