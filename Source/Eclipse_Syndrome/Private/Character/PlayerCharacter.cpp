@@ -254,6 +254,15 @@ void APlayerCharacter::GrappleEnd()
 	bCanGrapple = false;	
 }
 
+int32 APlayerCharacter::GetCurrentWeaponAmmo()
+{
+	if (CurrentWeapon)
+	{
+		return CurrentWeapon->GetCurrentAmmo();
+	}
+	return 0;
+}
+
 
 void APlayerCharacter::Move(const FInputActionValue& value)
 {

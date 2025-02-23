@@ -1,5 +1,7 @@
 #include "Character/PlayerCharacterController.h"
 
+#include "System/DefaultGameState.h"
+
 #include "Blueprint/UserWidget.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputMappingContext.h"
@@ -95,5 +97,11 @@ void APlayerCharacterController::BeginPlay()
 		{
 			HUDWidgetInstance->AddToViewport();
 		}
+	}
+
+	ADefaultGameState* DefaultGameState = GetWorld() ? GetWorld()->GetGameState<ADefaultGameState>() : nullptr;
+	if (DefaultGameState)
+	{
+		DefaultGameState->UpdateHUD();
 	}
 }

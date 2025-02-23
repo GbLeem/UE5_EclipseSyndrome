@@ -36,6 +36,9 @@ public:
 	void GrappleStart();
 	UFUNCTION(BlueprintCallable)
 	void GrappleEnd();
+
+	//getter
+	int32 GetCurrentWeaponAmmo();
 protected:
 	//for input action
 	UFUNCTION()
