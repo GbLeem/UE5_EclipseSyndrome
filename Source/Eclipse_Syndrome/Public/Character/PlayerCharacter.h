@@ -20,6 +20,7 @@ public:
 	APlayerCharacter();
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	virtual void Tick(float DeltaTime) override;
+	virtual void BeginPlay() override;
 
 	UFUNCTION()
 	void Shoot();
@@ -36,6 +37,9 @@ public:
 	void GrappleStart();
 	UFUNCTION(BlueprintCallable)
 	void GrappleEnd();
+
+	//getter
+	int32 GetCurrentWeaponAmmo();
 protected:
 	//for input action
 	UFUNCTION()
@@ -55,8 +59,6 @@ protected:
 	UFUNCTION()
 	void StartShoot(const FInputActionValue& value);
 	UFUNCTION()
-	void StartShootAuto(const FInputActionValue& value);
-	UFUNCTION()
 	void StopShoot(const FInputActionValue& value);
 	UFUNCTION()
 	void PickUp(const FInputActionValue& value);
@@ -64,6 +66,8 @@ protected:
 	void EquipWeapon1(const FInputActionValue& value);
 	UFUNCTION()
 	void Grapple(const FInputActionValue& value);
+	UFUNCTION()
+	void PossessToDrone(const FInputActionValue& value);
 
 //variables
 public:
@@ -89,13 +93,8 @@ public:
 
 	//for character item (inventory ammo)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
-	int32 CurrentAmmos;
+	int32 CurrentInventoryAmmos;
 
-	//for test
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon")
-	float FireRate; //from gun class
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon")
-	bool bAutoFire; //from gun class
 	//for animation
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
 	int32 BlendPoseVariable;
@@ -104,14 +103,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
 	bool bCanGrapple; //can move character(attach to grapple actor)
 
+	void SetEnhancedInput();
+	
 private:
 	bool bCanFire;  //character flag
 	bool bCanReload; //for reloading animation
 	bool bCanTraceForItemPeeking;
-
-	//for test
-	int32 GunCurrentAmmo;//from gun class
-	int32 GunMaxAmmo;//from gun class
 
 	FTimerHandle FireRateTimerHandle;
 	FTimerHandle GrappleTimerHandle;

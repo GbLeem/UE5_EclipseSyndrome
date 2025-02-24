@@ -26,6 +26,5 @@ public:
 	virtual int32 GetHealth() const = 0;
 	virtual float GetDamage() const = 0;
 	virtual void OnDeath() = 0;
-	virtual float TakeDamage() = 0;
-	virtual void Attack() = 0;
+	virtual void Attack(AActor* TargetActor) = 0;
 };

@@ -12,6 +12,13 @@ class USkeletalMeshComponent;
 class UCapsuleComponent;
 class USceneComponent;
 
+UENUM(BlueprintType)
+enum class EDroneControlMode : uint8
+{
+	Manual UMETA(DisplayName = "Manual"),
+	AIControlled UMETA(DisplayName = "AI Controlled")
+};
+
 UCLASS()
 class ECLIPSE_SYNDROME_API ADrone : public APawn
 {
@@ -56,6 +63,11 @@ protected:
 public:	
 	virtual void Tick(float DeltaTime) override;
 
+	void SetMoveInput(const FVector& Value) {MoveInput = Value;}
+	TObjectPtr<USceneComponent> GetCameraSceneComponent() {return CameraSceneComp;};
+
+	void SetEnhancedInput();
+
 protected:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	
@@ -63,7 +75,9 @@ protected:
 	void Move(const FInputActionValue& Value);
 	UFUNCTION()
 	void Look(const FInputActionValue& Value);
-
+	UFUNCTION()
+	void PossessToCharacter(const FInputActionValue& Value);
+	
 private:
 	void ComponentInit();
 	void TiltDrone(float DeltaTime);
