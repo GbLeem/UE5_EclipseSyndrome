@@ -130,6 +130,13 @@ void APlayerCharacter::Tick(float DeltaTime)
 		BeginTraceForPickItem();
 }
 
+void APlayerCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+
+	Cast<ADefaultGameState>(GetWorld()->GetGameState())->SetPlayerCharacter(this);
+}
+
 void APlayerCharacter::Shoot()
 {	
 	if (CurrentWeapon)
@@ -417,9 +424,16 @@ void APlayerCharacter::Grapple(const FInputActionValue& value)
 
 void APlayerCharacter::PossessToDrone(const FInputActionValue& value)
 {
-	ADefaultGameState* DefaultGameState = GetWorld()->GetGameState<ADefaultGameState>();
-	if (DefaultGameState)
+	if (!value.Get<bool>())
 	{
-		DefaultGameState->ToggleControl();
+		Cast<APlayerCharacterController>(GetController())->SetPlayerPawn(this);
+		Cast<APlayerCharacterController>(GetController())->ChangeMappingContext(1);
+		Cast<APlayerCharacterController>(GetController())->ChangePossess(Cast<ADefaultGameState>(GetWorld()->GetGameState())->GetDrone());
 	}
+}
+
+void APlayerCharacter::SetEnhancedInput()
+{
+	InputComponent->ClearActionBindings();
+	SetupPlayerInputComponent(InputComponent);
 }

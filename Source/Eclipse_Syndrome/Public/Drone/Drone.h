@@ -59,6 +59,8 @@ public:
 	void SetMoveInput(const FVector& Value) {MoveInput = Value;}
 	TObjectPtr<USceneComponent> GetCameraSceneComponent() {return CameraSceneComp;};
 
+	void SetEnhancedInput();
+
 protected:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	
@@ -66,7 +68,9 @@ protected:
 	void Move(const FInputActionValue& Value);
 	UFUNCTION()
 	void Look(const FInputActionValue& Value);
-
+	UFUNCTION()
+	void PossessToCharacter(const FInputActionValue& Value);
+	
 private:
 	void ComponentInit();
 	void TiltDrone(float DeltaTime);

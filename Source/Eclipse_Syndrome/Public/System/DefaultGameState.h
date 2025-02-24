@@ -1,6 +1,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Character/PlayerCharacter.h"
+#include "Drone/Drone.h"
 #include "GameFramework/GameState.h"
 #include "DefaultGameState.generated.h"
 
@@ -22,35 +24,19 @@ public:
 	virtual void BeginPlay() override;
 	void UpdateHUD();
 
-	//for possesss
-	void ToggleControl();
-	void ControlPlayer();
-	void ControlDrone();
-
+	void SetDrone(const TObjectPtr<ADrone>& TargetDrone) { Drone = TargetDrone; }
+	const TObjectPtr<ADrone>& GetDrone() const { return Drone; }
+	void SetPlayerCharacter(const TObjectPtr<APlayerCharacter>& TargetCharacter) { PlayerPawn = TargetCharacter;}
+	const TObjectPtr<APlayerCharacter>& GetPlayerCharacter() const { return PlayerPawn; }
+	
 //variables
 public:
 	int32 CurrentInventoryAmmos;
 
-	//possess
-	UPROPERTY(EditAnywhere, Category = "DronePossess")
-	APawn* PlayerCharacterP;
-
-	UPROPERTY(EditAnywhere, Category = "DronePossess")
-	APawn* Drone;
-
-	UPROPERTY(EditAnywhere, Category = "DronePossess")
-	TObjectPtr<APlayerCharacterController> PlayerCharacterControllerP;
-
-	UPROPERTY(EditAnywhere, Category = "DronePossess")
-	TObjectPtr<ADroneAIController> DroneAIController;
-
-	UPROPERTY(EditAnywhere, Category = "DronePossess")
-	TObjectPtr<ADroneController> DroneController;
-
-	UPROPERTY(EditAnywhere, Category = "AI")
-	TSubclassOf<ADroneController> DroneClass;
-
-	bool bIsControllingDrone;
+	UPROPERTY(VisibleAnywhere, Category = "Possess")
+	TObjectPtr<ADrone> Drone;
+	UPROPERTY(VisibleAnywhere, Category = "Possess")
+	TObjectPtr<APlayerCharacter> PlayerPawn;
 
 private:
 	FTimerHandle HUDUpdateTimerHandle;

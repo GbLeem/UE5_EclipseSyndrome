@@ -9,22 +9,6 @@ ADroneController::ADroneController()
 	
 }
 
-//void ADroneController::Init()
-//{
-//	GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Black, FString::Printf(TEXT("drone controller init")));
-//	if (const TObjectPtr<ULocalPlayer> LocalPlayer = GetLocalPlayer())
-//	{
-//		if (const TObjectPtr<UEnhancedInputLocalPlayerSubsystem> SubSystem =
-//			LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>())
-//		{
-//			if (nullptr != InputMappingContext)
-//			{
-//				SubSystem->AddMappingContext(InputMappingContext, 0);
-//			}
-//		}
-//	}
-//}
-
 void ADroneController::AddMappingContextToPawn(APawn* InPawn)
 {
     if (const TObjectPtr<ULocalPlayer> LocalPlayer = GetLocalPlayer())
@@ -47,6 +31,5 @@ void ADroneController::AddMappingContextToPawn(APawn* InPawn)
 void ADroneController::BeginPlay()
 {
 	Super::BeginPlay();
-
-	//Init();
+    
 }

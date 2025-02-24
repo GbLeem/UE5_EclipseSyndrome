@@ -20,6 +20,7 @@ public:
 	APlayerCharacter();
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	virtual void Tick(float DeltaTime) override;
+	virtual void BeginPlay() override;
 
 	UFUNCTION()
 	void Shoot();
@@ -102,7 +103,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
 	bool bCanGrapple; //can move character(attach to grapple actor)
 
-
+	void SetEnhancedInput();
+	
 private:
 	bool bCanFire;  //character flag
 	bool bCanReload; //for reloading animation

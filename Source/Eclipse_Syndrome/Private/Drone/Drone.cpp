@@ -1,11 +1,12 @@
 #include "Drone/Drone.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
-#include "Drone/DroneController.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "PhysicsEngine/PhysicsHandleComponent.h"
 #include "EnhancedInputComponent.h"
 #include "InputActionValue.h"
+#include "Character/PlayerCharacterController.h"
+#include "System/DefaultGameState.h"
 
 ADrone::ADrone()
 	: MoveForce(300000.f)
@@ -22,6 +23,7 @@ void ADrone::BeginPlay()
 {
 	Super::BeginPlay();
 
+	Cast<ADefaultGameState>(GetWorld()->GetGameState())->SetDrone(this);
 }
 
 void ADrone::Tick(float DeltaTime)
@@ -72,23 +74,31 @@ void ADrone::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	if (const TObjectPtr<UEnhancedInputComponent> EnhancedInput
 		= Cast<UEnhancedInputComponent>(PlayerInputComponent))
 	{
-		if (const TObjectPtr<ADroneController> PlayerController
-			= Cast<ADroneController>(GetController()))
+		if (const TObjectPtr<APlayerCharacterController> PlayerController
+			= Cast<APlayerCharacterController>(GetController()))
 		{
-			if (PlayerController->MoveAction)
+			if (PlayerController->DroneMoveAction)
 			{
-				EnhancedInput->BindAction(PlayerController->MoveAction
+				EnhancedInput->BindAction(PlayerController->DroneMoveAction
 					, ETriggerEvent::Triggered
 					,this
 					, &ADrone::Move);
 			}
 
-			if (PlayerController->LookAction)
+			if (PlayerController->DroneLookAction)
 			{
-				EnhancedInput->BindAction(PlayerController->LookAction
+				EnhancedInput->BindAction(PlayerController->DroneLookAction
 					, ETriggerEvent::Triggered
 					,this
 					, &ADrone::Look);
+			}
+			
+			if (PlayerController->DronePossessAction)
+			{
+				EnhancedInput->BindAction(PlayerController->DronePossessAction
+					, ETriggerEvent::Started
+					,this
+					, &ADrone::PossessToCharacter);
 			}
 		}
 	}
@@ -135,6 +145,16 @@ void ADrone::Look(const FInputActionValue& Value)
 	SpringArmComp->SetRelativeRotation(FRotator(NewPitch, 0.0f, 0.0f));
 }
 
+void ADrone::PossessToCharacter(const FInputActionValue& Value)
+{
+	if (!Value.Get<bool>())
+	{
+		Cast<APlayerCharacterController>(GetController())->SetPlayerPawn(this);
+		Cast<APlayerCharacterController>(GetController())->ChangeMappingContext(0);
+		Cast<APlayerCharacterController>(GetController())->ChangePossess(Cast<ADefaultGameState>(GetWorld()->GetGameState())->GetPlayerCharacter());
+	}
+}
+
 void ADrone::TiltDrone(float DeltaTime)
 {
 	float TargetRoll = MoveInput.Y * MaxTiltAngle;
@@ -166,4 +186,10 @@ void ADrone::AddAirResistance() const
 	const FVector CurrentVelocity = CapsuleComp->GetPhysicsLinearVelocity();
 	const FVector DampingForce = -CurrentVelocity * CapsuleComp->GetMass() * AirResistance;
 	CapsuleComp->AddForce(DampingForce, NAME_None, false);
+}
+
+void ADrone::SetEnhancedInput()
+{
+	InputComponent->ClearActionBindings();
+	SetupPlayerInputComponent(InputComponent);
 }
