@@ -58,7 +58,7 @@ void ADrone::ComponentInit()
 
 	SpringArmComp = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
 	SpringArmComp->SetupAttachment(CameraSceneComp);
-	SpringArmComp->TargetArmLength = 400;
+	SpringArmComp->TargetArmLength = 120;
 	SpringArmComp->bUsePawnControlRotation = false;
 
 	CameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));

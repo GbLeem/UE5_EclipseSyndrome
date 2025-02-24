@@ -12,6 +12,13 @@ class USkeletalMeshComponent;
 class UCapsuleComponent;
 class USceneComponent;
 
+UENUM(BlueprintType)
+enum class EDroneControlMode : uint8
+{
+	Manual UMETA(DisplayName = "Manual"),
+	AIControlled UMETA(DisplayName = "AI Controlled")
+};
+
 UCLASS()
 class ECLIPSE_SYNDROME_API ADrone : public APawn
 {

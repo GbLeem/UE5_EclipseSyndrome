@@ -1,24 +1,20 @@
 #include "Drone/DroneAIController.h"
 
-#include "Camera/CameraComponent.h"
+#include "BehaviorTree/BehaviorTree.h"
+#include "BehaviorTree/BlackboardComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Drone/Drone.h"
-#include "Volume/AOctreeVolume.h"
 
 ADroneAIController::ADroneAIController()
-	: BaseDroneOffset(FVector(-50, 80, 100))
+	: BaseDroneOffset(FVector(25, 80, 100))
 	, Kp(140000.0f)
 	, Ki(2000.0f)
 	, Kd(8000.0f)
 	, MaxSpeed(150000.f)
 	, DesiredDistance(15.0f)
 	, bShowDebug(true)
-	, CurIndex(0)
 	, PathFindModeAcceleration(20.0f)
-	, NextNodeIgnoreRadius(80.0f)
-	, bEndFollowPath(true)
-	, bCanFindPath(true)
 {
 }
 void ADroneAIController::BeginPlay()
@@ -26,176 +22,74 @@ void ADroneAIController::BeginPlay()
 	Super::BeginPlay();
 
 	CircleRadius = (BaseDroneOffset - FVector(0.0f, 0.0f, 100.0f)).Length();
+
+	UseBlackboard(DroneBehaviorTree->GetBlackboardAsset(), BlackboardComp);
+	RunBehaviorTree(DroneBehaviorTree);
+
+	if (const TObjectPtr<APawn> Player = UGameplayStatics::GetPlayerPawn(GetWorld(), 0))
+	{
+		BlackboardComp->SetValueAsObject("PlayerActor", Player);
+	}
+
+	EnumPtr = FindObject<UEnum>(ANY_PACKAGE, TEXT("BlackboardEnum"));
 }
 
 void ADroneAIController::Tick(float DeltaTime)
 {
-    Super::Tick(DeltaTime);
-    
-	const TObjectPtr<APawn> PlayerPawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
-	//UpdateDesiredTarget(PlayerPawn);
-	//
-	//if (bShowDebug)
-	//{
-	//	DrawDebugSphere(GetWorld(), DesiredTarget, 30, 30, FColor::Green);
-	//}
-	//
-	//UpdatePath();
-	//FollowPath(DeltaTime);
-	//
-	//if (bShowDebug)
-	//{
-	//	DrawDebugPath();
-	//}
+	Super::Tick(DeltaTime);
 
-	UpdateIdleMovement(PlayerPawn, DeltaTime);
+	//UpdateRollingCircleMovement(DeltaTime);
 	
-    TargetLocation = FMath::VInterpTo(TargetLocation, PathTargetLocation, DeltaTime, 5.0f);
-    DroneRotation(PlayerPawn);
-    ApplyPIDControl(DeltaTime);
-}
-
-void ADroneAIController::FindPath()
-{
-    if (IsValid(CurOctreeVolume))
-    {
-	    TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
-    	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_Visibility));
-    	if (CurOctreeVolume->IsValidDestLocation(DesiredTarget, ObjectTypes, AActor::StaticClass()))
-    	{
-    		FVector DroneLocation = GetPawn()->GetActorLocation();
-    		PathPoints.Empty();
-    		if (CurOctreeVolume->FindPath(DroneLocation, DesiredTarget, ObjectTypes, AActor::StaticClass(), PathPoints))
-    		{
-    			bEndFollowPath = false;
-    			CurIndex = 0;
-    		}
-    	}
-	    else
-	    {
-	    	bCanFindPath = false;
-		    GetWorld()->GetTimerManager().SetTimer(PathTimerHandle, this, &ADroneAIController::CanFindPath, 1.0f, false);
-	    }
-    }
-}
-
-void ADroneAIController::CanFindPath()
-{
-	bCanFindPath = true;
-}
-
-void ADroneAIController::DrawDebugPath()
-{
-	for (const auto& Node : PathPoints)
+	if (const TObjectPtr<APawn> Player = UGameplayStatics::GetPlayerPawn(GetWorld(), 0))
 	{
-		DrawDebugSphere(GetWorld(), Node, 20, 20, FColor::Orange);
-	}
-}
-
-void ADroneAIController::UpdatePath()
-{
-	FVector DroneLocation = GetPawn()->GetActorLocation();
-	FHitResult HitResult;
-	FCollisionQueryParams CollisionParams;
-	CollisionParams.AddIgnoredActor(GetPawn());
+		const FVector PlayerVelocity = Player->GetVelocity();
+		const FVector DroneVelocity = GetPawn()->GetVelocity();
+		const float DistanceToPlayer = FVector::Dist(Player->GetActorLocation(), GetPawn()->GetActorLocation());
+    	
+		static float IdleTransitionTime = 0.0f;
+		static float FollowTransitionTime = 0.0f;
+		static float LastDistanceToPlayer = DistanceToPlayer;
 	
-	if (GetWorld()->LineTraceSingleByChannel(HitResult, DroneLocation, DesiredTarget, ECC_Visibility, CollisionParams))
-	{
-		if (bCanFindPath && bEndFollowPath)
+		const bool bPlayerStopped = PlayerVelocity.Length() < 10.0f;
+		const bool bDroneAlmostStopped = DroneVelocity.Length() <= 10.0f;
+		const bool bPlayerClose = DistanceToPlayer < 300.0f;
+		const bool bPlayerFar = DistanceToPlayer > 1000.0f;
+	
+		float DistanceChange = FMath::Abs(DistanceToPlayer - LastDistanceToPlayer);
+	
+		if (bPlayerStopped && bDroneAlmostStopped && bPlayerClose && DistanceChange < 5.0f)
 		{
-			FindPath();
-		}
-	}
-}
-
-void ADroneAIController::UpdateDesiredTarget(const TObjectPtr<APawn>& PlayerPawn)
-{
-	if (!PlayerPawn) return;
-	const FVector RotatedOffset = PlayerPawn->GetActorRotation().RotateVector(BaseDroneOffset);
-	FHitResult Hit;
-	FCollisionQueryParams CollisionParams;
-	CollisionParams.AddIgnoredActor(PlayerPawn);
-	CollisionParams.AddIgnoredActor(GetPawn());
-	if (!GetWorld()->LineTraceSingleByChannel(Hit, PlayerPawn->GetActorLocation() + FVector(0.0f, 0.0f, 100.0f), PlayerPawn->GetActorLocation() + RotatedOffset * 1.5f, ECC_Visibility, CollisionParams))
-	{
-		DesiredTarget = PlayerPawn->GetActorLocation() + RotatedOffset;
-	}
-}
-
-void ADroneAIController::UpdateIdleMovement(const TObjectPtr<APawn>& PlayerPawn, float DeltaTime)
-{
-	FVector PlayerLocation = PlayerPawn->GetActorLocation() + FVector(0.0f, 0.0f, 100.0f);
-
-	// 카메라와 플레이어의 방향 벡터
-	FVector CameraForward = PlayerPawn->GetComponentByClass<UCameraComponent>()->GetForwardVector();
+			IdleTransitionTime += DeltaTime;
+			FollowTransitionTime = 0.0f;
 	
-	// 시간 기반 각도 계산 (속도 조절 가능)
-	float AngleSpeed = RotationSpeed;
-	//CurrentAngle += RotationSpeed * DeltaTime;
-
-	// 각도 -> 원형 좌표 변환
-	FVector Offset = FVector(
-		FMath::Cos(CurrentAngle) * CircleRadius,
-		FMath::Sin(CurrentAngle) * CircleRadius,
-		0.0f // 필요하면 높이 조절
-	);
-	
-	FVector PlayerToDrone = Offset.GetSafeNormal();
-
-	// 드론이 플레이어 앞에 있을 때만 거리 조정
-	float DotProduct = FVector::DotProduct(CameraForward, PlayerToDrone);
-	float AdjustedRadius = CircleRadius;
-
-	if (DotProduct > 0) // 앞쪽일 때만 보정
-	{
-		float RadiusFactor = (1.0f - DotProduct * DistanceScaleFactor);
-		AdjustedRadius *= RadiusFactor;
-
-		// 반지름이 작아질수록 회전 속도 증가 (속도 역보정)
-		AngleSpeed /= FMath::Max(RadiusFactor, 0.1f);
-	}
-	
-	PathTargetLocation = PlayerLocation + Offset.GetSafeNormal() * AdjustedRadius;
-	
-	// Perlin 노이즈로 자연스러운 높이 변화
-	float TimeScale = GetWorld()->GetTimeSeconds() * HeightNoiseSpeed;
-	float NoiseValue = FMath::PerlinNoise1D(TimeScale) * MaxHeightVariation;
-
-	//FVector TargetLocation = PlayerLocation + Offset + FVector(0.0f, 0.0f, NoiseValue);
-	
-	PathTargetLocation.Z += NoiseValue;
-
-	// 회전 각도 업데이트 (속도 보정 포함)
-	CurrentAngle += AngleSpeed * DeltaTime;
-}
-
-void ADroneAIController::FollowPath(float DeltaTime)
-{
-	if (!bEndFollowPath && !PathPoints.IsEmpty())
-	{
-		if (CurIndex < PathPoints.Num())
-		{
-			if (FVector::DistSquared(GetPawn()->GetActorLocation(), PathPoints[CurIndex]) < FMath::Square(NextNodeIgnoreRadius))
+			if (IdleTransitionTime >= 1.0f)
 			{
-				CurIndex++;
-			}
-			if (CurIndex < PathPoints.Num())
-			{
-				PathTargetLocation = PathPoints[CurIndex];
-			}
-			else
-			{
-				bEndFollowPath = true;
+				BlackboardComp->SetValueAsEnum("CurrentState", 0); // Idle State
 			}
 		}
-	}
-	else
-	{
-		PathTargetLocation = DesiredTarget;
+		else if (bPlayerFar)
+		{
+			BlackboardComp->SetValueAsEnum("CurrentState", 1); // Follow State
+			IdleTransitionTime = 0.0f;
+			FollowTransitionTime = 0.0f;
+		}
+		else
+		{
+			FollowTransitionTime += DeltaTime;
+			IdleTransitionTime = 0.0f;
+	
+			if (FollowTransitionTime >= 0.5f && DistanceChange > 5.0f)
+			{
+				BlackboardComp->SetValueAsEnum("CurrentState", 1); // Follow State
+			}
+		}
+		LastDistanceToPlayer = DistanceToPlayer;
+	
+		DroneRotation(Player);
 	}
 }
 
-void ADroneAIController::ApplyPIDControl(float DeltaTime)
+void ADroneAIController::ApplyPIDControl(float DeltaTime, bool IsFollowPath)
 {
 	TObjectPtr<ADrone> ControlledDrone = Cast<ADrone>(GetPawn());
 	if (!ControlledDrone) return;
@@ -221,7 +115,7 @@ void ADroneAIController::ApplyPIDControl(float DeltaTime)
 	float DistanceToTarget = Error.Size();
 	
 	float BaseSpeedFactor = DistanceToTarget / 500.0f; 
-	float PathSpeedBoost = bEndFollowPath ? 1.0f : PathFindModeAcceleration;
+	float PathSpeedBoost = IsFollowPath ? PathFindModeAcceleration : 1.0f;
 	float SpeedFactor = FMath::Clamp(BaseSpeedFactor * PathSpeedBoost, 0.1f, 1.0f);
 	
 	PIDForce = PIDForce.GetClampedToMaxSize(MaxSpeed * SpeedFactor);
@@ -230,10 +124,146 @@ void ADroneAIController::ApplyPIDControl(float DeltaTime)
 	ControlledDrone->SetMoveInput(PIDForce.GetSafeNormal());
 	PreviousError = Error;
 }
-void ADroneAIController::DroneRotation(const TObjectPtr<APawn>& PlayerPawnPtr)
+
+void ADroneAIController::ApplySmoothMovement(float DeltaTime)
+{
+	TargetLocation = FMath::VInterpTo(TargetLocation, NewTargetLocation, DeltaTime, 5.0f);
+}
+
+ void ADroneAIController::DroneRotation(const TObjectPtr<APawn>& PlayerPawnPtr)
 {
 	const TObjectPtr<ADrone> ControlledDrone = Cast<ADrone>(GetPawn());
 	if (!ControlledDrone) return;
+
+	FRotator CurrentRotation = ControlledDrone->GetCameraSceneComponent()->GetRelativeRotation();
+	FRotator TargetRotation;
+
+	// Idle State
+	if (BlackboardComp->GetValueAsEnum("CurrentState") == 0)
+	{
+		TargetRotation = PlayerPawnPtr->GetActorRotation();
+	}
+	// Follow State
+	else if (BlackboardComp->GetValueAsEnum("CurrentState") == 1)
+	{
+		FVector DroneLocation = ControlledDrone->GetActorLocation();
+		FVector DirectionToPlayer = (TargetLocation - DroneLocation).GetSafeNormal();
+		TargetRotation = DirectionToPlayer.Rotation();
+
+		//  DeadZone
+		float DistanceToTarget = FVector::Dist(DroneLocation, TargetLocation);
+		if (DistanceToTarget < 15.0f) 
+		{
+			return;
+		}
+	}
+
+	FRotator NewRotation = FMath::RInterpTo(
+		CurrentRotation,
+		TargetRotation,
+		GetWorld()->GetDeltaSeconds(),
+		3.0f
+	);
+
+	ControlledDrone->GetCameraSceneComponent()->SetRelativeRotation(NewRotation);
+}
+
+
+void ADroneAIController::UpdateHappyMovement(float DeltaTime)
+{
+	const TObjectPtr<ADrone> ControlledDrone = Cast<ADrone>(GetPawn());
+	if (!ControlledDrone) return;
+
+	const TObjectPtr<APawn> Player = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
+	if (!Player) return;
+
+	const FVector PlayerLocation = Player->GetActorLocation() + BaseDroneOffset;
+
+	const float Time = GetWorld()->GetTimeSeconds();
+
+	float BounceHeight = FMath::Abs(FMath::Sin(Time * 1.0f)) * 50.0f;
+
+	float EaseFactor = (FMath::Cos(Time * 2.0f) + 1.0f) / 2.0f;
+
+	FVector RandomShake = FVector(
+		FMath::Sin(Time * 2.0f + FMath::RandRange(-0.5f, 0.5f)) * 2.0f,
+		FMath::Cos(Time * 2.0f + FMath::RandRange(-0.5f, 0.5f)) * 2.0f,
+		0.0f
+	);
+
+	FVector TargetLocations = PlayerLocation + RandomShake + FVector(0.0f, 0.0f, BounceHeight * EaseFactor);
+
+	// 좌우 틸트 회전 (Roll)
+	float TiltAngle = FMath::Sin(Time * 3.0f) * 15.0f; // 좌우 기울기 각도
+	FRotator NewTiltRotation = ControlledDrone->GetCameraSceneComponent()->GetRelativeRotation();
+	NewTiltRotation.Roll = FMath::FInterpTo(NewTiltRotation.Roll, TiltAngle, DeltaTime, 8.0f);
+	// 회전 적용
+	ControlledDrone->GetCameraSceneComponent()->SetRelativeRotation(NewTiltRotation);
 	
-	ControlledDrone->GetCameraSceneComponent()->SetRelativeRotation(PlayerPawnPtr->GetActorRotation());
+	SetNewTargetLocation(TargetLocations);
+	ApplySmoothMovement(DeltaTime);
+	ApplyPIDControl(DeltaTime, true);
+}
+
+
+void ADroneAIController::UpdateRollingCircleMovement(float DeltaTime)
+{
+	const TObjectPtr<ADrone> ControlledDrone = Cast<ADrone>(GetPawn());
+	if (!ControlledDrone) return;
+
+	const TObjectPtr<APawn> Player = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
+	if (!Player) return;
+
+	const FVector PlayerLocation = Player->GetActorLocation() + FVector(0.0f, 0.0f, 100.0f);
+
+	const float Time = GetWorld()->GetTimeSeconds();
+
+	// 원형 궤도 계산
+	const float AngleSpeed = GetRotationSpeed();
+
+	const FVector Offset = FVector(
+		FMath::Cos(CurrentAngle) * CircleRadius,
+		FMath::Sin(CurrentAngle) * CircleRadius,
+		0.0f
+	);
+
+	FVector TargetLocations = PlayerLocation + Offset;
+
+	// 🎲 랜덤 Roll 속도 조절
+	const float RollStep = 60.0f; // 60도 단위로 속도 갱신
+	if (FMath::Fmod(CurrentAngle, RollStep) < 5.0f && !bHasUpdatedRollSpeed)
+	{
+		TargetRollSpeed = FMath::RandRange(MinRollSpeed, MaxRollSpeed);
+		bHasUpdatedRollSpeed = true;
+	}
+	else if (FMath::Fmod(CurrentAngle, RollStep) > 5.0f)
+	{
+		bHasUpdatedRollSpeed = false;
+	}
+
+	// Roll 회전 계산 (부드럽게 보간)
+	CurrentRollAngle += FMath::FInterpTo(CurrentRollSpeed, TargetRollSpeed, DeltaTime, 1.5f) * DeltaTime;
+
+	// Roll 한 바퀴 돌면 리셋
+	if (CurrentRollAngle >= 360.0f)
+	{
+		CurrentRollAngle = 0.0f;
+	}
+
+	FRotator RollRotation = FRotator(
+		0.0f,
+		0.0f,
+		CurrentRollAngle//FMath::Sin(CurrentRollAngle * PI / 180.0f) * 45.0f
+	);
+
+	// 회전 적용
+	ControlledDrone->GetCameraSceneComponent()->SetRelativeRotation(RollRotation);
+
+	// 위치 갱신
+	SetNewTargetLocation(TargetLocations);
+	ApplySmoothMovement(DeltaTime);
+	ApplyPIDControl(DeltaTime);
+
+	// 각도 업데이트
+	CurrentAngle += AngleSpeed * DeltaTime;
 }
