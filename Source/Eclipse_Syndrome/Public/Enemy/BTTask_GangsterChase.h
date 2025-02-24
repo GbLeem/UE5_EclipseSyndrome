@@ -6,6 +6,8 @@
 #include "BehaviorTree/BTTaskNode.h"
 #include "BTTask_GangsterChase.generated.h"
 
+class APlayerCharacter;
+class AGangsterAIController;
 /**
  * 
  */
@@ -14,4 +16,14 @@ class ECLIPSE_SYNDROME_API UBTTask_GangsterChase : public UBTTaskNode
 {
 	GENERATED_BODY()
 	
+public:
+	UBTTask_GangsterChase();
+
+	APlayerCharacter* PlayerCharacter = nullptr;
+	AGangsterAIController* GangsterAIController = nullptr;
+
+protected:
+	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
+	virtual void TickTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds) override;
+
 };
