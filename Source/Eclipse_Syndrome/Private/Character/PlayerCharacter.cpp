@@ -85,7 +85,6 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 				EnhancedInputComponent->BindAction(PlayerController->SprintAction,
 					ETriggerEvent::Completed, this, &APlayerCharacter::StopSprint);
-
 			}
 			if (PlayerController->ShootAction)
 			{				
