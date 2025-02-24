@@ -13,5 +13,13 @@ UCLASS()
 class ECLIPSE_SYNDROME_API AGangsterEnemy : public AEnemyBase
 {
 	GENERATED_BODY()
+public:
+	AGangsterEnemy();
+
+	UPROPERTY(EditDefaultsOnly, Category = "Animation")
+	UAnimMontage* HitMontage;
 	
+	// Interface Function
+	void OnDeath() override;
+	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 };
