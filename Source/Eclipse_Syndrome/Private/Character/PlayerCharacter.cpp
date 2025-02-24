@@ -2,6 +2,7 @@
 
 #include "Character/PlayerCharacterController.h"
 #include "Item/BaseItem.h"
+#include "System/DefaultGameState.h"
 #include "Weapon/Weapon.h"
 
 #include "CableComponent.h"
@@ -114,6 +115,11 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 				EnhancedInputComponent->BindAction(PlayerController->GrappleAction,
 					ETriggerEvent::Started, this, &APlayerCharacter::Grapple);
 			}
+			if (PlayerController->PossessAction)
+			{
+				EnhancedInputComponent->BindAction(PlayerController->PossessAction,
+					ETriggerEvent::Started, this, &APlayerCharacter::PossessToDrone);
+			}
 		}
 	}
 }
@@ -122,6 +128,13 @@ void APlayerCharacter::Tick(float DeltaTime)
 {
 	if (bCanTraceForItemPeeking)
 		BeginTraceForPickItem();
+}
+
+void APlayerCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+
+	Cast<ADefaultGameState>(GetWorld()->GetGameState())->SetPlayerCharacter(this);
 }
 
 void APlayerCharacter::Shoot()
@@ -407,4 +420,20 @@ void APlayerCharacter::Grapple(const FInputActionValue& value)
 			CableComp->SetAttachEndToComponent(GrappleHitPoint.GetComponent());
 		}
 	}
+}
+
+void APlayerCharacter::PossessToDrone(const FInputActionValue& value)
+{
+	if (!value.Get<bool>())
+	{
+		Cast<APlayerCharacterController>(GetController())->SetPlayerPawn(this);
+		Cast<APlayerCharacterController>(GetController())->ChangeMappingContext(1);
+		Cast<APlayerCharacterController>(GetController())->ChangePossess(Cast<ADefaultGameState>(GetWorld()->GetGameState())->GetDrone());
+	}
+}
+
+void APlayerCharacter::SetEnhancedInput()
+{
+	InputComponent->ClearActionBindings();
+	SetupPlayerInputComponent(InputComponent);
 }
