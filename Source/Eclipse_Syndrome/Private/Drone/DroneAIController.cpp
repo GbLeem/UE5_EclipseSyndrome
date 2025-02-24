@@ -6,6 +6,7 @@
 #include "Components/CapsuleComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Drone/Drone.h"
+#include "System/DefaultGameState.h"
 
 ADroneAIController::ADroneAIController()
 	: BaseDroneOffset(FVector(25, 80, 100))
@@ -26,21 +27,20 @@ void ADroneAIController::BeginPlay()
 
 	UseBlackboard(DroneBehaviorTree->GetBlackboardAsset(), BlackboardComp);
 	RunBehaviorTree(DroneBehaviorTree);
-
-	if (const TObjectPtr<APawn> Player = UGameplayStatics::GetPlayerPawn(GetWorld(), 0))
-	{
-		BlackboardComp->SetValueAsObject("PlayerActor", Player);
-	}
-
+	
 	EnumPtr = FindObject<UEnum>(ANY_PACKAGE, TEXT("BlackboardEnum"));
-
-	CurOctreeVolume = Cast<ADrone>(GetPawn())->GetOctreeVolume();
 }
 
 void ADroneAIController::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	if (const TObjectPtr<APawn> Player = Cast<ADefaultGameState>(GetWorld()->GetGameState())->GetPlayerCharacter())
+	{
+		BlackboardComp->SetValueAsObject("PlayerActor", Player);
+	}
+	
+	CurOctreeVolume = Cast<ADrone>(Cast<ADefaultGameState>(GetWorld()->GetGameState())->GetDrone())->GetOctreeVolume();
 	//UpdateRollingCircleMovement(DeltaTime);
 	
 	if (const TObjectPtr<APawn> Player = UGameplayStatics::GetPlayerPawn(GetWorld(), 0))
