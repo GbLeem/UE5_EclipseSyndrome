@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "AIController.h"
+#include "DroneController.h"
 #include "DroneAIController.generated.h"
 
 enum class EDroneState : uint8;
@@ -97,7 +98,6 @@ public:
 
 	
 	void UpdateHappyMovement(float DeltaTime);
-	void UpdateRollingCircleMovement(float DeltaTime);
 
 private:
 	float TargetRollSpeed = 0.0f;
