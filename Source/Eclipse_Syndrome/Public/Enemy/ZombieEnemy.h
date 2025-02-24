@@ -17,11 +17,18 @@ class ECLIPSE_SYNDROME_API AZombieEnemy : public AEnemyBase
 public:
 	AZombieEnemy();
 
-	
+	UPROPERTY(EditDefaultsOnly, Category = "Animation")
+	UAnimMontage* AttackMontage1;
+	UPROPERTY(EditDefaultsOnly, Category = "Animation")
+	UAnimMontage* AttackMontage2;
+	UPROPERTY(EditDefaultsOnly, Category = "Animation")
+	UAnimMontage* AttackMontage3;
+	UPROPERTY(EditDefaultsOnly, Category = "Animation")
+	UAnimMontage* HitMontage;
+
+	UAnimMontage* GetRandomAttackMontage();
 
 	// Interface Function
 	void OnDeath() override;
-	float TakeDamage() override;
-	void Attack() override;
-	
+	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 };
