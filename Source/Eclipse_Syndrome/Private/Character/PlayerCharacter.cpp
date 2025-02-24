@@ -19,17 +19,13 @@ APlayerCharacter::APlayerCharacter()
 	,NormalSpeed(500.f)
 	,MaxHealth(100.f)
 	,CurrentHealth(100.f)
-	,CurrentAmmos(40)
+	,CurrentInventoryAmmos(40)
 	,bCanFire(false)
-	,bAutoFire(true)
 	,bCanReload(false)
 	, bCanTraceForItemPeeking(false)
 	, bCanGrapple(false)
 	, bIsWeaponEquipped(false)
-	,GunCurrentAmmo(20)
-	,GunMaxAmmo(20)
 	,BlendPoseVariable(0)
-	,FireRate(0.5f)
 	,PeekingItem(nullptr)
 	,CurrentWeapon(nullptr)
 	,GrappleEndTime(0.5f) //fix
@@ -47,8 +43,7 @@ APlayerCharacter::APlayerCharacter()
 	CableComp = CreateDefaultSubobject<UCableComponent>(TEXT("Hook"));
 	CableComp->SetupAttachment(GetMesh());	
 	FName HandSocket(TEXT("hand_l_socket"));
-	CableComp->SetupAttachment(GetMesh(), HandSocket);
-	//CableComp->bAttachEnd = false;
+	CableComp->SetupAttachment(GetMesh(), HandSocket);	
 	CableComp->CableWidth = 5.f;
 	CableComp->NumSegments = 2;
 	CableComp->SetVisibility(false);
@@ -90,24 +85,14 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 				EnhancedInputComponent->BindAction(PlayerController->SprintAction,
 					ETriggerEvent::Completed, this, &APlayerCharacter::StopSprint);
-
 			}
 			if (PlayerController->ShootAction)
-			{
-				if (!bAutoFire)
-				{
-					EnhancedInputComponent->BindAction(PlayerController->ShootAction,
-						ETriggerEvent::Started, this, &APlayerCharacter::StartShoot);
-				}
-				if (bAutoFire)
-				{
-					EnhancedInputComponent->BindAction(PlayerController->ShootAction,
-						ETriggerEvent::Triggered, this, &APlayerCharacter::StartShootAuto);
-				}
-					
+			{				
 				EnhancedInputComponent->BindAction(PlayerController->ShootAction,
-					ETriggerEvent::Completed, this, &APlayerCharacter::StopShoot);
-
+					ETriggerEvent::Triggered, this, &APlayerCharacter::StartShoot);
+						
+				EnhancedInputComponent->BindAction(PlayerController->ShootAction,
+					ETriggerEvent::Completed, this, &APlayerCharacter::StopShoot);								
 			}
 			if (PlayerController->ReloadAction)
 			{
@@ -141,35 +126,46 @@ void APlayerCharacter::Tick(float DeltaTime)
 
 void APlayerCharacter::Shoot()
 {	
-	if (GunCurrentAmmo <= 0)
+	if (CurrentWeapon)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Black, FString::Printf(TEXT("you need to reload!")));
-		return;
-	}
-	if (!bCanFire)
-		return;
-	bCanFire = false;
-	GunCurrentAmmo--;
-	GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Black, FString::Printf(TEXT("shoot %d"), GunCurrentAmmo));
+		if (CurrentWeapon->GetCurrentAmmo() <= 0)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Black, FString::Printf(TEXT("you need to reload!")));
+			return;
+		}
+		if (bCanFire)
+		{
+			//Real shooting 
+			CurrentWeapon->Fire();			
+			GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Black, FString::Printf(TEXT("shoot %d"), CurrentWeapon->GetCurrentAmmo()));		
+			bCanFire = false;	
 
-	//fire rate
-	GetWorld()->GetTimerManager().SetTimer(FireRateTimerHandle, this, &APlayerCharacter::ResetShoot, FireRate, false);
-}
+			//auto fire
+			if (CurrentWeapon->GetAutoFire())
+			{
+				GetWorld()->GetTimerManager().SetTimer(FireRateTimerHandle, this, &APlayerCharacter::ResetShoot, CurrentWeapon->GetFireRate(), true);			
+			}
+		}
+	}	
+}	
 
 void APlayerCharacter::Reloading()
 {
-	int PlusAmmo = GunMaxAmmo - GunCurrentAmmo;
-	if (CurrentAmmos <= 0)
+	if (CurrentWeapon)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("not enough ammo")));
-		return;
-	}
-	if (PlusAmmo > 0)
-	{
-		PlusAmmo = FMath::Min(PlusAmmo, CurrentAmmos);
-		GunCurrentAmmo += PlusAmmo;
-		CurrentAmmos -= PlusAmmo;
-		GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("current : %d plus : %d"), GunCurrentAmmo, PlusAmmo));
+		int PlusAmmo = CurrentWeapon->GetMaxAmmo() - CurrentWeapon->GetCurrentAmmo();
+		if (CurrentInventoryAmmos <= 0)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("not enough ammo")));
+			return;
+		}
+		if (PlusAmmo > 0)
+		{
+			PlusAmmo = FMath::Min(PlusAmmo, CurrentInventoryAmmos);
+			CurrentWeapon->Reload(PlusAmmo);
+			CurrentInventoryAmmos -= PlusAmmo;
+			GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("current : %d plus : %d"), CurrentWeapon->GetCurrentAmmo() , PlusAmmo));
+		}
 	}
 }
 
@@ -217,6 +213,7 @@ void APlayerCharacter::BeginTraceForPickItem()
 				{						
 					CurrentWeapon = GetWorld()->SpawnActor<AWeapon>();
 					CurrentWeapon->SetActorEnableCollision(false);
+					
 					FName WeaponSocket(TEXT("back_socket"));
 					CurrentWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponSocket);					
 					Cast<AWeapon>(HitResult.GetActor())->DestroyItem();
@@ -248,19 +245,21 @@ void APlayerCharacter::GrappleStart()
 		
 		CableComp->SetAttachEndToComponent(RootComponent);
 		CableComp->SetVisibility(false);
-		GetWorld()->GetTimerManager().SetTimer(FireRateTimerHandle, this, &APlayerCharacter::ResetShoot, FireRate, false);
-
-		//GetWorldTimerManager().SetTimer(GrappleTimerHandle, this, &APlayerCharacter::GrappleEnd, GrappleEndTime, false);
 	}
 }
 
 void APlayerCharacter::GrappleEnd()
 {
-	bCanGrapple = false;
-	
-	//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("%f %f %f"), OriginRootRotator.Yaw, OriginRootRotator.Pitch, OriginRootRotator.Roll));	
-	//RootComponent->SetWorldRotation(FRotator::ZeroRotator);
-	
+	bCanGrapple = false;	
+}
+
+int32 APlayerCharacter::GetCurrentWeaponAmmo()
+{
+	if (CurrentWeapon)
+	{
+		return CurrentWeapon->GetCurrentAmmo();
+	}
+	return 0;
 }
 
 
@@ -325,41 +324,30 @@ void APlayerCharacter::StopSprint(const FInputActionValue& value)
 void APlayerCharacter::Reload(const FInputActionValue& value)
 {
 	//TODO		
-	//Reloading();	
-	if (CurrentWeapon)
-	{
-		CurrentWeapon->Reload();
-	}
+	Reloading();		
 }
 
 void APlayerCharacter::StartShoot(const FInputActionValue& value)
-{	
-	//Shoot();	
-	GrappleStart();
-	if (CurrentWeapon)
-	{
-		CurrentWeapon->Fire();
-	}
-}
-
-void APlayerCharacter::StartShootAuto(const FInputActionValue& value)
 {
-	//Shoot();
-	GrappleStart();
-
-	if (CurrentWeapon)
+	if (bCanFire)
 	{
-		CurrentWeapon->Fire();
+		Shoot();	
 	}
+	GrappleStart();
 }
 
 void APlayerCharacter::StopShoot(const FInputActionValue& value)
 {
-	if (!value.Get<bool>())
+	if(CurrentWeapon && !CurrentWeapon->GetAutoFire())
 	{
-		//maybe animation ?
-		//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Blue, FString::Printf(TEXT("Stop Fire")));
+		bCanFire = true;
 	}
+
+	//if (!value.Get<bool>())
+	//{
+	//	//maybe animation ?
+	//	//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Blue, FString::Printf(TEXT("Stop Fire")));
+	//}
 }
 
 void APlayerCharacter::PickUp(const FInputActionValue& value)
@@ -398,7 +386,6 @@ void APlayerCharacter::EquipWeapon1(const FInputActionValue& value)
 		FName WeaponSocket(TEXT("hand_socket"));
 		CurrentWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponSocket);
 	}
-	//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("blend po var: %d"), BlendPoseVariable));
 }
 
 void APlayerCharacter::Grapple(const FInputActionValue& value)
@@ -416,9 +403,7 @@ void APlayerCharacter::Grapple(const FInputActionValue& value)
 		if (bHit)
 		{
 			CableComp->SetVisibility(true);
-			//bIsGrapple = true;
 			bCanGrapple = true;
-			//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, GrappleHitPoint.GetComponent()->GetName());
 			CableComp->SetAttachEndToComponent(GrappleHitPoint.GetComponent());
 		}
 	}
