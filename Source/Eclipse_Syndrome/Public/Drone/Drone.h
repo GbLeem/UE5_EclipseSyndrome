@@ -56,6 +56,9 @@ protected:
 public:	
 	virtual void Tick(float DeltaTime) override;
 
+	void SetMoveInput(const FVector& Value) {MoveInput = Value;}
+	TObjectPtr<USceneComponent> GetCameraSceneComponent() {return CameraSceneComp;};
+
 protected:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	

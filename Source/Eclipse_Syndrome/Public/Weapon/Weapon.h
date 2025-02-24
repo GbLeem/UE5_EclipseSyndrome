@@ -14,15 +14,20 @@ class ECLIPSE_SYNDROME_API AWeapon : public AActor
 public:	
 	AWeapon();
 
-protected:
-	virtual void BeginPlay() override;
-
 public:
 	UFUNCTION(BlueprintCallable)
 	void Fire();
 	UFUNCTION(BlueprintCallable)
-	void Reload();
+	void Reload(int32 Amount);
 	void DestroyItem();
+	// TEST  Crosshair
+	bool GetAimHitResult(FHitResult& OutHitResult);
+	FVector CalculateDestination();
+
+	bool GetAutoFire() { return bAutoFire; }
+	int32 GetCurrentAmmo() { return CurrentAmmo; }
+	int32 GetMaxAmmo() { return MaxAmmo; }
+	float GetFireRate() { return FireRate; }
 
 	//TEST
 	UFUNCTION()
@@ -48,25 +53,25 @@ private:
     UPROPERTY(EditDefaultsOnly, Category = "Components")
     UStaticMeshComponent* GunMesh;
 
-	//TEST Muzzlepoint
-	UPROPERTY(EditDefaultsOnly, Category = "Components")
-	USceneComponent* Muzzlepoint;
-	
+	//TEST MuzzleFlash
+	UPROPERTY(EditDefaultsOnly, Category = "Effects")
+	UParticleSystem* MuzzleFlash;
 	//TEST
 	UPROPERTY(EditDefaultsOnly, Category = "Components")
 	TObjectPtr<USphereComponent> CollisionComp;
 
+	//[FOR GUN's feature]
     UPROPERTY(EditAnywhere, Category = "Gun Settings")
-    float FireRange = 5000.f;
-
+    float FireRange;
     UPROPERTY(EditAnywhere, Category = "Gun Settings")
-    float Damage = 10.f;
-
+    float Damage;
     UPROPERTY(EditAnywhere, Category = "Gun Settings")
-    float FireRate = 0.2f;
-
+	float FireRate;
     UPROPERTY(EditAnywhere, Category = "Gun Settings")
-    int32 MaxAmmo = 30;
+	int32 MaxAmmo;
+	UPROPERTY(EditAnywhere, Category = "Gun Settings")
+	bool bAutoFire;
 
-    int32 CurrentAmmo;
+private:
+    int32 CurrentAmmo;	
 };

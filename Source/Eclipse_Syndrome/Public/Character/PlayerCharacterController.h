@@ -14,6 +14,7 @@ class ECLIPSE_SYNDROME_API APlayerCharacterController : public APlayerController
 	
 public:
 	APlayerCharacterController();
+	UUserWidget* GetHUDWidget() { return HUDWidgetInstance; }
 
 protected:
 	virtual void BeginPlay() override;
@@ -40,4 +41,10 @@ public:
 	TObjectPtr<UInputAction> EquipWeapon1Action;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputAction> GrappleAction;
+
+	//UI
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "HUD")
+	TSubclassOf<UUserWidget> HUDWidgetClass;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "HUD")
+	TObjectPtr<UUserWidget> HUDWidgetInstance;
 };
