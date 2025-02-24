@@ -4,6 +4,7 @@
 #include "GameFramework/Pawn.h"
 #include "Drone.generated.h"
 
+class AAOctreeVolume;
 struct FInputActionValue;
 class UPhysicsHandleComponent;
 class UCameraComponent;
@@ -39,7 +40,9 @@ protected:
 	TObjectPtr<UCameraComponent> CameraComp;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Drone|Component")
 	TObjectPtr<UPhysicsHandleComponent> PhysicsHandleComp;
-	
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="PathFinding")
+	TObjectPtr<AAOctreeVolume> OctreeVolume;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DroneMovement|Property")
 	float MoveForce;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DroneMovement|Property")
@@ -65,6 +68,7 @@ public:
 
 	void SetMoveInput(const FVector& Value) {MoveInput = Value;}
 	TObjectPtr<USceneComponent> GetCameraSceneComponent() {return CameraSceneComp;};
+	TObjectPtr<AAOctreeVolume> GetOctreeVolume() { return OctreeVolume; };
 
 protected:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
