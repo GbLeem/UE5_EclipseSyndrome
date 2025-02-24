@@ -41,8 +41,12 @@ void AZombieEnemy::OnDeath()
 float AZombieEnemy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
 	float ActualDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+	HitAnimation();
+	return ActualDamage;
+}
 
-	// Hit Animation
+void AZombieEnemy::HitAnimation()
+{
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	if (AnimInstance)
 	{
@@ -51,6 +55,4 @@ float AZombieEnemy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEve
 			AnimInstance->Montage_Play(HitMontage);
 		}
 	}
-
-	return ActualDamage;
 }

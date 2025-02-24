@@ -31,4 +31,6 @@ public:
 	// Interface Function
 	void OnDeath() override;
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
+	
+	void HitAnimation();
 };

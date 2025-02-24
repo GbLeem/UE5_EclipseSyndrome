@@ -44,20 +44,17 @@ EBTNodeResult::Type UBTTask_ZombieAttack::ExecuteTask(UBehaviorTreeComponent& Ow
 			UAnimMontage* AttackMontage = EnemyCharacter->GetRandomAttackMontage();
 			if (AttackMontage)
 			{
-				if (EnemyCharacter->Health > 0)
-				{
-					AnimInstance->Montage_Play(AttackMontage);
+				AnimInstance->Montage_Play(AttackMontage);
 
-					// Save OwnerComp (to use OnAttackMontageEnded)
-					CachedOwnerComp = &OwnerComp;
+				// Save OwnerComp (to use OnAttackMontageEnded)
+				CachedOwnerComp = &OwnerComp;
 
-					// binding Montage end event 
-					FOnMontageEnded MontageEndDelegate;
-					MontageEndDelegate.BindUObject(this, &UBTTask_ZombieAttack::OnAttackMontageEnded);
-					AnimInstance->Montage_SetEndDelegate(MontageEndDelegate, AttackMontage);
+				// binding Montage end event 
+				FOnMontageEnded MontageEndDelegate;
+				MontageEndDelegate.BindUObject(this, &UBTTask_ZombieAttack::OnAttackMontageEnded);
+				AnimInstance->Montage_SetEndDelegate(MontageEndDelegate, AttackMontage);
 
-					return EBTNodeResult::InProgress;
-				}
+				return EBTNodeResult::InProgress;
 			}
 		}
 	}
