@@ -21,6 +21,8 @@ protected:
 
 public:
 	ADroneController();
+	//void Init();
+	void AddMappingContextToPawn(APawn* InPawn);
 
 protected:
 	virtual void BeginPlay() override;

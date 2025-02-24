@@ -65,6 +65,8 @@ protected:
 	void EquipWeapon1(const FInputActionValue& value);
 	UFUNCTION()
 	void Grapple(const FInputActionValue& value);
+	UFUNCTION()
+	void PossessToDrone(const FInputActionValue& value);
 
 //variables
 public:
@@ -99,6 +101,7 @@ public:
 	bool bIsWeaponEquipped; //for change character animation(idle<->weapon)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
 	bool bCanGrapple; //can move character(attach to grapple actor)
+
 
 private:
 	bool bCanFire;  //character flag

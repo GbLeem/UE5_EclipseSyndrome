@@ -14,5 +14,5 @@ public:
 
 public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "PlayerData")
-	int32 CurrentInventoryAmmo;
+	int32 InventoryAmmo;
 };

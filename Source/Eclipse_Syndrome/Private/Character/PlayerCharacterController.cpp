@@ -1,10 +1,16 @@
 #include "Character/PlayerCharacterController.h"
 
+#include "Character/PlayerCharacter.h"
+#include "Drone/Drone.h"
+#include "Drone/DroneAIController.h"
+#include "Drone/DroneController.h"
 #include "System/DefaultGameState.h"
 
+#include "AIController.h"
 #include "Blueprint/UserWidget.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputMappingContext.h"
+#include "Kismet/GameplayStatics.h"
 
 APlayerCharacterController::APlayerCharacterController()
 	:DefaultInputMappingContext(nullptr)
@@ -67,12 +73,19 @@ APlayerCharacterController::APlayerCharacterController()
 	{
 		GrappleAction = IA_Grapple.Object;
 	}
+	static ConstructorHelpers::FObjectFinder<UInputAction> IA_PossessToDrone(TEXT("/Game/HJ/Input/IA_PossessToDrone.IA_PossessToDrone"));
+	if (IA_PossessToDrone.Succeeded())
+	{
+		PossessAction = IA_PossessToDrone.Object;
+	}
+
 
 	static ConstructorHelpers::FClassFinder<UUserWidget>HUDWidget(TEXT("/Game/HJ/UI/WBP_HUD.WBP_HUD_C"));
 	if (HUDWidget.Succeeded())
 	{
 		HUDWidgetClass = HUDWidget.Class;
 	}
+
 }
 
 void APlayerCharacterController::BeginPlay()
