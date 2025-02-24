@@ -57,6 +57,13 @@ void AChest::OnPlayerOverlapBegin(
 		//  OpenChest function will activate and random items will be spawned )
 		OpenChest();
 
+		//[HJ add]
+		APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(OtherActor);
+
+		if (PlayerCharacter)
+		{
+			PlayerCharacter->StartPeek();
+		}
 	}
 }
 
@@ -75,6 +82,13 @@ void AChest::OnPlayerOverlapEnd(
 		bPlayerInRange = false; 
 		bCanOpenChest = false;
 
+		//[HJ add]
+		APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(OtherActor);
+
+		if (PlayerCharacter)
+		{
+			PlayerCharacter->StopPeek();
+		}
 	}
 }
 

@@ -5,6 +5,7 @@
 #include "Weapon.generated.h"
 
 class USphereComponent;
+class UWidgetComponent;
 
 UCLASS()
 class ECLIPSE_SYNDROME_API AWeapon : public AActor
@@ -13,6 +14,7 @@ class ECLIPSE_SYNDROME_API AWeapon : public AActor
 	
 public:	
 	AWeapon();
+	virtual void Tick(float DeltaTime) override;
 
 public:
 	UFUNCTION(BlueprintCallable)
@@ -23,12 +25,14 @@ public:
 	// TEST  Crosshair
 	bool GetAimHitResult(FHitResult& OutHitResult);
 	FVector CalculateDestination();
+	//for ui
+	void ShowUI();
+	void StopUI();
 
 	bool GetAutoFire() { return bAutoFire; }
 	int32 GetCurrentAmmo() { return CurrentAmmo; }
 	int32 GetMaxAmmo() { return MaxAmmo; }
 	float GetFireRate() { return FireRate; }
-
 	//TEST
 	UFUNCTION()
 	virtual void OnItemOverlap
@@ -49,7 +53,7 @@ public:
 		, int32 OtherBodyIndex
 	);
 
-private:
+protected:
     UPROPERTY(EditDefaultsOnly, Category = "Components")
     UStaticMeshComponent* GunMesh;
 
@@ -59,6 +63,9 @@ private:
 	//TEST
 	UPROPERTY(EditDefaultsOnly, Category = "Components")
 	TObjectPtr<USphereComponent> CollisionComp;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	TObjectPtr<UWidgetComponent> ItemHoverUI;
 
 	//[FOR GUN's feature]
     UPROPERTY(EditAnywhere, Category = "Gun Settings")
@@ -72,6 +79,10 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Gun Settings")
 	bool bAutoFire;
 
+
 private:
     int32 CurrentAmmo;	
+
+public:
+	bool bIsPeeking;
 };

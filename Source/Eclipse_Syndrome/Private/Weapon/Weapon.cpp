@@ -6,6 +6,7 @@
 #include "Blueprint/UserWidget.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/SphereComponent.h"
+#include "Components/WidgetComponent.h"
 #include "Components/Image.h"
 #include "DrawDebugHelpers.h"
 #include "Engine/Engine.h"
@@ -14,14 +15,15 @@
 
 
 AWeapon::AWeapon()
-    :FireRate(0.2f)
+    :FireRate(0.05f)
     ,FireRange(5000.f)
     ,Damage(10.f)
     ,MaxAmmo(30)
     ,CurrentAmmo(30)
     ,bAutoFire(true)
+    ,bIsPeeking(false)
 {
-    PrimaryActorTick.bCanEverTick = false;
+    PrimaryActorTick.bCanEverTick = true;
 
 	GunMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("GunMesh"));
 	RootComponent = GunMesh;
@@ -29,24 +31,41 @@ AWeapon::AWeapon()
     CollisionComp = CreateDefaultSubobject<USphereComponent>(TEXT("Sphere Collision"));
     CollisionComp->SetupAttachment(RootComponent);
     CollisionComp->SetCollisionProfileName(TEXT("OverlapAllDynamics"));
-    CollisionComp->SetSphereRadius(150.f);
+    CollisionComp->SetSphereRadius(200.f);
     
     static ConstructorHelpers::FObjectFinder<UStaticMesh>StaticMeshAsset(TEXT("/Game/HJ/Assets/QuantumCharacter/Mesh/Rifle/SM_Rifle_Olive.SM_Rifle_Olive"));
     if (StaticMeshAsset.Succeeded())
     {
         GunMesh->SetStaticMesh(StaticMeshAsset.Object);
     }
-	// 기본 값 설정
-	/*FireRate = 0.2f;
-	MaxAmmo = 30;
-	CurrentAmmo = MaxAmmo;
-	FireRange = 5000.f;
-	Damage = 10.f;*/
 
     CollisionComp->OnComponentBeginOverlap.AddDynamic(this, &AWeapon::OnItemOverlap);
     CollisionComp->OnComponentEndOverlap.AddDynamic(this, &AWeapon::OnItemEndOverlap);
     
+    ItemHoverUI = CreateDefaultSubobject<UWidgetComponent>(TEXT("Hover UI"));
+    ItemHoverUI->SetupAttachment(GunMesh);
+    ItemHoverUI->SetWidgetSpace(EWidgetSpace::Screen);
+    ItemHoverUI->SetVisibility(false);
+
+    static ConstructorHelpers::FClassFinder<UUserWidget>ItemUIClass(TEXT("/Game/HJ/UI/WBP_Item.WBP_Item_C"));
+    if (ItemUIClass.Succeeded())
+    {
+        ItemHoverUI->SetWidgetClass(ItemUIClass.Class);
+    }
+
     Tags.Add("Weapon");
+}
+
+void AWeapon::Tick(float DeltaTime)
+{
+    Super::Tick(DeltaTime);
+
+    if (bIsPeeking)
+        ShowUI();
+    else
+        StopUI();
+
+    bIsPeeking = false;
 }
 
 void AWeapon::Fire()
@@ -116,7 +135,6 @@ void AWeapon::Reload(int32 Amount)
 {	
     GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("reloading!!")));
     CurrentAmmo += Amount;
-    //CurrentAmmo = MaxAmmo;
 }
 
 void AWeapon::DestroyItem()
@@ -172,6 +190,17 @@ FVector AWeapon::CalculateDestination()
         }                    
     }
     return FVector::ZeroVector;
+}
+
+void AWeapon::ShowUI()
+{
+    ItemHoverUI->SetVisibility(true);
+    //CanPickUp = true;
+}
+
+void AWeapon::StopUI()
+{
+    ItemHoverUI->SetVisibility(false);
 }
 
 void AWeapon::OnItemOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
