@@ -18,7 +18,9 @@ public class Eclipse_Syndrome : ModuleRules
             "EnhancedInput",
 			"UMG",
             "Niagara",
-            "ProceduralMeshComponent"
+            "ProceduralMeshComponent",
+            "GameplayTasks",
+            "AIModule"
 		});
 
         PrivateDependencyModuleNames.AddRange(new string[] {  });
