@@ -30,14 +30,20 @@ public:
 	float AttackRange;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="PatrolPath")
 	APatrolPath* PatrolPath;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MoveSpeed")
+	float PatrolSpeed;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MoveSpeed")
+	float ChaseSeed;
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
+	UFUNCTION(BlueprintCallable)
+	void ChangeSpeedPatrol();
+	UFUNCTION(BlueprintCallable)
+	void ChangeSpeedChase();
 
 	// Interface Function
 	virtual FName GetName() const override;
@@ -45,6 +51,8 @@ public:
 	virtual float GetDamage() const override;
 	virtual void OnDeath() override;
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
-	virtual void Attack() override;
+	virtual void Attack(AActor* TargetActor) override;
+
+	// General Function
 
 };

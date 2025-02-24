@@ -2,6 +2,8 @@
 
 
 #include "Enemy/EnemyBase.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 AEnemyBase::AEnemyBase()
@@ -14,6 +16,8 @@ AEnemyBase::AEnemyBase()
 	Health = MaxHealth;
 	Damage = 10.0f;
 	AttackRange = 150.0f;
+	PatrolSpeed = 100.0f;
+	ChaseSeed = 200.0f;
 }
 
 // Called when the game starts or when spawned
@@ -23,30 +27,46 @@ void AEnemyBase::BeginPlay()
 	
 }
 
-// Called every frame
-void AEnemyBase::Tick(float DeltaTime)
+void AEnemyBase::ChangeSpeedPatrol()
 {
-	Super::Tick(DeltaTime);
+	UCharacterMovementComponent* MovementComponent = GetCharacterMovement();
+	if (MovementComponent)
+	{
+		MovementComponent->MaxWalkSpeed = PatrolSpeed;
+	}
+}
 
+void AEnemyBase::ChangeSpeedChase()
+{
+	UCharacterMovementComponent* MovementComponent = GetCharacterMovement();
+	if (MovementComponent)
+	{
+		MovementComponent->MaxWalkSpeed = ChaseSeed;
+	}
 }
 
 FName AEnemyBase::GetName() const
 {
-	return FName();
+	return Name;
 }
 
 int32 AEnemyBase::GetHealth() const
 {
-	return int32();
+	return Health;
 }
 
 float AEnemyBase::GetDamage() const
 {
-	return 0.0f;
+	return Damage;
 }
 
 void AEnemyBase::OnDeath()
 {
+	UCharacterMovementComponent* MovementComponent = GetCharacterMovement();
+	if (MovementComponent)
+	{
+		MovementComponent->MaxWalkSpeed = 0.0f;
+	}
 }
 
 float AEnemyBase::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
@@ -63,7 +83,9 @@ float AEnemyBase::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent
 	return ActualDamage;
 }
 
-void AEnemyBase::Attack()
+void AEnemyBase::Attack(AActor* TargetActor)
 {
+	// Apply damage
+	UGameplayStatics::ApplyDamage(TargetActor, Damage, nullptr, this, UDamageType::StaticClass());
 }
 

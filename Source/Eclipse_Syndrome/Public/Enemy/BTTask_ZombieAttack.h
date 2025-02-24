@@ -17,10 +17,11 @@ class ECLIPSE_SYNDROME_API UBTTask_ZombieAttack : public UBTTaskNode
 public:
 	UBTTask_ZombieAttack();
 
+	UBehaviorTreeComponent* CachedOwnerComp; // BT Component
+
 protected:
 	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
 
 private:
-	void PerformAttack(AActor* EnemyActor, AActor* TargetActor);
-	
+	void OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 };

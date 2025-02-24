@@ -17,6 +17,22 @@ AZombieEnemy::AZombieEnemy()
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 }
 
+UAnimMontage* AZombieEnemy::GetRandomAttackMontage()
+{
+	if (!AttackMontage1 || !AttackMontage2 || !AttackMontage3)
+	{
+		return nullptr;
+	}
+
+	TArray<UAnimMontage*> AttackMontages = { AttackMontage1, AttackMontage2, AttackMontage3 };
+
+	UAnimMontage* SelectedMontage = nullptr;
+	int32 RandomIndex = FMath::RandRange(0, AttackMontages.Num() - 1);
+	SelectedMontage = AttackMontages[RandomIndex];
+
+	return SelectedMontage;
+}
+
 void AZombieEnemy::OnDeath()
 {
 	// Play Dead Animation
