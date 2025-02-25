@@ -23,6 +23,8 @@ public:
 	virtual FName GetItemType() const override;
 	void ShowUI();
 	void StopUI();
+	int32 GetItemNumber() { return ItemNumber; }
+	int32 GetItemAmount() { return ItemAmount; }
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
@@ -65,7 +67,6 @@ protected:
 
 	
 	virtual void CollectItem(AActor* Collector) override;
-	/*virtual void TestCollectItem() override;*/
 
 	virtual void ActivateItem(AActor* Activator) override;
 	
@@ -74,7 +75,7 @@ protected:
 
 public:
 	bool bIsPeeking;
-
-	////for test
-	//void BeginPlay();
+	UPROPERTY(EditAnywhere, Category = "Item Settings")
+	int32 ItemNumber; //for ui [TEST - 2/25]
+	int32 ItemAmount;
 };

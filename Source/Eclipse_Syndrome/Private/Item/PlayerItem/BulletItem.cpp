@@ -5,6 +5,8 @@
 ABulletItem::ABulletItem()
 {	
 	ItemType = "Bullet";
+	ItemNumber = 2;
+	ItemAmount = 30;
 
 	static ConstructorHelpers::FObjectFinder<UStaticMesh>StaticMeshAsset(TEXT("/Game/Yujin/Assets/BulletItem/bullet.bullet"));
 	if (StaticMeshAsset.Succeeded())

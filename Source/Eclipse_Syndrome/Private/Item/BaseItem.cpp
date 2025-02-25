@@ -9,11 +9,10 @@
 
 ABaseItem::ABaseItem()
 	:bIsPeeking(false)
+	,ItemNumber(0)
+	,ItemAmount(0)
 {
 	PrimaryActorTick.bCanEverTick = true;
-
-	//SceneRootComp = CreateDefaultSubobject<USceneComponent>(TEXT("SceneRoot"));
-	//SetRootComponent(SceneRootComp);
 
 	StaticMeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMesh"));
 	StaticMeshComp->SetupAttachment(RootComponent);

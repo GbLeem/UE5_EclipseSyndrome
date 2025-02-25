@@ -21,19 +21,24 @@ public:
 	void Fire();
 	UFUNCTION(BlueprintCallable)
 	void Reload(int32 Amount);
-	void DestroyItem();
+
 	// TEST  Crosshair
 	bool GetAimHitResult(FHitResult& OutHitResult);
+
+	//for shooting
 	FVector CalculateDestination();
+	
 	//for ui
 	void ShowUI();
 	void StopUI();
 
+	//getter
 	bool GetAutoFire() { return bAutoFire; }
 	int32 GetCurrentAmmo() { return CurrentAmmo; }
 	int32 GetMaxAmmo() { return MaxAmmo; }
 	float GetFireRate() { return FireRate; }
-	//TEST
+	int32 GetWeaponNumber() { return WeaponNumber; }
+
 	UFUNCTION()
 	virtual void OnItemOverlap
 	(
@@ -60,10 +65,12 @@ protected:
 	//TEST MuzzleFlash
 	UPROPERTY(EditDefaultsOnly, Category = "Effects")
 	UParticleSystem* MuzzleFlash;
-	//TEST
+	
+	//overlap check
 	UPROPERTY(EditDefaultsOnly, Category = "Components")
 	TObjectPtr<USphereComponent> CollisionComp;
 
+	//ui
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
 	TObjectPtr<UWidgetComponent> ItemHoverUI;
 
@@ -78,10 +85,10 @@ protected:
 	int32 MaxAmmo;
 	UPROPERTY(EditAnywhere, Category = "Gun Settings")
 	bool bAutoFire;
-
-
-private:
+	UPROPERTY(EditAnywhere, Category = "Gun Settings")
     int32 CurrentAmmo;	
+	UPROPERTY(EditAnywhere, Category = "Gun Settings")
+	int32 WeaponNumber; //for ui [TEST - 2/25]
 
 public:
 	bool bIsPeeking;

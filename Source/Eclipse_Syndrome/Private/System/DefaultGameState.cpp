@@ -6,21 +6,16 @@
 
 #include "Blueprint/UserWidget.h"
 #include "Components/TextBlock.h"
+#include "Components/Image.h"
 
 ADefaultGameState::ADefaultGameState()
-	:CurrentInventoryAmmos(100)
 {
-}
-
-int32 ADefaultGameState::GetAmmo() const
-{
-	return CurrentInventoryAmmos;
 }
 
 void ADefaultGameState::BeginPlay()
 {
 	Super::BeginPlay();
-
+	
 	UpdateHUD();
 
 	GetWorldTimerManager().SetTimer
@@ -59,6 +54,69 @@ void ADefaultGameState::UpdateHUD()
 						CurrentAmmoText->SetText(FText::FromString(FString::Printf(TEXT("%d"), PlayerCharacter->GetCurrentWeaponAmmo())));
 					}
 				}
+			}
+
+			//Inventory
+			if (UUserWidget* InventoryWidget = PlayerCharacterController->GetInventoryWidget())
+			{
+				//Weapon UI
+				if (UImage* WeaponUI1Image = Cast<UImage>(InventoryWidget->GetWidgetFromName(TEXT("Weapon1Image"))))
+				{
+					if (UGameInstance* GameInstance = GetGameInstance())
+					{
+						if (UDefaultGameInstance* DefaultGameInstance = Cast<UDefaultGameInstance>(GameInstance))
+						{
+							if (DefaultGameInstance->FindWeaponByIdx(1))
+								WeaponUI1Image->SetOpacity(1.f);
+						}
+					}
+				}
+				if (UImage* WeaponUI2Image = Cast<UImage>(InventoryWidget->GetWidgetFromName(TEXT("Weapon2Image"))))
+				{
+					if (UGameInstance* GameInstance = GetGameInstance())
+					{
+						if (UDefaultGameInstance* DefaultGameInstance = Cast<UDefaultGameInstance>(GameInstance))
+						{
+							if (DefaultGameInstance->FindWeaponByIdx(2))
+								WeaponUI2Image->SetOpacity(1.f);
+						}
+					}
+				}
+				if (UImage* WeaponUI3Image = Cast<UImage>(InventoryWidget->GetWidgetFromName(TEXT("Weapon3Image"))))
+				{
+					if (UGameInstance* GameInstance = GetGameInstance())
+					{
+						if (UDefaultGameInstance* DefaultGameInstance = Cast<UDefaultGameInstance>(GameInstance))
+						{
+							if (DefaultGameInstance->FindWeaponByIdx(3))
+								WeaponUI3Image->SetOpacity(1.f);
+						}
+					}
+				}
+
+				//Item UI
+				if (UTextBlock* CurrentInventoryHealthText = Cast<UTextBlock>(InventoryWidget->GetWidgetFromName(TEXT("Item1Text"))))
+				{
+					if (UGameInstance* GameInstance = GetGameInstance())
+					{
+						if (UDefaultGameInstance* DefaultGameInstance = Cast<UDefaultGameInstance>(GameInstance))
+						{
+							CurrentInventoryHealthText->SetText(FText::FromString(FString::Printf(TEXT("%d"), DefaultGameInstance->InventoryItem[1])));
+						}
+					}
+				}
+				if (UTextBlock* CurrentInventoryAmmoText = Cast<UTextBlock>(InventoryWidget->GetWidgetFromName(TEXT("Item2Text"))))
+				{
+					if (UGameInstance* GameInstance = GetGameInstance())
+					{
+						if (UDefaultGameInstance* DefaultGameInstance = Cast<UDefaultGameInstance>(GameInstance))
+						{
+							CurrentInventoryAmmoText->SetText(FText::FromString(FString::Printf(TEXT("%d"), DefaultGameInstance->InventoryItem[2])));
+						}
+					}
+				}
+				//Item1Image
+				//Item2Image
 			}
 		}
 	}
