@@ -75,6 +75,9 @@ protected:
 	void StopShowInventory(const FInputActionValue& value);
 	UFUNCTION()
 	void PossessToDrone(const FInputActionValue& value);
+	UFUNCTION()
+	void DroneMoveCommand(const FInputActionValue& value);
+
 
 //variables
 public:

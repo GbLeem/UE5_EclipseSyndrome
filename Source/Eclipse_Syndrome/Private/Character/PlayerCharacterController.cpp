@@ -81,6 +81,11 @@ APlayerCharacterController::APlayerCharacterController()
 	{
 		ShowInventoryAction = IA_ShowInventory.Object;
 	}
+	static ConstructorHelpers::FObjectFinder<UInputAction> IA_DroneMoveCommand(TEXT("/Game/HJ/Input/IA_DroneMoveCommand.IA_DroneMoveCommand"));
+	if (IA_DroneMoveCommand.Succeeded())
+	{
+		DroneMoveCommandAction = IA_DroneMoveCommand.Object;
+	}
 
 	//for drone possess
 	static ConstructorHelpers::FObjectFinder<UInputMappingContext> IMC_Drone(TEXT("/Game/SH/Input/IMC_Drone.IMC_Drone"));
