@@ -10,7 +10,8 @@ AGangsterEnemy::AGangsterEnemy()
 	MaxHealth = 100.0f;
 	Health = MaxHealth;
 	Damage = 20.0f;
-	AttackRange = 400.0f;
+	AttackRange = 700.0f;
+	AttackReadyRange = 450.0f;
 
 	// AI
 	AIControllerClass = AGangsterAIController::StaticClass();

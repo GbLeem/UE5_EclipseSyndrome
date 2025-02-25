@@ -6,18 +6,27 @@
 #include "AIController.h"
 #include "GangsterAIController.generated.h"
 
-/**
- * 
- */
+UENUM(BlueprintType)
+enum class EEnemyStateEnum : uint8
+{
+	Chasing     UMETA(DisplayName = "Chasing"),
+	Shooting    UMETA(DisplayName = "Shooting"),
+	AttackReady UMETA(DisplayName = "AttackReady")
+};
+
 UCLASS()
 class ECLIPSE_SYNDROME_API AGangsterAIController : public AAIController
 {
 	GENERATED_BODY()
 
 public:
+	AGangsterAIController();
 
 	UPROPERTY(EditDefaultsOnly, Category="AI")
 	float AttackRange;
+	UPROPERTY(EditDefaultsOnly, Category = "AI")
+	float AttackReadyRange;
+	EEnemyStateEnum CurrentState;
 
 	void UpdateAttackRange();
 

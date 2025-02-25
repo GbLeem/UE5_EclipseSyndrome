@@ -18,6 +18,8 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Animation")
 	UAnimMontage* HitMontage;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy")
+	float AttackReadyRange;
 	
 	// Interface Function
 	void OnDeath() override;
