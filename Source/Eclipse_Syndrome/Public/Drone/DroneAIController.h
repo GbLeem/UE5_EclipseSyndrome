@@ -94,10 +94,12 @@ public:
 	bool GetShowDebug() const { return bShowDebug; }
 	FVector GetBaseDroneOffset() const { return BaseDroneOffset; }
 	TObjectPtr<AAOctreeVolume> GetOctreeVolume() { return CurOctreeVolume; }
+	float GetDesiredDistance() const { return DesiredDistance; }
 
+	//Setters
+	void SetDesiredDistance(float NewDesiredDistance) { DesiredDistance = NewDesiredDistance; }
 	
 	void UpdateHappyMovement(float DeltaTime);
-	void UpdateRollingCircleMovement(float DeltaTime);
 
 private:
 	float TargetRollSpeed = 0.0f;

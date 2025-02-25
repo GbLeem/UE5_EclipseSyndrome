@@ -3,7 +3,11 @@
 #include "Character/PlayerCharacterController.h"
 #include "Item/BaseItem.h"
 #include "System/DefaultGameState.h"
+#include "System/DefaultGameInstance.h"
 #include "Weapon/Weapon.h"
+#include "Weapon/WeaponAR1.h"
+#include "Weapon/WeaponAR2.h"
+#include "Weapon/WeaponSR.h"
 
 #include "CableComponent.h"
 #include "Camera/CameraComponent.h"
@@ -20,7 +24,7 @@ APlayerCharacter::APlayerCharacter()
 	,NormalSpeed(500.f)
 	,MaxHealth(100.f)
 	,CurrentHealth(100.f)
-	,CurrentInventoryAmmos(40)
+	,CurrentInventoryAmmos(100)
 	,bCanFire(false)
 	,bCanReload(false)
 	, bCanTraceForItemPeeking(false)
@@ -30,6 +34,7 @@ APlayerCharacter::APlayerCharacter()
 	,PeekingItem(nullptr)
 	,CurrentWeapon(nullptr)
 	,GrappleEndTime(0.5f) //fix
+	, bIsWeaponEquippedBack(false)
 {
 	PrimaryActorTick.bCanEverTick = true;
 
@@ -114,6 +119,19 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 			{
 				EnhancedInputComponent->BindAction(PlayerController->GrappleAction,
 					ETriggerEvent::Started, this, &APlayerCharacter::Grapple);
+			}	
+			if (PlayerController->ShowInventoryAction)
+			{
+				EnhancedInputComponent->BindAction(PlayerController->ShowInventoryAction,
+					ETriggerEvent::Triggered, this, &APlayerCharacter::ShowInventory);
+
+				EnhancedInputComponent->BindAction(PlayerController->ShowInventoryAction,
+					ETriggerEvent::Completed, this, &APlayerCharacter::StopShowInventory);
+			}
+			if (PlayerController->DroneMoveCommandAction)
+			{
+				EnhancedInputComponent->BindAction(PlayerController->DroneMoveCommandAction,
+					ETriggerEvent::Started, this, &APlayerCharacter::DroneMoveCommand);
 			}
 			if (PlayerController->PossessAction)
 			{
@@ -128,6 +146,14 @@ void APlayerCharacter::Tick(float DeltaTime)
 {
 	if (bCanTraceForItemPeeking)
 		BeginTraceForPickItem();
+
+	if (PeekingItem && bCanTraceForItemPeeking)
+	{
+		if (PeekingItem->ActorHasTag("Weapon"))
+			Cast<AWeapon>(PeekingItem)->bIsPeeking = true;
+		if (PeekingItem->ActorHasTag("Item"))
+			Cast<ABaseItem>(PeekingItem)->bIsPeeking = true;
+	}
 }
 
 void APlayerCharacter::BeginPlay()
@@ -143,14 +169,14 @@ void APlayerCharacter::Shoot()
 	{
 		if (CurrentWeapon->GetCurrentAmmo() <= 0)
 		{
-			GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Black, FString::Printf(TEXT("you need to reload!")));
+			//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Black, FString::Printf(TEXT("you need to reload!")));
 			return;
 		}
 		if (bCanFire)
 		{
 			//Real shooting 
 			CurrentWeapon->Fire();			
-			GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Black, FString::Printf(TEXT("shoot %d"), CurrentWeapon->GetCurrentAmmo()));		
+			//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Black, FString::Printf(TEXT("shoot %d"), CurrentWeapon->GetCurrentAmmo()));		
 			bCanFire = false;	
 
 			//auto fire
@@ -169,23 +195,32 @@ void APlayerCharacter::Reloading()
 		int PlusAmmo = CurrentWeapon->GetMaxAmmo() - CurrentWeapon->GetCurrentAmmo();
 		if (CurrentInventoryAmmos <= 0)
 		{
-			GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("not enough ammo")));
 			return;
 		}
 		if (PlusAmmo > 0)
 		{
 			PlusAmmo = FMath::Min(PlusAmmo, CurrentInventoryAmmos);
 			CurrentWeapon->Reload(PlusAmmo);
+
 			CurrentInventoryAmmos -= PlusAmmo;
-			GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("current : %d plus : %d"), CurrentWeapon->GetCurrentAmmo() , PlusAmmo));
+
+			if (UGameInstance* GameInstance = GetGameInstance())
+			{
+				UDefaultGameInstance* DefaultGameInstance = Cast<UDefaultGameInstance>(GameInstance);
+				if (DefaultGameInstance)
+				{
+					DefaultGameInstance->UseAmmo(PlusAmmo);
+				}
+			}		
 		}
-	}
+	}	
 }
 
+//only ammo and health item
 void APlayerCharacter::PickUpItem()
 {
 	if (PeekingItem)
-		Inventory.Add(PeekingItem);
+		Inventory.Add(Cast<ABaseItem>(PeekingItem));
 }
 
 
@@ -205,7 +240,7 @@ void APlayerCharacter::BeginTraceForPickItem()
 		FVector WorldDirection;
 		if (PlayerController->DeprojectScreenPositionToWorld(ScreenCenter.X, ScreenCenter.Y, WorldLocation, WorldDirection))
 		{
-			FVector TraceStart = WorldLocation + WorldDirection*100.f;
+			FVector TraceStart = WorldLocation + WorldDirection * 100.f;
 			FVector TraceEnd = TraceStart + (WorldDirection * 10000.f);
 
 			FHitResult HitResult;
@@ -214,23 +249,12 @@ void APlayerCharacter::BeginTraceForPickItem()
 
 			bool bHit = GetWorld()->LineTraceSingleByChannel(HitResult, TraceStart, TraceEnd, ECC_Visibility, TraceParams);
 
-			FColor LineColor = bHit ? FColor::Red : FColor::Blue;
-			DrawDebugLine(GetWorld(), TraceStart, TraceEnd, LineColor, false, 2.0f, 0, 2.0f);
+			/*FColor LineColor = bHit ? FColor::Red : FColor::Blue;
+			DrawDebugLine(GetWorld(), TraceStart, TraceEnd, LineColor, false, 2.0f, 0, 2.0f);*/
 
 			if (bHit)
-			{				
-				//if trace hit weapon
-				//destroy origin weapon
-				//spawn new weapon and attach to character
-				if(Cast<AWeapon>(HitResult.GetActor()))
-				{						
-					CurrentWeapon = GetWorld()->SpawnActor<AWeapon>();
-					CurrentWeapon->SetActorEnableCollision(false);
-					
-					FName WeaponSocket(TEXT("back_socket"));
-					CurrentWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponSocket);					
-					Cast<AWeapon>(HitResult.GetActor())->DestroyItem();
-				}
+			{						
+				PeekingItem = HitResult.GetActor();				
 			}
 		}
 	}
@@ -244,6 +268,18 @@ void APlayerCharacter::StartPeek()
 void APlayerCharacter::StopPeek()
 {
 	bCanTraceForItemPeeking = false;
+
+	if (PeekingItem)
+	{
+		if (Cast<AWeapon>(PeekingItem))
+		{
+			Cast<AWeapon>(PeekingItem)->bIsPeeking = false;
+		}
+		if (Cast<ABaseItem>(PeekingItem))
+		{
+			Cast<ABaseItem>(PeekingItem)->bIsPeeking = false;
+		}
+	}
 }
 
 //character move
@@ -264,6 +300,37 @@ void APlayerCharacter::GrappleStart()
 void APlayerCharacter::GrappleEnd()
 {
 	bCanGrapple = false;	
+}
+
+void APlayerCharacter::EquipWeaponBack(int32 WeaponIdx)
+{
+	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString::Printf(TEXT("equip weapon")));
+
+	if (CurrentWeapon)
+	{
+		CurrentWeapon = nullptr;
+	}
+
+	if (WeaponIdx == 1)
+	{
+		CurrentWeapon = GetWorld()->SpawnActor<AWeaponAR1>();
+	}
+	else if (WeaponIdx == 2)
+	{
+		CurrentWeapon = GetWorld()->SpawnActor<AWeaponAR2>();
+	}
+	else if (WeaponIdx == 3)
+	{
+		CurrentWeapon = GetWorld()->SpawnActor<AWeaponSR>();
+	}
+	else if (WeaponIdx == 4)
+	{
+		//CurrentWeapon = GetWorld()->SpawnActor<AWeapon>();
+	}
+
+	CurrentWeapon->SetActorEnableCollision(false);
+	FName WeaponSocket(TEXT("back_socket"));
+	CurrentWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponSocket);
 }
 
 int32 APlayerCharacter::GetCurrentWeaponAmmo()
@@ -342,7 +409,7 @@ void APlayerCharacter::Reload(const FInputActionValue& value)
 
 void APlayerCharacter::StartShoot(const FInputActionValue& value)
 {
-	if (bCanFire)
+	if (bCanFire&& bIsWeaponEquipped)
 	{
 		Shoot();	
 	}
@@ -355,19 +422,42 @@ void APlayerCharacter::StopShoot(const FInputActionValue& value)
 	{
 		bCanFire = true;
 	}
-
-	//if (!value.Get<bool>())
-	//{
-	//	//maybe animation ?
-	//	//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Blue, FString::Printf(TEXT("Stop Fire")));
-	//}
 }
 
 void APlayerCharacter::PickUp(const FInputActionValue& value)
 {
-	//empty
-	if (Inventory.Num() != 0)
-		PickUpItem();
+	if (PeekingItem != nullptr)
+	{
+		if (PeekingItem->ActorHasTag("Weapon"))
+		{
+			if (GetGameInstance())
+			{
+				UDefaultGameInstance* DefaultGameInstance = Cast<UDefaultGameInstance>(GetGameInstance());
+				if (DefaultGameInstance)
+				{
+					int32 WeaponIdx = Cast<AWeapon>(PeekingItem)->GetWeaponNumber();
+					DefaultGameInstance->AddWeapon(WeaponIdx);
+				}
+			}
+			PeekingItem->Destroy();
+		}
+
+		else if(PeekingItem->ActorHasTag("Item"))
+		{
+			//PickUpItem();
+			if (GetGameInstance())
+			{
+				UDefaultGameInstance* DefaultGameInstance = Cast<UDefaultGameInstance>(GetGameInstance());
+				if (DefaultGameInstance)
+				{
+					int32 ItemIdx = Cast<ABaseItem>(PeekingItem)->GetItemNumber();
+					int32 ItemAmount = Cast<ABaseItem>(PeekingItem)->GetItemAmount();
+					DefaultGameInstance->AddItem(ItemIdx, ItemAmount);
+				}
+			}
+			PeekingItem->Destroy();
+		}
+	}
 }
 
 //equip weapon
@@ -422,6 +512,30 @@ void APlayerCharacter::Grapple(const FInputActionValue& value)
 	}
 }
 
+void APlayerCharacter::ShowInventory(const FInputActionValue& value)
+{
+	if (value.Get<bool>())
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Blue, FString::Printf(TEXT("Show")));
+		//if pressed UI
+		if (GetController())
+		{
+			Cast<APlayerCharacterController>(GetController())->ShowInventoryUI();
+		}
+	}
+}
+
+void APlayerCharacter::StopShowInventory(const FInputActionValue& value)
+{
+	GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Blue, FString::Printf(TEXT("Remove")));
+	//if(!value.Get<bool>())
+	/*if (GetController())
+	{
+		Cast<APlayerCharacterController>(GetController())->StopShowInventoryUI();
+
+	}*/
+}
+
 void APlayerCharacter::PossessToDrone(const FInputActionValue& value)
 {
 	if (!value.Get<bool>())
@@ -430,6 +544,11 @@ void APlayerCharacter::PossessToDrone(const FInputActionValue& value)
 		Cast<APlayerCharacterController>(GetController())->ChangeMappingContext(1);
 		Cast<APlayerCharacterController>(GetController())->ChangePossess(Cast<ADefaultGameState>(GetWorld()->GetGameState())->GetDrone());
 	}
+}
+
+void APlayerCharacter::DroneMoveCommand(const FInputActionValue& value)
+{
+	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString::Printf(TEXT("drone move command")));
 }
 
 void APlayerCharacter::SetEnhancedInput()
