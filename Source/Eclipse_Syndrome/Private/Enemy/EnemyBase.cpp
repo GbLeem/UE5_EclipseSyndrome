@@ -45,6 +45,15 @@ void AEnemyBase::ChangeSpeedChase()
 	}
 }
 
+void AEnemyBase::StopEnemy()
+{
+	UCharacterMovementComponent* MovementComponent = GetCharacterMovement();
+	if (MovementComponent)
+	{
+		MovementComponent->MaxWalkSpeed = 0.0f;
+	}
+}
+
 FName AEnemyBase::GetName() const
 {
 	return Name;
@@ -65,7 +74,7 @@ void AEnemyBase::OnDeath()
 	UCharacterMovementComponent* MovementComponent = GetCharacterMovement();
 	if (MovementComponent)
 	{
-		MovementComponent->MaxWalkSpeed = 0.0f;
+		StopEnemy();
 	}
 }
 

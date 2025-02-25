@@ -44,6 +44,8 @@ public:
 	void ChangeSpeedPatrol();
 	UFUNCTION(BlueprintCallable)
 	void ChangeSpeedChase();
+	UFUNCTION(BlueprintCallable)
+	void StopEnemy();
 
 	// Interface Function
 	virtual FName GetName() const override;
