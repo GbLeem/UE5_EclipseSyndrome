@@ -37,7 +37,9 @@ public:
 	void GrappleStart();
 	UFUNCTION(BlueprintCallable)
 	void GrappleEnd();
-	void EquipWeaponBack();
+
+	UFUNCTION(BlueprintCallable)
+	void EquipWeaponBack(int32 WeaponIdx);
 
 	//getter
 	int32 GetCurrentWeaponAmmo();
@@ -67,7 +69,12 @@ protected:
 	void EquipWeapon1(const FInputActionValue& value);
 	UFUNCTION()
 	void Grapple(const FInputActionValue& value);
-
+	UFUNCTION()
+	void ShowInventory(const FInputActionValue& value);
+	UFUNCTION()
+	void StopShowInventory(const FInputActionValue& value);
+	UFUNCTION()
+	void PossessToDrone(const FInputActionValue& value);
 
 //variables
 public:
@@ -112,6 +119,7 @@ private:
 	bool bCanFire;  //character flag
 	bool bCanReload; //for reloading animation
 	bool bCanTraceForItemPeeking; //if true, trace start
+	bool bIsWeaponEquippedBack; //[TEMP]
 
 	FTimerHandle FireRateTimerHandle;
 	FTimerHandle GrappleTimerHandle;

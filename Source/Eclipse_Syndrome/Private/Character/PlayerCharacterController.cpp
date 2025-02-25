@@ -20,7 +20,7 @@ APlayerCharacterController::APlayerCharacterController()
 	,ReloadAction(nullptr)
 	,PickUpAction(nullptr)
 {
-	//IMC & IA setting
+	//player IMC & IA setting
 	static ConstructorHelpers::FObjectFinder<UInputMappingContext> IMC_Default(TEXT("/Game/HJ/Input/IMC_Default.IMC_Default"));
 	if (IMC_Default.Succeeded())
 	{
@@ -76,14 +76,110 @@ APlayerCharacterController::APlayerCharacterController()
 	{
 		PossessAction = IA_PossessToDrone.Object;
 	}
-
-
-	static ConstructorHelpers::FClassFinder<UUserWidget>HUDWidget(TEXT("/Game/HJ/UI/WBP_HUD.WBP_HUD_C"));
-	if (HUDWidget.Succeeded())
+	static ConstructorHelpers::FObjectFinder<UInputAction> IA_ShowInventory(TEXT("/Game/HJ/Input/IA_ShowInventoryUI.IA_ShowInventoryUI"));
+	if (IA_ShowInventory.Succeeded())
 	{
-		HUDWidgetClass = HUDWidget.Class;
+		ShowInventoryAction = IA_ShowInventory.Object;
 	}
 
+	//for drone possess
+	static ConstructorHelpers::FObjectFinder<UInputMappingContext> IMC_Drone(TEXT("/Game/SH/Input/IMC_Drone.IMC_Drone"));
+	if (IMC_Drone.Succeeded())
+	{
+		DroneInputMappingContext = IMC_Drone.Object;
+	}
+	static ConstructorHelpers::FObjectFinder<UInputAction> IA_DroneMove(TEXT("/Game/SH/Input/IA_DroneMove.IA_DroneMove"));
+	if (IA_DroneMove.Succeeded())
+	{
+		DroneMoveAction = IA_DroneMove.Object;
+	}
+	static ConstructorHelpers::FObjectFinder<UInputAction> IA_DroneLook(TEXT("/Game/SH/Input/IA_DroneLook.IA_DroneLook"));
+	if (IA_DroneLook.Succeeded())
+	{
+		DroneLookAction = IA_DroneLook.Object;
+	}
+	static ConstructorHelpers::FObjectFinder<UInputAction> IA_DronePossess(TEXT("/Game/SH/Input/IA_DroneToPlayer.IA_DroneToPlayer"));
+	if (IA_DronePossess.Succeeded())
+	{
+		DronePossessAction = IA_DronePossess.Object;
+	}
+	static ConstructorHelpers::FClassFinder<ADroneAIController> DroneAIControllerClass(TEXT("/Game/SH/Blueprint/BP_DroneAIController.BP_DroneAIController_C"));
+	if (DroneAIControllerClass.Succeeded())
+	{
+		DroneAIClass = DroneAIControllerClass.Class;
+	}
+
+	//ui BP setting
+	static ConstructorHelpers::FClassFinder<UUserWidget>HUDWidgetBP(TEXT("/Game/HJ/UI/WBP_HUD.WBP_HUD_C"));
+	if (HUDWidgetBP.Succeeded())
+	{
+		HUDWidgetClass = HUDWidgetBP.Class;
+	}
+	static ConstructorHelpers::FClassFinder<UUserWidget>InventoryWidgetBP(TEXT("/Game/HJ/UI/WBP_Inventory.WBP_Inventory_C"));
+	if (InventoryWidgetBP.Succeeded())
+	{
+		InventoryUIClass = InventoryWidgetBP.Class;
+	}
+}
+
+void APlayerCharacterController::ShowHUD()
+{
+	if (HUDWidgetInstance)
+	{
+		HUDWidgetInstance->RemoveFromParent();
+		HUDWidgetInstance = nullptr;	
+	}
+
+	if (HUDWidgetInstance)
+	{
+		InventoryUIInstance->RemoveFromParent();
+		InventoryUIInstance = nullptr;
+	}
+
+	if (HUDWidgetClass)
+	{
+		HUDWidgetInstance = CreateWidget<UUserWidget>(this, HUDWidgetClass);
+		if (HUDWidgetInstance)
+		{
+			HUDWidgetInstance->AddToViewport();
+
+			bShowMouseCursor = false;
+			SetInputMode(FInputModeGameOnly());
+
+			ADefaultGameState* DefaultGameState = GetWorld() ? GetWorld()->GetGameState<ADefaultGameState>() : nullptr;
+			if (DefaultGameState)
+			{
+				DefaultGameState->UpdateHUD();
+			}
+		}
+	}
+}
+
+void APlayerCharacterController::ShowInventoryUI()
+{
+	if (!InventoryUIInstance)
+	{
+		InventoryUIInstance = CreateWidget<UUserWidget>(GetWorld(), InventoryUIClass);
+	}
+
+	if (InventoryUIInstance && !InventoryUIInstance->IsInViewport())
+	{
+		InventoryUIInstance->AddToViewport();
+		bShowMouseCursor = true;		
+		SetInputMode(FInputModeUIOnly());
+	}
+}
+
+void APlayerCharacterController::StopShowInventoryUI()
+{
+	if (InventoryUIInstance && InventoryUIInstance->IsInViewport())
+	{
+		InventoryUIInstance->RemoveFromParent();
+		InventoryUIInstance = nullptr;
+
+		bShowMouseCursor = false;
+		SetInputMode(FInputModeGameOnly());
+	}
 }
 
 void APlayerCharacterController::BeginPlay()
@@ -101,20 +197,7 @@ void APlayerCharacterController::BeginPlay()
 		}
 	}
 
-	if (HUDWidgetClass)
-	{
-		HUDWidgetInstance = CreateWidget<UUserWidget>(this, HUDWidgetClass);
-		if (HUDWidgetInstance)
-		{
-			HUDWidgetInstance->AddToViewport();
-		}
-	}
-
-	ADefaultGameState* DefaultGameState = GetWorld() ? GetWorld()->GetGameState<ADefaultGameState>() : nullptr;
-	if (DefaultGameState)
-	{
-		DefaultGameState->UpdateHUD();
-	}
+	ShowHUD();
 }
 
 void APlayerCharacterController::ChangePossess(const TObjectPtr<APawn>& NewPawn)
@@ -209,7 +292,6 @@ void APlayerCharacterController::SpawnDummyAIForPawn(const TObjectPtr<APlayerCha
 		DummyAIController->Possess(PrevPlayerPawn);
 	}
 }
-
 
 // void APlayerCharacterController::ChangePossess(const TObjectPtr<APawn>& NewPawn)
 // {

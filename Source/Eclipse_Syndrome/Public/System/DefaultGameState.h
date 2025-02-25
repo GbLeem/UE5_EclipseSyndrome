@@ -18,9 +18,6 @@ class ECLIPSE_SYNDROME_API ADefaultGameState : public AGameState
 public:
 	ADefaultGameState();
 
-	UFUNCTION(BlueprintPure, Category = "Score")
-	int32 GetAmmo() const;
-
 	virtual void BeginPlay() override;
 	void UpdateHUD();
 
@@ -31,8 +28,6 @@ public:
 	
 //variables
 public:
-	int32 CurrentInventoryAmmos;
-
 	UPROPERTY(VisibleAnywhere, Category = "Possess")
 	TObjectPtr<ADrone> Drone;
 	UPROPERTY(VisibleAnywhere, Category = "Possess")

@@ -5,6 +5,9 @@
 #include "System/DefaultGameState.h"
 #include "System/DefaultGameInstance.h"
 #include "Weapon/Weapon.h"
+#include "Weapon/WeaponAR1.h"
+#include "Weapon/WeaponAR2.h"
+#include "Weapon/WeaponSR.h"
 
 #include "CableComponent.h"
 #include "Camera/CameraComponent.h"
@@ -31,6 +34,7 @@ APlayerCharacter::APlayerCharacter()
 	,PeekingItem(nullptr)
 	,CurrentWeapon(nullptr)
 	,GrappleEndTime(0.5f) //fix
+	, bIsWeaponEquippedBack(false)
 {
 	PrimaryActorTick.bCanEverTick = true;
 
@@ -115,7 +119,20 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 			{
 				EnhancedInputComponent->BindAction(PlayerController->GrappleAction,
 					ETriggerEvent::Started, this, &APlayerCharacter::Grapple);
-			}		
+			}	
+			if (PlayerController->ShowInventoryAction)
+			{
+				EnhancedInputComponent->BindAction(PlayerController->ShowInventoryAction,
+					ETriggerEvent::Started, this, &APlayerCharacter::ShowInventory);
+
+				EnhancedInputComponent->BindAction(PlayerController->ShowInventoryAction,
+					ETriggerEvent::Completed, this, &APlayerCharacter::StopShowInventory);
+			}
+			if (PlayerController->PossessAction)
+			{
+				EnhancedInputComponent->BindAction(PlayerController->PossessAction,
+					ETriggerEvent::Started, this, &APlayerCharacter::PossessToDrone);
+			}
 		}
 	}
 }
@@ -280,13 +297,35 @@ void APlayerCharacter::GrappleEnd()
 	bCanGrapple = false;	
 }
 
-void APlayerCharacter::EquipWeaponBack()
+void APlayerCharacter::EquipWeaponBack(int32 WeaponIdx)
 {
-	CurrentWeapon = GetWorld()->SpawnActor<AWeapon>();
-	CurrentWeapon->SetActorEnableCollision(false);
+	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString::Printf(TEXT("equip weapon")));
 
+	if (CurrentWeapon)
+	{
+		CurrentWeapon = nullptr;
+	}
+
+	if (WeaponIdx == 1)
+	{
+		CurrentWeapon = GetWorld()->SpawnActor<AWeaponAR1>();
+	}
+	else if (WeaponIdx == 2)
+	{
+		CurrentWeapon = GetWorld()->SpawnActor<AWeaponAR2>();
+	}
+	else if (WeaponIdx == 3)
+	{
+		CurrentWeapon = GetWorld()->SpawnActor<AWeaponSR>();
+	}
+	else if (WeaponIdx == 4)
+	{
+		//CurrentWeapon = GetWorld()->SpawnActor<AWeapon>();
+	}
+
+	CurrentWeapon->SetActorEnableCollision(false);
 	FName WeaponSocket(TEXT("back_socket"));
-	CurrentWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponSocket);	
+	CurrentWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponSocket);
 }
 
 int32 APlayerCharacter::GetCurrentWeaponAmmo()
@@ -378,12 +417,6 @@ void APlayerCharacter::StopShoot(const FInputActionValue& value)
 	{
 		bCanFire = true;
 	}
-
-	//if (!value.Get<bool>())
-	//{
-	//	//maybe animation ?
-	//	//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Blue, FString::Printf(TEXT("Stop Fire")));
-	//}
 }
 
 void APlayerCharacter::PickUp(const FInputActionValue& value)
@@ -392,12 +425,31 @@ void APlayerCharacter::PickUp(const FInputActionValue& value)
 	{
 		if (PeekingItem->ActorHasTag("Weapon"))
 		{
-			EquipWeaponBack();
+			if (GetGameInstance())
+			{
+				UDefaultGameInstance* DefaultGameInstance = Cast<UDefaultGameInstance>(GetGameInstance());
+				if (DefaultGameInstance)
+				{
+					int32 WeaponIdx = Cast<AWeapon>(PeekingItem)->GetWeaponNumber();
+					DefaultGameInstance->AddWeapon(WeaponIdx);
+				}
+			}
 			PeekingItem->Destroy();
 		}
+
 		else if(PeekingItem->ActorHasTag("Item"))
 		{
-			PickUpItem();
+			//PickUpItem();
+			if (GetGameInstance())
+			{
+				UDefaultGameInstance* DefaultGameInstance = Cast<UDefaultGameInstance>(GetGameInstance());
+				if (DefaultGameInstance)
+				{
+					int32 ItemIdx = Cast<ABaseItem>(PeekingItem)->GetItemNumber();
+					int32 ItemAmount = Cast<ABaseItem>(PeekingItem)->GetItemAmount();
+					DefaultGameInstance->AddItem(ItemIdx, ItemAmount);
+				}
+			}
 			PeekingItem->Destroy();
 		}
 	}
@@ -453,6 +505,28 @@ void APlayerCharacter::Grapple(const FInputActionValue& value)
 			CableComp->SetAttachEndToComponent(GrappleHitPoint.GetComponent());
 		}
 	}
+}
+
+void APlayerCharacter::ShowInventory(const FInputActionValue& value)
+{
+	GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Blue, FString::Printf(TEXT("Show")));
+
+	//if pressed UI
+	if (GetController())
+	{
+		Cast<APlayerCharacterController>(GetController())->ShowInventoryUI();
+	}
+}
+
+void APlayerCharacter::StopShowInventory(const FInputActionValue& value)
+{
+	GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Blue, FString::Printf(TEXT("Remove")));
+
+	/*if (GetController())
+	{
+		Cast<APlayerCharacterController>(GetController())->StopShowInventoryUI();
+
+	}*/
 }
 
 void APlayerCharacter::PossessToDrone(const FInputActionValue& value)
