@@ -36,6 +36,7 @@ public:
 	void GrappleStart();
 	UFUNCTION(BlueprintCallable)
 	void GrappleEnd();
+	void EquipWeaponBack();
 
 	//getter
 	int32 GetCurrentWeaponAmmo();
@@ -66,6 +67,7 @@ protected:
 	UFUNCTION()
 	void Grapple(const FInputActionValue& value);
 
+
 //variables
 public:
 	//components
@@ -92,6 +94,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
 	int32 CurrentInventoryAmmos;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
+	TArray<ABaseItem*> Inventory;
+
 	//for animation
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
 	int32 BlendPoseVariable;
@@ -100,15 +105,15 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
 	bool bCanGrapple; //can move character(attach to grapple actor)
 
+
 private:
 	bool bCanFire;  //character flag
 	bool bCanReload; //for reloading animation
-	bool bCanTraceForItemPeeking;
+	bool bCanTraceForItemPeeking; //if true, trace start
 
 	FTimerHandle FireRateTimerHandle;
 	FTimerHandle GrappleTimerHandle;
-	TArray<ABaseItem*> Inventory;
-	ABaseItem* PeekingItem;
+	TObjectPtr<AActor> PeekingItem;
 	AWeapon* CurrentWeapon;
 	FHitResult GrappleHitPoint; //grapple target actor point
 	float GrappleEndTime;

@@ -2,13 +2,16 @@
 
 #include "Character/PlayerCharacter.h"
 #include "Character/PlayerCharacterController.h"
+#include "System/DefaultGameInstance.h"
 
 #include "Blueprint/UserWidget.h"
 #include "Components/TextBlock.h"
+#include "Kismet/GameplayStatics.h"
 
 ADefaultGameState::ADefaultGameState()
 	:CurrentInventoryAmmos(100)
 {
+
 }
 
 int32 ADefaultGameState::GetAmmo() const
@@ -42,7 +45,13 @@ void ADefaultGameState::UpdateHUD()
 			{
 				if (UTextBlock* CurrentInventoryAmmoText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("TotalAmmoTxt"))))
 				{
-					CurrentInventoryAmmoText->SetText(FText::FromString(FString::Printf(TEXT(": %d"), CurrentInventoryAmmos)));
+					if (UGameInstance* GameInstance = GetGameInstance())
+					{
+						if (UDefaultGameInstance* DefaultGameInstance = Cast<UDefaultGameInstance>(GameInstance))
+						{
+							CurrentInventoryAmmoText->SetText(FText::FromString(FString::Printf(TEXT("| %d"), DefaultGameInstance->InventoryAmmo)));						
+						}
+					}
 				}
 
 				if (UTextBlock* CurrentAmmoText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("CurrentAmmoTxt"))))

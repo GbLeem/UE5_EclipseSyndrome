@@ -4,6 +4,10 @@
 #include "GameFramework/GameState.h"
 #include "DefaultGameState.generated.h"
 
+class ADroneAIController;
+class ADroneController;
+class APlayerCharacterController;
+
 UCLASS()
 class ECLIPSE_SYNDROME_API ADefaultGameState : public AGameState
 {
@@ -18,9 +22,11 @@ public:
 	virtual void BeginPlay() override;
 	void UpdateHUD();
 
+
 //variables
 public:
 	int32 CurrentInventoryAmmos;
+
 
 private:
 	FTimerHandle HUDUpdateTimerHandle;
