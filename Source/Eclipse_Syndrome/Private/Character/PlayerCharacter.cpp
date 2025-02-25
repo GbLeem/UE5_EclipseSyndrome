@@ -128,6 +128,11 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 				EnhancedInputComponent->BindAction(PlayerController->ShowInventoryAction,
 					ETriggerEvent::Completed, this, &APlayerCharacter::StopShowInventory);
 			}
+			if (PlayerController->DroneMoveCommandAction)
+			{
+				EnhancedInputComponent->BindAction(PlayerController->DroneMoveCommandAction,
+					ETriggerEvent::Started, this, &APlayerCharacter::DroneMoveCommand);
+			}
 			if (PlayerController->PossessAction)
 			{
 				EnhancedInputComponent->BindAction(PlayerController->PossessAction,
@@ -539,6 +544,11 @@ void APlayerCharacter::PossessToDrone(const FInputActionValue& value)
 		Cast<APlayerCharacterController>(GetController())->ChangeMappingContext(1);
 		Cast<APlayerCharacterController>(GetController())->ChangePossess(Cast<ADefaultGameState>(GetWorld()->GetGameState())->GetDrone());
 	}
+}
+
+void APlayerCharacter::DroneMoveCommand(const FInputActionValue& value)
+{
+	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString::Printf(TEXT("drone move command")));
 }
 
 void APlayerCharacter::SetEnhancedInput()
