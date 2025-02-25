@@ -2,7 +2,6 @@
 
 #include "CoreMinimal.h"
 #include "AIController.h"
-#include "DroneController.h"
 #include "DroneAIController.generated.h"
 
 enum class EDroneState : uint8;
@@ -95,7 +94,10 @@ public:
 	bool GetShowDebug() const { return bShowDebug; }
 	FVector GetBaseDroneOffset() const { return BaseDroneOffset; }
 	TObjectPtr<AAOctreeVolume> GetOctreeVolume() { return CurOctreeVolume; }
+	float GetDesiredDistance() const { return DesiredDistance; }
 
+	//Setters
+	void SetDesiredDistance(float NewDesiredDistance) { DesiredDistance = NewDesiredDistance; }
 	
 	void UpdateHappyMovement(float DeltaTime);
 
