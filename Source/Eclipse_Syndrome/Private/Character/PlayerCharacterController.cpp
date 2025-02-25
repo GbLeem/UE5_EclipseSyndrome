@@ -1,7 +1,11 @@
 #include "Character/PlayerCharacterController.h"
 
+#include "Character/PlayerCharacter.h"
+#include "Drone/Drone.h"
+#include "Drone/DroneAIController.h"
 #include "System/DefaultGameState.h"
 
+#include "AIController.h"
 #include "Blueprint/UserWidget.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputMappingContext.h"
@@ -16,7 +20,7 @@ APlayerCharacterController::APlayerCharacterController()
 	,ReloadAction(nullptr)
 	,PickUpAction(nullptr)
 {
-	//IMC & IA setting
+	//player IMC & IA setting
 	static ConstructorHelpers::FObjectFinder<UInputMappingContext> IMC_Default(TEXT("/Game/HJ/Input/IMC_Default.IMC_Default"));
 	if (IMC_Default.Succeeded())
 	{
@@ -67,11 +71,119 @@ APlayerCharacterController::APlayerCharacterController()
 	{
 		GrappleAction = IA_Grapple.Object;
 	}
-
-	static ConstructorHelpers::FClassFinder<UUserWidget>HUDWidget(TEXT("/Game/HJ/UI/WBP_HUD.WBP_HUD_C"));
-	if (HUDWidget.Succeeded())
+	static ConstructorHelpers::FObjectFinder<UInputAction> IA_PossessToDrone(TEXT("/Game/HJ/Input/IA_PossessToDrone.IA_PossessToDrone"));
+	if (IA_PossessToDrone.Succeeded())
 	{
-		HUDWidgetClass = HUDWidget.Class;
+		PossessAction = IA_PossessToDrone.Object;
+	}
+	static ConstructorHelpers::FObjectFinder<UInputAction> IA_ShowInventory(TEXT("/Game/HJ/Input/IA_ShowInventoryUI.IA_ShowInventoryUI"));
+	if (IA_ShowInventory.Succeeded())
+	{
+		ShowInventoryAction = IA_ShowInventory.Object;
+	}
+	static ConstructorHelpers::FObjectFinder<UInputAction> IA_DroneMoveCommand(TEXT("/Game/HJ/Input/IA_DroneMoveCommand.IA_DroneMoveCommand"));
+	if (IA_DroneMoveCommand.Succeeded())
+	{
+		DroneMoveCommandAction = IA_DroneMoveCommand.Object;
+	}
+
+	//for drone possess
+	static ConstructorHelpers::FObjectFinder<UInputMappingContext> IMC_Drone(TEXT("/Game/SH/Input/IMC_Drone.IMC_Drone"));
+	if (IMC_Drone.Succeeded())
+	{
+		DroneInputMappingContext = IMC_Drone.Object;
+	}
+	static ConstructorHelpers::FObjectFinder<UInputAction> IA_DroneMove(TEXT("/Game/SH/Input/IA_DroneMove.IA_DroneMove"));
+	if (IA_DroneMove.Succeeded())
+	{
+		DroneMoveAction = IA_DroneMove.Object;
+	}
+	static ConstructorHelpers::FObjectFinder<UInputAction> IA_DroneLook(TEXT("/Game/SH/Input/IA_DroneLook.IA_DroneLook"));
+	if (IA_DroneLook.Succeeded())
+	{
+		DroneLookAction = IA_DroneLook.Object;
+	}
+	static ConstructorHelpers::FObjectFinder<UInputAction> IA_DronePossess(TEXT("/Game/SH/Input/IA_DroneToPlayer.IA_DroneToPlayer"));
+	if (IA_DronePossess.Succeeded())
+	{
+		DronePossessAction = IA_DronePossess.Object;
+	}
+	static ConstructorHelpers::FClassFinder<ADroneAIController> DroneAIControllerClass(TEXT("/Game/SH/Blueprint/BP_DroneAIController.BP_DroneAIController_C"));
+	if (DroneAIControllerClass.Succeeded())
+	{
+		DroneAIClass = DroneAIControllerClass.Class;
+	}
+
+	//ui BP setting
+	static ConstructorHelpers::FClassFinder<UUserWidget>HUDWidgetBP(TEXT("/Game/HJ/UI/WBP_HUD.WBP_HUD_C"));
+	if (HUDWidgetBP.Succeeded())
+	{
+		HUDWidgetClass = HUDWidgetBP.Class;
+	}
+	static ConstructorHelpers::FClassFinder<UUserWidget>InventoryWidgetBP(TEXT("/Game/HJ/UI/WBP_Inventory.WBP_Inventory_C"));
+	if (InventoryWidgetBP.Succeeded())
+	{
+		InventoryUIClass = InventoryWidgetBP.Class;
+	}
+}
+
+void APlayerCharacterController::ShowHUD()
+{
+	if (HUDWidgetInstance)
+	{
+		HUDWidgetInstance->RemoveFromParent();
+		HUDWidgetInstance = nullptr;	
+	}
+
+	if (HUDWidgetInstance)
+	{
+		InventoryUIInstance->RemoveFromParent();
+		InventoryUIInstance = nullptr;
+	}
+
+	if (HUDWidgetClass)
+	{
+		HUDWidgetInstance = CreateWidget<UUserWidget>(this, HUDWidgetClass);
+		if (HUDWidgetInstance)
+		{
+			HUDWidgetInstance->AddToViewport();
+
+			bShowMouseCursor = false;
+			SetInputMode(FInputModeGameOnly());
+
+			ADefaultGameState* DefaultGameState = GetWorld() ? GetWorld()->GetGameState<ADefaultGameState>() : nullptr;
+			if (DefaultGameState)
+			{
+				DefaultGameState->UpdateHUD();
+			}
+		}
+	}
+}
+
+void APlayerCharacterController::ShowInventoryUI()
+{
+	if (!InventoryUIInstance)
+	{
+		InventoryUIInstance = CreateWidget<UUserWidget>(GetWorld(), InventoryUIClass);
+	}
+
+	if (InventoryUIInstance && !InventoryUIInstance->IsInViewport())
+	{
+		InventoryUIInstance->AddToViewport();
+		bShowMouseCursor = true;		
+		SetInputMode(FInputModeUIOnly());
+	}
+}
+
+void APlayerCharacterController::StopShowInventoryUI()
+{
+	if (InventoryUIInstance && InventoryUIInstance->IsInViewport())
+	{
+		InventoryUIInstance->RemoveFromParent();
+		InventoryUIInstance = nullptr;
+
+		bShowMouseCursor = false;
+		SetInputMode(FInputModeGameOnly());
 	}
 }
 
@@ -90,18 +202,152 @@ void APlayerCharacterController::BeginPlay()
 		}
 	}
 
-	if (HUDWidgetClass)
+	ShowHUD();
+}
+
+void APlayerCharacterController::ChangePossess(const TObjectPtr<APawn>& NewPawn)
+{
+	if (!NewPawn)
 	{
-		HUDWidgetInstance = CreateWidget<UUserWidget>(this, HUDWidgetClass);
-		if (HUDWidgetInstance)
+		return;
+	}
+
+	const TObjectPtr<APawn> PrevPawn = GetPawn();
+	UnPossess();
+
+	if (const TObjectPtr<ADrone> DronePawn = Cast<ADrone>(NewPawn))
+	{
+		HandleDronePossess(DronePawn, PrevPawn);
+	}
+	else if (const TObjectPtr<APlayerCharacter> NewPlayerPawn = Cast<APlayerCharacter>(NewPawn))
+	{
+		HandlePlayerPossess(NewPlayerPawn, PrevPawn);
+	}
+}
+
+void APlayerCharacterController::ChangeMappingContext(int Type)
+{
+	if (const ULocalPlayer* LocalPlayer = GetLocalPlayer())
+	{
+		if (UEnhancedInputLocalPlayerSubsystem* SubSystem =
+			LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>())
 		{
-			HUDWidgetInstance->AddToViewport();
+			SubSystem->ClearAllMappings();
+			// Character
+			if (Type == 0)
+			{
+				if (nullptr != DefaultInputMappingContext)
+				{
+					SubSystem->AddMappingContext(DefaultInputMappingContext, 0);
+				}
+			}
+			// Drone
+			else if (Type == 1)
+			{
+				if (nullptr != DroneInputMappingContext)
+				{
+					SubSystem->AddMappingContext(DroneInputMappingContext, 1);
+				}
+			}
+		}
+	}
+}
+
+void APlayerCharacterController::HandleDronePossess(const TObjectPtr<ADrone>& DronePawn, const TObjectPtr<APawn>& PrevPawn)
+{
+	if (const TObjectPtr<AController>& PrevController = DronePawn->GetController())
+	{
+		if (const TObjectPtr<ADroneAIController>& PrevDroneAIController = Cast<ADroneAIController>(PrevController))
+		{
+			PrevDroneAIController->UnPossess();
+			PrevDroneAIController->Destroy();
 		}
 	}
 
-	ADefaultGameState* DefaultGameState = GetWorld() ? GetWorld()->GetGameState<ADefaultGameState>() : nullptr;
-	if (DefaultGameState)
+	Possess(DronePawn);
+	DronePawn->SetEnhancedInput();
+
+	if (APlayerCharacter* PrevPlayer = Cast<APlayerCharacter>(PrevPawn))
 	{
-		DefaultGameState->UpdateHUD();
+		SpawnDummyAIForPawn(PrevPlayer);
 	}
 }
+
+void APlayerCharacterController::HandlePlayerPossess(const TObjectPtr<APlayerCharacter>& NewPlayerPawn, const TObjectPtr<APawn>& PrevPawn)
+{
+	if (const TObjectPtr<AController>& PrevController = NewPlayerPawn->GetController())
+	{
+		PrevController->UnPossess();
+		PrevController->Destroy();
+	}
+
+	if (ADroneAIController* NewAIController = GetWorld()->SpawnActor<ADroneAIController>(DroneAIClass))
+	{
+		NewAIController->Possess(PrevPawn);
+	}
+
+	Possess(NewPlayerPawn);
+	NewPlayerPawn->SetEnhancedInput();
+}
+
+void APlayerCharacterController::SpawnDummyAIForPawn(const TObjectPtr<APlayerCharacter>& PrevPlayerPawn)
+{
+	if (TObjectPtr<AAIController> DummyAIController = GetWorld()->SpawnActor<AAIController>(AAIController::StaticClass()))
+	{
+		DummyAIController->Possess(PrevPlayerPawn);
+	}
+}
+
+// void APlayerCharacterController::ChangePossess(const TObjectPtr<APawn>& NewPawn)
+// {
+// 	if (nullptr != NewPawn)
+// 	{
+// 		TObjectPtr<APawn> PrevPawn = GetPawn();
+// 		UnPossess(); // 기존 Pawn에서 빙의 해제
+//
+// 		if (TObjectPtr<ADrone> DronePawn = Cast<ADrone>(NewPawn))
+// 		{
+// 			// 이전 Drone의 AI 컨트롤러를 UnPossess하고 삭제
+// 			if (const TObjectPtr<AController>& PrevController = NewPawn->GetController())
+// 			{
+// 				if (const TObjectPtr<ADroneAIController>& PrevDroneAIController = Cast<ADroneAIController>(PrevController))
+// 				{
+// 					PrevDroneAIController->UnPossess();
+// 					PrevDroneAIController->Destroy();
+// 				}
+// 			}
+//
+// 			// DronePawn에 대해 새로운 Possess 호출
+// 			Possess(NewPawn);
+// 			DronePawn->SetEnhancedInput();
+//
+// 			if (APlayerCharacter* PrevPlayer = Cast<APlayerCharacter>(PrevPawn))
+// 			{
+// 				if (TObjectPtr<AAIController> DummyAIController = GetWorld()->SpawnActor<AAIController>(AAIController::StaticClass()))
+// 				{
+// 					DummyAIController->Possess(PrevPlayer); // 플레이어 캐릭터를 AI에 맡김
+// 				}
+// 			}
+// 		}
+// 		else if (TObjectPtr<APlayerCharacter> NewPlayerPawn = Cast<APlayerCharacter>(NewPawn))
+// 		{
+// 			// 이전 Player의 AI 컨트롤러를 UnPossess하고 삭제
+// 			if (const TObjectPtr<AController>& PrevController = NewPawn->GetController())
+// 			{
+// 				PrevController->UnPossess();
+// 				PrevController->Destroy();
+// 			}
+// 			
+// 			// AI 컨트롤러를 새로 생성하여 PlayerPawn에 대한 Possess 호출
+// 			ADroneAIController* NewAIController = GetWorld()->SpawnActor<ADroneAIController>(DroneAIClass);
+// 			if (NewAIController)
+// 			{
+// 				NewAIController->Possess(PrevPawn); // 이전 PlayerPawn을 AI 컨트롤러로 Possess
+// 			}
+//
+// 			// PlayerPawn에 대해서 Possess 호출
+// 			Possess(NewPawn);
+// 			NewPlayerPawn->SetEnhancedInput();
+// 		}
+// 	}
+// }

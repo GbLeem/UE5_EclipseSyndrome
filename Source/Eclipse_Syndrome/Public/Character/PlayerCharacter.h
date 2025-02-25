@@ -20,6 +20,7 @@ public:
 	APlayerCharacter();
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	virtual void Tick(float DeltaTime) override;
+	virtual void BeginPlay() override;
 
 	UFUNCTION()
 	void Shoot();
@@ -36,6 +37,9 @@ public:
 	void GrappleStart();
 	UFUNCTION(BlueprintCallable)
 	void GrappleEnd();
+
+	UFUNCTION(BlueprintCallable)
+	void EquipWeaponBack(int32 WeaponIdx);
 
 	//getter
 	int32 GetCurrentWeaponAmmo();
@@ -65,6 +69,15 @@ protected:
 	void EquipWeapon1(const FInputActionValue& value);
 	UFUNCTION()
 	void Grapple(const FInputActionValue& value);
+	UFUNCTION()
+	void ShowInventory(const FInputActionValue& value);
+	UFUNCTION()
+	void StopShowInventory(const FInputActionValue& value);
+	UFUNCTION()
+	void PossessToDrone(const FInputActionValue& value);
+	UFUNCTION()
+	void DroneMoveCommand(const FInputActionValue& value);
+
 
 //variables
 public:
@@ -92,6 +105,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
 	int32 CurrentInventoryAmmos;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
+	TArray<ABaseItem*> Inventory;
+
 	//for animation
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
 	int32 BlendPoseVariable;
@@ -100,15 +116,17 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
 	bool bCanGrapple; //can move character(attach to grapple actor)
 
+	void SetEnhancedInput();
+	
 private:
 	bool bCanFire;  //character flag
 	bool bCanReload; //for reloading animation
-	bool bCanTraceForItemPeeking;
+	bool bCanTraceForItemPeeking; //if true, trace start
+	bool bIsWeaponEquippedBack; //[TEMP]
 
 	FTimerHandle FireRateTimerHandle;
 	FTimerHandle GrappleTimerHandle;
-	TArray<ABaseItem*> Inventory;
-	ABaseItem* PeekingItem;
+	TObjectPtr<AActor> PeekingItem;
 	AWeapon* CurrentWeapon;
 	FHitResult GrappleHitPoint; //grapple target actor point
 	float GrappleEndTime;

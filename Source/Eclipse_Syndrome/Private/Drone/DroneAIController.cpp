@@ -1,10 +1,12 @@
 #include "Drone/DroneAIController.h"
 
+#include "EngineUtils.h"
 #include "BehaviorTree/BehaviorTree.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Drone/Drone.h"
+#include "System/DefaultGameState.h"
 
 ADroneAIController::ADroneAIController()
 	: BaseDroneOffset(FVector(25, 80, 100))
@@ -25,12 +27,7 @@ void ADroneAIController::BeginPlay()
 
 	UseBlackboard(DroneBehaviorTree->GetBlackboardAsset(), BlackboardComp);
 	RunBehaviorTree(DroneBehaviorTree);
-
-	if (const TObjectPtr<APawn> Player = UGameplayStatics::GetPlayerPawn(GetWorld(), 0))
-	{
-		BlackboardComp->SetValueAsObject("PlayerActor", Player);
-	}
-
+	
 	EnumPtr = FindObject<UEnum>(ANY_PACKAGE, TEXT("BlackboardEnum"));
 }
 
@@ -38,6 +35,12 @@ void ADroneAIController::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	if (const TObjectPtr<APawn> Player = Cast<ADefaultGameState>(GetWorld()->GetGameState())->GetPlayerCharacter())
+	{
+		BlackboardComp->SetValueAsObject("PlayerActor", Player);
+	}
+	
+	CurOctreeVolume = Cast<ADrone>(Cast<ADefaultGameState>(GetWorld()->GetGameState())->GetDrone())->GetOctreeVolume();
 	//UpdateRollingCircleMovement(DeltaTime);
 	
 	if (const TObjectPtr<APawn> Player = UGameplayStatics::GetPlayerPawn(GetWorld(), 0))
@@ -203,67 +206,4 @@ void ADroneAIController::UpdateHappyMovement(float DeltaTime)
 	SetNewTargetLocation(TargetLocations);
 	ApplySmoothMovement(DeltaTime);
 	ApplyPIDControl(DeltaTime, true);
-}
-
-
-void ADroneAIController::UpdateRollingCircleMovement(float DeltaTime)
-{
-	const TObjectPtr<ADrone> ControlledDrone = Cast<ADrone>(GetPawn());
-	if (!ControlledDrone) return;
-
-	const TObjectPtr<APawn> Player = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
-	if (!Player) return;
-
-	const FVector PlayerLocation = Player->GetActorLocation() + FVector(0.0f, 0.0f, 100.0f);
-
-	const float Time = GetWorld()->GetTimeSeconds();
-
-	// 원형 궤도 계산
-	const float AngleSpeed = GetRotationSpeed();
-
-	const FVector Offset = FVector(
-		FMath::Cos(CurrentAngle) * CircleRadius,
-		FMath::Sin(CurrentAngle) * CircleRadius,
-		0.0f
-	);
-
-	FVector TargetLocations = PlayerLocation + Offset;
-
-	// 🎲 랜덤 Roll 속도 조절
-	const float RollStep = 60.0f; // 60도 단위로 속도 갱신
-	if (FMath::Fmod(CurrentAngle, RollStep) < 5.0f && !bHasUpdatedRollSpeed)
-	{
-		TargetRollSpeed = FMath::RandRange(MinRollSpeed, MaxRollSpeed);
-		bHasUpdatedRollSpeed = true;
-	}
-	else if (FMath::Fmod(CurrentAngle, RollStep) > 5.0f)
-	{
-		bHasUpdatedRollSpeed = false;
-	}
-
-	// Roll 회전 계산 (부드럽게 보간)
-	CurrentRollAngle += FMath::FInterpTo(CurrentRollSpeed, TargetRollSpeed, DeltaTime, 1.5f) * DeltaTime;
-
-	// Roll 한 바퀴 돌면 리셋
-	if (CurrentRollAngle >= 360.0f)
-	{
-		CurrentRollAngle = 0.0f;
-	}
-
-	FRotator RollRotation = FRotator(
-		0.0f,
-		0.0f,
-		CurrentRollAngle//FMath::Sin(CurrentRollAngle * PI / 180.0f) * 45.0f
-	);
-
-	// 회전 적용
-	ControlledDrone->GetCameraSceneComponent()->SetRelativeRotation(RollRotation);
-
-	// 위치 갱신
-	SetNewTargetLocation(TargetLocations);
-	ApplySmoothMovement(DeltaTime);
-	ApplyPIDControl(DeltaTime);
-
-	// 각도 업데이트
-	CurrentAngle += AngleSpeed * DeltaTime;
 }
