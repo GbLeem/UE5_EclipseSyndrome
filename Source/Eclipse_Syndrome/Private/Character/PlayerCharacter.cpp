@@ -123,7 +123,7 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 			if (PlayerController->ShowInventoryAction)
 			{
 				EnhancedInputComponent->BindAction(PlayerController->ShowInventoryAction,
-					ETriggerEvent::Started, this, &APlayerCharacter::ShowInventory);
+					ETriggerEvent::Triggered, this, &APlayerCharacter::ShowInventory);
 
 				EnhancedInputComponent->BindAction(PlayerController->ShowInventoryAction,
 					ETriggerEvent::Completed, this, &APlayerCharacter::StopShowInventory);
@@ -509,19 +509,21 @@ void APlayerCharacter::Grapple(const FInputActionValue& value)
 
 void APlayerCharacter::ShowInventory(const FInputActionValue& value)
 {
-	GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Blue, FString::Printf(TEXT("Show")));
-
-	//if pressed UI
-	if (GetController())
+	if (value.Get<bool>())
 	{
-		Cast<APlayerCharacterController>(GetController())->ShowInventoryUI();
+		GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Blue, FString::Printf(TEXT("Show")));
+		//if pressed UI
+		if (GetController())
+		{
+			Cast<APlayerCharacterController>(GetController())->ShowInventoryUI();
+		}
 	}
 }
 
 void APlayerCharacter::StopShowInventory(const FInputActionValue& value)
 {
 	GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Blue, FString::Printf(TEXT("Remove")));
-
+	//if(!value.Get<bool>())
 	/*if (GetController())
 	{
 		Cast<APlayerCharacterController>(GetController())->StopShowInventoryUI();
