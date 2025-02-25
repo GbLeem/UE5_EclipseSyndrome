@@ -1,148 +1,98 @@
 #include "Drone/DroneAIController.h"
+
+#include "EngineUtils.h"
+#include "BehaviorTree/BehaviorTree.h"
+#include "BehaviorTree/BlackboardComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Drone/Drone.h"
-#include "Volume/AOctreeVolume.h"
+#include "System/DefaultGameState.h"
 
 ADroneAIController::ADroneAIController()
-	: BaseDroneOffset(FVector(-50, 80, 100))
+	: BaseDroneOffset(FVector(25, 80, 100))
 	, Kp(140000.0f)
 	, Ki(2000.0f)
 	, Kd(8000.0f)
 	, MaxSpeed(150000.f)
 	, DesiredDistance(15.0f)
 	, bShowDebug(true)
-	, CurIndex(0)
 	, PathFindModeAcceleration(20.0f)
-	, NextNodeIgnoreRadius(80.0f)
-	, bEndFollowPath(true)
-	, bCanFindPath(true)
 {
 }
 void ADroneAIController::BeginPlay()
 {
 	Super::BeginPlay();
+
+	CircleRadius = (BaseDroneOffset - FVector(0.0f, 0.0f, 100.0f)).Length();
+
+	UseBlackboard(DroneBehaviorTree->GetBlackboardAsset(), BlackboardComp);
+	RunBehaviorTree(DroneBehaviorTree);
+	
+	EnumPtr = FindObject<UEnum>(ANY_PACKAGE, TEXT("BlackboardEnum"));
 }
 
 void ADroneAIController::Tick(float DeltaTime)
 {
-    Super::Tick(DeltaTime);
-    
-	const TObjectPtr<APawn> PlayerPawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
-	UpdateDesiredTarget(PlayerPawn);
-	
-	if (bShowDebug)
+	Super::Tick(DeltaTime);
+
+	if (const TObjectPtr<APawn> Player = Cast<ADefaultGameState>(GetWorld()->GetGameState())->GetPlayerCharacter())
 	{
-		DrawDebugSphere(GetWorld(), DesiredTarget, 30, 30, FColor::Green);
+		BlackboardComp->SetValueAsObject("PlayerActor", Player);
 	}
 	
-	UpdatePath();
-	FollowPath(DeltaTime);
+	CurOctreeVolume = Cast<ADrone>(Cast<ADefaultGameState>(GetWorld()->GetGameState())->GetDrone())->GetOctreeVolume();
+	//UpdateRollingCircleMovement(DeltaTime);
 	
-	if (bShowDebug)
+	if (const TObjectPtr<APawn> Player = UGameplayStatics::GetPlayerPawn(GetWorld(), 0))
 	{
-		DrawDebugPath();
-	}
+		const FVector PlayerVelocity = Player->GetVelocity();
+		const FVector DroneVelocity = GetPawn()->GetVelocity();
+		const float DistanceToPlayer = FVector::Dist(Player->GetActorLocation(), GetPawn()->GetActorLocation());
+    	
+		static float IdleTransitionTime = 0.0f;
+		static float FollowTransitionTime = 0.0f;
+		static float LastDistanceToPlayer = DistanceToPlayer;
 	
-    TargetLocation = FMath::VInterpTo(TargetLocation, PathTargetLocation, DeltaTime, 5.0f);
-    DroneRotation(PlayerPawn);
-    ApplyPIDControl(DeltaTime);
-}
-
-void ADroneAIController::FindPath()
-{
-    if (IsValid(CurOctreeVolume))
-    {
-	    TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
-    	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_Visibility));
-    	if (CurOctreeVolume->IsValidDestLocation(DesiredTarget, ObjectTypes, AActor::StaticClass()))
-    	{
-    		FVector DroneLocation = GetPawn()->GetActorLocation();
-    		PathPoints.Empty();
-    		if (CurOctreeVolume->FindPath(DroneLocation, DesiredTarget, ObjectTypes, AActor::StaticClass(), PathPoints))
-    		{
-    			bEndFollowPath = false;
-    			CurIndex = 0;
-    		}
-    	}
-	    else
-	    {
-	    	bCanFindPath = false;
-		    GetWorld()->GetTimerManager().SetTimer(PathTimerHandle, this, &ADroneAIController::CanFindPath, 1.0f, false);
-	    }
-    }
-}
-
-void ADroneAIController::CanFindPath()
-{
-	bCanFindPath = true;
-}
-
-void ADroneAIController::DrawDebugPath()
-{
-	for (const auto& Node : PathPoints)
-	{
-		DrawDebugSphere(GetWorld(), Node, 20, 20, FColor::Orange);
-	}
-}
-
-void ADroneAIController::UpdatePath()
-{
-	FVector DroneLocation = GetPawn()->GetActorLocation();
-	FHitResult HitResult;
-	FCollisionQueryParams CollisionParams;
-	CollisionParams.AddIgnoredActor(GetPawn());
+		const bool bPlayerStopped = PlayerVelocity.Length() < 10.0f;
+		const bool bDroneAlmostStopped = DroneVelocity.Length() <= 10.0f;
+		const bool bPlayerClose = DistanceToPlayer < 300.0f;
+		const bool bPlayerFar = DistanceToPlayer > 1000.0f;
 	
-	if (GetWorld()->LineTraceSingleByChannel(HitResult, DroneLocation, DesiredTarget, ECC_Visibility, CollisionParams))
-	{
-		if (bCanFindPath && bEndFollowPath)
+		float DistanceChange = FMath::Abs(DistanceToPlayer - LastDistanceToPlayer);
+	
+		if (bPlayerStopped && bDroneAlmostStopped && bPlayerClose && DistanceChange < 5.0f)
 		{
-			FindPath();
-		}
-	}
-}
-
-void ADroneAIController::UpdateDesiredTarget(const TObjectPtr<APawn>& PlayerPawn)
-{
-	if (!PlayerPawn) return;
-	const FVector RotatedOffset = PlayerPawn->GetActorRotation().RotateVector(BaseDroneOffset);
-	FHitResult Hit;
-	FCollisionQueryParams CollisionParams;
-	CollisionParams.AddIgnoredActor(PlayerPawn);
-	CollisionParams.AddIgnoredActor(GetPawn());
-	if (!GetWorld()->LineTraceSingleByChannel(Hit, PlayerPawn->GetActorLocation() + FVector(0.0f, 0.0f, 100.0f), PlayerPawn->GetActorLocation() + RotatedOffset * 1.5f, ECC_Visibility, CollisionParams))
-	{
-		DesiredTarget = PlayerPawn->GetActorLocation() + RotatedOffset;
-	}
-}
-
-void ADroneAIController::FollowPath(float DeltaTime)
-{
-	if (!bEndFollowPath && !PathPoints.IsEmpty())
-	{
-		if (CurIndex < PathPoints.Num())
-		{
-			if (FVector::DistSquared(GetPawn()->GetActorLocation(), PathPoints[CurIndex]) < FMath::Square(NextNodeIgnoreRadius))
+			IdleTransitionTime += DeltaTime;
+			FollowTransitionTime = 0.0f;
+	
+			if (IdleTransitionTime >= 1.0f)
 			{
-				CurIndex++;
-			}
-			if (CurIndex < PathPoints.Num())
-			{
-				PathTargetLocation = PathPoints[CurIndex];
-			}
-			else
-			{
-				bEndFollowPath = true;
+				BlackboardComp->SetValueAsEnum("CurrentState", 0); // Idle State
 			}
 		}
-	}
-	else
-	{
-		PathTargetLocation = DesiredTarget;
+		else if (bPlayerFar)
+		{
+			BlackboardComp->SetValueAsEnum("CurrentState", 1); // Follow State
+			IdleTransitionTime = 0.0f;
+			FollowTransitionTime = 0.0f;
+		}
+		else
+		{
+			FollowTransitionTime += DeltaTime;
+			IdleTransitionTime = 0.0f;
+	
+			if (FollowTransitionTime >= 0.5f && DistanceChange > 5.0f)
+			{
+				BlackboardComp->SetValueAsEnum("CurrentState", 1); // Follow State
+			}
+		}
+		LastDistanceToPlayer = DistanceToPlayer;
+	
+		DroneRotation(Player);
 	}
 }
 
-void ADroneAIController::ApplyPIDControl(float DeltaTime)
+void ADroneAIController::ApplyPIDControl(float DeltaTime, bool IsFollowPath)
 {
 	TObjectPtr<ADrone> ControlledDrone = Cast<ADrone>(GetPawn());
 	if (!ControlledDrone) return;
@@ -168,7 +118,7 @@ void ADroneAIController::ApplyPIDControl(float DeltaTime)
 	float DistanceToTarget = Error.Size();
 	
 	float BaseSpeedFactor = DistanceToTarget / 500.0f; 
-	float PathSpeedBoost = bEndFollowPath ? 1.0f : PathFindModeAcceleration;
+	float PathSpeedBoost = IsFollowPath ? PathFindModeAcceleration : 1.0f;
 	float SpeedFactor = FMath::Clamp(BaseSpeedFactor * PathSpeedBoost, 0.1f, 1.0f);
 	
 	PIDForce = PIDForce.GetClampedToMaxSize(MaxSpeed * SpeedFactor);
@@ -177,10 +127,83 @@ void ADroneAIController::ApplyPIDControl(float DeltaTime)
 	ControlledDrone->SetMoveInput(PIDForce.GetSafeNormal());
 	PreviousError = Error;
 }
-void ADroneAIController::DroneRotation(const TObjectPtr<APawn>& PlayerPawnPtr)
+
+void ADroneAIController::ApplySmoothMovement(float DeltaTime)
+{
+	TargetLocation = FMath::VInterpTo(TargetLocation, NewTargetLocation, DeltaTime, 5.0f);
+}
+
+ void ADroneAIController::DroneRotation(const TObjectPtr<APawn>& PlayerPawnPtr)
 {
 	const TObjectPtr<ADrone> ControlledDrone = Cast<ADrone>(GetPawn());
 	if (!ControlledDrone) return;
+
+	FRotator CurrentRotation = ControlledDrone->GetCameraSceneComponent()->GetRelativeRotation();
+	FRotator TargetRotation;
+
+	// Idle State
+	if (BlackboardComp->GetValueAsEnum("CurrentState") == 0)
+	{
+		TargetRotation = PlayerPawnPtr->GetActorRotation();
+	}
+	// Follow State
+	else if (BlackboardComp->GetValueAsEnum("CurrentState") == 1)
+	{
+		FVector DroneLocation = ControlledDrone->GetActorLocation();
+		FVector DirectionToPlayer = (TargetLocation - DroneLocation).GetSafeNormal();
+		TargetRotation = DirectionToPlayer.Rotation();
+
+		//  DeadZone
+		float DistanceToTarget = FVector::Dist(DroneLocation, TargetLocation);
+		if (DistanceToTarget < 15.0f) 
+		{
+			return;
+		}
+	}
+
+	FRotator NewRotation = FMath::RInterpTo(
+		CurrentRotation,
+		TargetRotation,
+		GetWorld()->GetDeltaSeconds(),
+		3.0f
+	);
+
+	ControlledDrone->GetCameraSceneComponent()->SetRelativeRotation(NewRotation);
+}
+
+
+void ADroneAIController::UpdateHappyMovement(float DeltaTime)
+{
+	const TObjectPtr<ADrone> ControlledDrone = Cast<ADrone>(GetPawn());
+	if (!ControlledDrone) return;
+
+	const TObjectPtr<APawn> Player = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
+	if (!Player) return;
+
+	const FVector PlayerLocation = Player->GetActorLocation() + BaseDroneOffset;
+
+	const float Time = GetWorld()->GetTimeSeconds();
+
+	float BounceHeight = FMath::Abs(FMath::Sin(Time * 1.0f)) * 50.0f;
+
+	float EaseFactor = (FMath::Cos(Time * 2.0f) + 1.0f) / 2.0f;
+
+	FVector RandomShake = FVector(
+		FMath::Sin(Time * 2.0f + FMath::RandRange(-0.5f, 0.5f)) * 2.0f,
+		FMath::Cos(Time * 2.0f + FMath::RandRange(-0.5f, 0.5f)) * 2.0f,
+		0.0f
+	);
+
+	FVector TargetLocations = PlayerLocation + RandomShake + FVector(0.0f, 0.0f, BounceHeight * EaseFactor);
+
+	// 좌우 틸트 회전 (Roll)
+	float TiltAngle = FMath::Sin(Time * 3.0f) * 15.0f; // 좌우 기울기 각도
+	FRotator NewTiltRotation = ControlledDrone->GetCameraSceneComponent()->GetRelativeRotation();
+	NewTiltRotation.Roll = FMath::FInterpTo(NewTiltRotation.Roll, TiltAngle, DeltaTime, 8.0f);
+	// 회전 적용
+	ControlledDrone->GetCameraSceneComponent()->SetRelativeRotation(NewTiltRotation);
 	
-	ControlledDrone->GetCameraSceneComponent()->SetRelativeRotation(PlayerPawnPtr->GetActorRotation());
+	SetNewTargetLocation(TargetLocations);
+	ApplySmoothMovement(DeltaTime);
+	ApplyPIDControl(DeltaTime, true);
 }

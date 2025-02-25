@@ -4,6 +4,7 @@
 #include "GameFramework/Pawn.h"
 #include "Drone.generated.h"
 
+class AAOctreeVolume;
 struct FInputActionValue;
 class UPhysicsHandleComponent;
 class UCameraComponent;
@@ -11,6 +12,13 @@ class USpringArmComponent;
 class USkeletalMeshComponent;
 class UCapsuleComponent;
 class USceneComponent;
+
+UENUM(BlueprintType)
+enum class EDroneControlMode : uint8
+{
+	Manual UMETA(DisplayName = "Manual"),
+	AIControlled UMETA(DisplayName = "AI Controlled")
+};
 
 UCLASS()
 class ECLIPSE_SYNDROME_API ADrone : public APawn
@@ -32,7 +40,9 @@ protected:
 	TObjectPtr<UCameraComponent> CameraComp;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Drone|Component")
 	TObjectPtr<UPhysicsHandleComponent> PhysicsHandleComp;
-	
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="PathFinding")
+	TObjectPtr<AAOctreeVolume> OctreeVolume;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DroneMovement|Property")
 	float MoveForce;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DroneMovement|Property")
@@ -58,6 +68,9 @@ public:
 
 	void SetMoveInput(const FVector& Value) {MoveInput = Value;}
 	TObjectPtr<USceneComponent> GetCameraSceneComponent() {return CameraSceneComp;};
+	TObjectPtr<AAOctreeVolume> GetOctreeVolume() { return OctreeVolume; };
+
+	void SetEnhancedInput();
 
 protected:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
@@ -66,7 +79,9 @@ protected:
 	void Move(const FInputActionValue& Value);
 	UFUNCTION()
 	void Look(const FInputActionValue& Value);
-
+	UFUNCTION()
+	void PossessToCharacter(const FInputActionValue& Value);
+	
 private:
 	void ComponentInit();
 	void TiltDrone(float DeltaTime);

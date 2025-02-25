@@ -6,12 +6,10 @@
 
 #include "Blueprint/UserWidget.h"
 #include "Components/TextBlock.h"
-#include "Kismet/GameplayStatics.h"
 
 ADefaultGameState::ADefaultGameState()
 	:CurrentInventoryAmmos(100)
 {
-
 }
 
 int32 ADefaultGameState::GetAmmo() const

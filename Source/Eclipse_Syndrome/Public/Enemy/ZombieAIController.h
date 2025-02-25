@@ -15,8 +15,14 @@ class ECLIPSE_SYNDROME_API AZombieAIController : public AAIController
 	GENERATED_BODY()
 
 public:
+	UPROPERTY(EditDefaultsOnly, Category="AI")
+	float AttackRange;
+
+	void UpdateAttackRange();
+
 	virtual void OnPossess(APawn* InPawn) override;
 	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaTime) override;
 	virtual void OnMoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& Result) override;
 	
 };
