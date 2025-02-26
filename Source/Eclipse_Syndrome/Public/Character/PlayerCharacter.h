@@ -47,6 +47,9 @@ public:
 	//for possess drone
 	void SetEnhancedInput();
 
+	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, 
+		AController* EventInstigator, AActor* DamageCauser) override;
+
 protected:
 	//for input action
 	UFUNCTION()
