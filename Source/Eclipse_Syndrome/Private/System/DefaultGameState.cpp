@@ -114,9 +114,7 @@ void ADefaultGameState::UpdateHUD()
 							CurrentInventoryAmmoText->SetText(FText::FromString(FString::Printf(TEXT("%d"), DefaultGameInstance->InventoryItem[2])));
 						}
 					}
-				}
-				//Item1Image
-				//Item2Image
+				}				
 			}
 		}
 	}

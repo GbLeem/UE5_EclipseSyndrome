@@ -11,14 +11,7 @@
 #include "InputMappingContext.h"
 
 APlayerCharacterController::APlayerCharacterController()
-	:DefaultInputMappingContext(nullptr)
-	,MoveAction(nullptr)
-	,LookAction(nullptr)
-	,JumpAction(nullptr)
-	,SprintAction(nullptr)
-	,ShootAction(nullptr)
-	,ReloadAction(nullptr)
-	,PickUpAction(nullptr)
+	:bIsInventoryUIOpen(false)
 {
 	//player IMC & IA setting
 	static ConstructorHelpers::FObjectFinder<UInputMappingContext> IMC_Default(TEXT("/Game/HJ/Input/IMC_Default.IMC_Default"));
@@ -171,19 +164,30 @@ void APlayerCharacterController::ShowInventoryUI()
 	{
 		InventoryUIInstance->AddToViewport();
 		bShowMouseCursor = true;		
-		SetInputMode(FInputModeUIOnly());
+		/*FInputModeGameAndUI InputMode;
+		InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+		InputMode.SetWidgetToFocus(InventoryUIInstance->TakeWidget());
+		SetInputMode(InputMode);*/
+		SetInputMode(FInputModeGameAndUI());
+
+		//bIsInventoryUIOpen = true;
 	}
 }
 
 void APlayerCharacterController::StopShowInventoryUI()
 {
-	if (InventoryUIInstance && InventoryUIInstance->IsInViewport())
+	if (!bIsInventoryUIOpen)
 	{
-		InventoryUIInstance->RemoveFromParent();
-		InventoryUIInstance = nullptr;
+		if (InventoryUIInstance && InventoryUIInstance->IsInViewport())
+		{
+			InventoryUIInstance->RemoveFromParent();
+			InventoryUIInstance = nullptr;
 
-		bShowMouseCursor = false;
-		SetInputMode(FInputModeGameOnly());
+			bShowMouseCursor = false;
+			SetInputMode(FInputModeGameOnly());
+
+			bIsInventoryUIOpen = false;
+		}
 	}
 }
 

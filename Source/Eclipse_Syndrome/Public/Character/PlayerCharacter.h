@@ -43,6 +43,10 @@ public:
 
 	//getter
 	int32 GetCurrentWeaponAmmo();
+
+	//for possess drone
+	void SetEnhancedInput();
+
 protected:
 	//for input action
 	UFUNCTION()
@@ -76,8 +80,7 @@ protected:
 	UFUNCTION()
 	void PossessToDrone(const FInputActionValue& value);
 	UFUNCTION()
-	void DroneMoveCommand(const FInputActionValue& value);
-
+	void DroneMoveCommand(const FInputActionValue& value);	
 
 //variables
 public:
@@ -116,8 +119,14 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
 	bool bCanGrapple; //can move character(attach to grapple actor)
 
-	void SetEnhancedInput();
 	
+	//for equip weapon
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon")
+	TObjectPtr<AWeapon> CurrentWeapon;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon")
+	TObjectPtr<AWeapon> TempWeapon;
+
+
 private:
 	bool bCanFire;  //character flag
 	bool bCanReload; //for reloading animation
@@ -127,8 +136,6 @@ private:
 	FTimerHandle FireRateTimerHandle;
 	FTimerHandle GrappleTimerHandle;
 	TObjectPtr<AActor> PeekingItem;
-	AWeapon* CurrentWeapon;
 	FHitResult GrappleHitPoint; //grapple target actor point
 	float GrappleEndTime;
-	FRotator OriginRootRotator;
 };
