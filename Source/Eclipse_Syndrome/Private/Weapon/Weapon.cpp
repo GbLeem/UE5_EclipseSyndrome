@@ -86,14 +86,28 @@ void AWeapon::Fire()
             if (HitResult.BoneName == "head")  // Headshot
             {
                 FinalDamage *= 2.0f; // Damage *2
-                GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Yellow, TEXT("Headshot!")); // 추후 삭제
+                //GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Yellow, TEXT("Headshot!")); // 추후 삭제
             }
             else // Bodyshot
             {
-                GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, TEXT("Bodyshot!")); // 추후 삭제
-            }            
+                //GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, TEXT("Bodyshot!")); // 추후 삭제
+            }   
 
-            UGameplayStatics::ApplyPointDamage(HitResult.GetActor(), Damage, HitResult.ImpactNormal, HitResult, nullptr, this, nullptr);
+            GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, HitResult.GetActor()->GetName());
+            APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(GetWorld()->GetFirstLocalPlayerFromController());
+            if (PlayerCharacter)
+            {
+               UGameplayStatics::ApplyDamage(HitResult.GetActor(), Damage, nullptr, PlayerCharacter, UDamageType::StaticClass());
+            }
+            /*if (GetWorld()->GetFirstPlayerController())
+            {
+                APlayerCharacterController* PlayerCharacterController = Cast<APlayerCharacterController>(GetWorld()->GetFirstPlayerController());
+                if (PlayerCharacterController)
+                {
+                }
+            }*/
+            //UGameplayStatics::ApplyPointDamage(HitResult.GetActor(), Damage, HitResult.ImpactNormal, HitResult, nullptr, this, nullptr);
+            
         }
     }
     DrawDebugLine(GetWorld(), MuzzleLocation, EndLocation, DrawColor, false, 1.0f, 0, 2.0f); //트레이스 빨간선 

@@ -560,3 +560,12 @@ void APlayerCharacter::SetEnhancedInput()
 	InputComponent->ClearActionBindings();
 	SetupPlayerInputComponent(InputComponent);
 }
+
+float APlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+	float ActualDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+
+	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, DamageCauser->GetName());
+
+	return ActualDamage;
+}
