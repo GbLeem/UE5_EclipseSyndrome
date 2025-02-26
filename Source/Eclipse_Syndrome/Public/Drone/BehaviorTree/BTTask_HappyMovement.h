@@ -18,6 +18,8 @@ protected:
 
 private:
 	void UpdateHappyMovement(const TObjectPtr<AAIController>& AIController, const TObjectPtr<APawn>& ControlledPawn, const TObjectPtr<APawn>& PlayerPawn, float DeltaSeconds);
+	void EndTask(UBehaviorTreeComponent& OwnerComp);
 	
 	float CurrentTime;
+	float PrevDroneAIDesiredDistance;
 };

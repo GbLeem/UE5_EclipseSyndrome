@@ -9,6 +9,9 @@ class ECLIPSE_SYNDROME_API UBTTask_SetIdleTypeRandomly : public UBTTaskNode
 {
 	GENERATED_BODY()
 
+private:
+	int32 PrevIdleType;
+	
 public:
 	UBTTask_SetIdleTypeRandomly();
 	

@@ -4,8 +4,10 @@
 #include "Camera/CameraComponent.h"
 #include "Drone/Drone.h"
 #include "Drone/DroneAIController.h"
+#include "Kismet/GameplayStatics.h"
 
 UBTTask_CircleAroundPlayer::UBTTask_CircleAroundPlayer()
+	: AccumulateAngle(0.0f)
 {
 	NodeName = "CircleAroundPlayer";
 	bNotifyTick = true;
@@ -23,7 +25,7 @@ EBTNodeResult::Type UBTTask_CircleAroundPlayer::ExecuteTask(UBehaviorTreeCompone
 
 		if (Player && Drone)
 		{
-			//UpdateIdleMovement(Player, AIController, OwnerComp.GetWorld()->GetDeltaSeconds());
+			AccumulateAngle = 0.0f;
 			CalculateStartAngle(Player, AIController);
 			return EBTNodeResult::InProgress;
 		}
@@ -35,7 +37,11 @@ EBTNodeResult::Type UBTTask_CircleAroundPlayer::ExecuteTask(UBehaviorTreeCompone
 void UBTTask_CircleAroundPlayer::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
 {
 	if (OwnerComp.GetBlackboardComponent()->GetValueAsEnum("CurrentState") != 0)
+	{
 		FinishLatentTask(OwnerComp, EBTNodeResult::Failed);
+	}
+
+	IsIdleCircleMovementDone(OwnerComp);
 	
 	Super::TickTask(OwnerComp, NodeMemory, DeltaSeconds);
 
@@ -55,7 +61,7 @@ void UBTTask_CircleAroundPlayer::TickTask(UBehaviorTreeComponent& OwnerComp, uin
 	FinishLatentTask(OwnerComp, EBTNodeResult::Failed);
 }
 
-void UBTTask_CircleAroundPlayer::UpdateIdleMovement(const TObjectPtr<AActor>& PlayerPawn, AAIController* AIController, float DeltaTime) const
+void UBTTask_CircleAroundPlayer::UpdateIdleMovement(const TObjectPtr<AActor>& PlayerPawn, AAIController* AIController, float DeltaTime)
 {
 	const FVector PlayerLocation = PlayerPawn->GetActorLocation() + FVector(0.0f, 0.0f, 100.0f);
 	const FVector CameraForward = PlayerPawn->GetComponentByClass<UCameraComponent>()->GetForwardVector();
@@ -95,7 +101,9 @@ void UBTTask_CircleAroundPlayer::UpdateIdleMovement(const TObjectPtr<AActor>& Pl
 	
 	TargetLocation.Z += NoiseValue;
 
-	CurrentAngle += AngleSpeed * DeltaTime;
+	float DeltaAngle = AngleSpeed * DeltaTime;
+	CurrentAngle += DeltaAngle;
+	AccumulateAngle += FMath::Abs(DeltaAngle);
 	DroneAIController->SetCurrentAngle(CurrentAngle);
 	DroneAIController->SetNewTargetLocation(TargetLocation);
 	DroneAIController->ApplySmoothMovement(DeltaTime);
@@ -112,4 +120,18 @@ void UBTTask_CircleAroundPlayer::CalculateStartAngle(const TObjectPtr<AActor>& P
 	float CurrentAngle = FMath::Atan2(DirectionToPlayer.Y, DirectionToPlayer.X);
 	
 	DroneAIController->SetCurrentAngle(CurrentAngle);
+}
+
+void UBTTask_CircleAroundPlayer::IsIdleCircleMovementDone(UBehaviorTreeComponent& OwnerComp)
+{
+	const TObjectPtr<APawn> Drone = OwnerComp.GetAIOwner()->GetPawn();
+	const TObjectPtr<APawn> Player = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
+	const TObjectPtr<ADroneAIController> DroneAIController = Cast<ADroneAIController>(OwnerComp.GetAIOwner());
+	if (AccumulateAngle >= 2 * PI
+		&& FVector::Dist(Drone->GetActorLocation(),
+			Player->GetActorLocation() + Player->GetActorRotation().RotateVector(DroneAIController->GetBaseDroneOffset())) <= 15.f)
+	{
+		AccumulateAngle = 0.0f;
+		FinishLatentTask(OwnerComp, EBTNodeResult::Failed);
+	}
 }

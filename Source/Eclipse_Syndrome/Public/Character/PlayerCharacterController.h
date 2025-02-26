@@ -23,8 +23,17 @@ private:
 	
 public:
 	APlayerCharacterController();
+	//for ui
 	UUserWidget* GetHUDWidget() { return HUDWidgetInstance; }
+	UUserWidget* GetInventoryWidget() { return InventoryUIInstance; }
+	UFUNCTION()
+	void ShowHUD();
+	UFUNCTION()
+	void ShowInventoryUI();
+	UFUNCTION()
+	void StopShowInventoryUI();
 
+	//for possess
 	void SetPlayerPawn(const TObjectPtr<APawn>& PlayerCharacterPawn) { PlayerPawn = PlayerCharacterPawn; }
 	APawn* GetPlayerPawn() const { return PlayerPawn; }
 	void ChangePossess(const TObjectPtr<APawn>& NewPawn);
@@ -35,6 +44,7 @@ protected:
 
 //variables
 public:
+	//character input
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputMappingContext> DefaultInputMappingContext;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Input")
@@ -57,7 +67,12 @@ public:
 	TObjectPtr<UInputAction> GrappleAction;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputAction> PossessAction;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> ShowInventoryAction;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> DroneMoveCommandAction;
 
+	//drone input
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DroneInput|Property")
 	TSubclassOf<ADroneAIController> DroneAIClass;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DroneInput|Property")
@@ -74,4 +89,8 @@ public:
 	TSubclassOf<UUserWidget> HUDWidgetClass;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "HUD")
 	TObjectPtr<UUserWidget> HUDWidgetInstance;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "HUD")
+	TSubclassOf<UUserWidget> InventoryUIClass;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "HUD")
+	TObjectPtr<UUserWidget> InventoryUIInstance;
 };

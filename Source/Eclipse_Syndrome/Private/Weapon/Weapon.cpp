@@ -22,6 +22,7 @@ AWeapon::AWeapon()
     ,CurrentAmmo(30)
     ,bAutoFire(true)
     ,bIsPeeking(false)
+    , WeaponNumber(0)
 {
     PrimaryActorTick.bCanEverTick = true;
 
@@ -31,13 +32,7 @@ AWeapon::AWeapon()
     CollisionComp = CreateDefaultSubobject<USphereComponent>(TEXT("Sphere Collision"));
     CollisionComp->SetupAttachment(RootComponent);
     CollisionComp->SetCollisionProfileName(TEXT("OverlapAllDynamics"));
-    CollisionComp->SetSphereRadius(200.f);
-    
-    static ConstructorHelpers::FObjectFinder<UStaticMesh>StaticMeshAsset(TEXT("/Game/HJ/Assets/QuantumCharacter/Mesh/Rifle/SM_Rifle_Olive.SM_Rifle_Olive"));
-    if (StaticMeshAsset.Succeeded())
-    {
-        GunMesh->SetStaticMesh(StaticMeshAsset.Object);
-    }
+    CollisionComp->SetSphereRadius(200.f);   
 
     CollisionComp->OnComponentBeginOverlap.AddDynamic(this, &AWeapon::OnItemOverlap);
     CollisionComp->OnComponentEndOverlap.AddDynamic(this, &AWeapon::OnItemEndOverlap);
@@ -68,6 +63,7 @@ void AWeapon::Tick(float DeltaTime)
     bIsPeeking = false;
 }
 
+//[TODO] effect, sound, damage system
 void AWeapon::Fire()
 {
     if (CurrentAmmo <= 0)
@@ -75,21 +71,11 @@ void AWeapon::Fire()
         GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Black, FString::Printf(TEXT("no current ammo")));
         return;
     }
-    
-    // 총구 위치 가져오기 (GunMegh -> Muzzlepoint)
-    //FVector MuzzleLocation = Muzzlepoint->GetComponentLocation();       
-    //FVector FireDirection = Muzzlepoint->GetRightVector(); //방향 가져오기
 
     FVector MuzzleLocation = GunMesh->GetSocketLocation(TEXT("MuzzleSocket"));
     FVector FireDirection = CalculateDestination() - MuzzleLocation;
 
     FVector EndLocation = MuzzleLocation + FireDirection * FireRange;  // 사거리 변수 사용
-
-    // TEST MuzzleFlash
-   /* if (MuzzleFlash)
-    {
-        UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), MuzzleFlash, MuzzleLocation, MuzzleLocation.GetComponentRotation());
-    }*/
 
     // 트레이스
     FHitResult HitResult;
@@ -100,8 +86,6 @@ void AWeapon::Fire()
     FColor DrawColor = bHit ? FColor::Green : FColor::Red;
     if (bHit)
     {
-        //EndLocation = HitResult.ImpactPoint; // 트레이스가 충돌한 지점 업데이트
-
         if (HitResult.GetActor())
         {
             float FinalDamage = Damage; // Damage
@@ -114,17 +98,12 @@ void AWeapon::Fire()
             else // Bodyshot
             {
                 GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, TEXT("Bodyshot!")); // 추후 삭제
-            }
-
-            //GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Cyan, FString::Printf(TEXT("MuzzleLocation: %s"), *MuzzleLocation.ToString())); //TEST 후 삭제 요망 좌표값
-            //GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Cyan, FString::Printf(TEXT("EndLocation: %s"), *EndLocation.ToString()));  //TEST 후 삭제요망 좌표값
+            }            
 
             UGameplayStatics::ApplyPointDamage(HitResult.GetActor(), Damage, HitResult.ImpactNormal, HitResult, nullptr, this, nullptr);
         }
     }
     DrawDebugLine(GetWorld(), MuzzleLocation, EndLocation, DrawColor, false, 1.0f, 0, 2.0f); //트레이스 빨간선 
-    //GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("fire!!")));
-
     
     // 탄약 감소
     CurrentAmmo--;
@@ -133,14 +112,10 @@ void AWeapon::Fire()
 // Reload
 void AWeapon::Reload(int32 Amount)
 {	
-    GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("reloading!!")));
+    //GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("reloading!!")));
     CurrentAmmo += Amount;
 }
 
-void AWeapon::DestroyItem()
-{
-    Destroy();
-}
 
 //TEST  Crosshair 이거는 잘모르겠네요 삭제하셔도 상관없는 코드 헤드샷 판정??
 bool AWeapon::GetAimHitResult(FHitResult& OutHitResult)

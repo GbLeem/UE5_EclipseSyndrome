@@ -5,6 +5,7 @@
 #include "DefaultGameInstance.generated.h"
 
 class ABaseItem;
+class AWeapon;
 
 UCLASS()
 class ECLIPSE_SYNDROME_API UDefaultGameInstance : public UGameInstance
@@ -19,12 +20,22 @@ public:
 	UFUNCTION()
 	void UseAmmo(int32 Amount);
 	UFUNCTION()
-	void AddItem(ABaseItem* Item);
+	void AddItem(int32 ItemIdx, int32 ItemAmount);
+	UFUNCTION()
+	void AddWeapon(int32 WeaponIdx);
+	UFUNCTION()
+	bool FindWeaponByIdx(int32 WeaponIdx);
 
 public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "PlayerData")
 	int32 InventoryAmmo;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "PlayerData")
-	TArray<ABaseItem*> InventoryItem;
+	TMap<int32, int32> InventoryItem;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "PlayerData")
+	TArray<int32> WeaponInventoryItem;
+
+private:
+
 };
