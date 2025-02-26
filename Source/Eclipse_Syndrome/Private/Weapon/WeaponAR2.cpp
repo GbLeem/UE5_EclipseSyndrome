@@ -11,10 +11,9 @@ AWeaponAR2::AWeaponAR2()
     bIsPeeking = false;
     WeaponNumber = 2;
 
-    static ConstructorHelpers::FObjectFinder<UStaticMesh>StaticMeshAsset(TEXT("/Game/HJ/Assets/FPS_Weapon_Bundle/Weapons/Meshes/Ka47/SM_KA47_X.SM_KA47_X"));
+    static ConstructorHelpers::FObjectFinder<UStaticMesh>StaticMeshAsset(TEXT("/Game/HJ/Assets/FPS_Weapon_Bundle/Weapons/Meshes/Ka47/SM_KA47.SM_KA47"));
     if (StaticMeshAsset.Succeeded())
     {
         GunMesh->SetStaticMesh(StaticMeshAsset.Object);
     }
-    GunMesh->SetRelativeRotation(FRotator(0.f, 90.f, 0.f));
 }

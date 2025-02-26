@@ -15,14 +15,7 @@
 
 
 AWeapon::AWeapon()
-    :FireRate(0.05f)
-    ,FireRange(5000.f)
-    ,Damage(10.f)
-    ,MaxAmmo(30)
-    ,CurrentAmmo(30)
-    ,bAutoFire(true)
-    ,bIsPeeking(false)
-    , WeaponNumber(0)
+    :WeaponNumber(0)
 {
     PrimaryActorTick.bCanEverTick = true;
 

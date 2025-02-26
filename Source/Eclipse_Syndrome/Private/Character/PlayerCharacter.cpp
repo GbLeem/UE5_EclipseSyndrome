@@ -21,19 +21,19 @@
 
 APlayerCharacter::APlayerCharacter()
 	:SprintSpeed(800.f)
-	,NormalSpeed(500.f)
-	,MaxHealth(100.f)
-	,CurrentHealth(100.f)
-	,CurrentInventoryAmmos(100)
-	,bCanFire(false)
-	,bCanReload(false)
+	, NormalSpeed(500.f)
+	, MaxHealth(100.f)
+	, CurrentHealth(100.f)
+	, CurrentInventoryAmmos(100)
+	, bCanFire(false)
+	, bCanReload(false)
 	, bCanTraceForItemPeeking(false)
 	, bCanGrapple(false)
 	, bIsWeaponEquipped(false)
-	,BlendPoseVariable(0)
-	,PeekingItem(nullptr)
-	,CurrentWeapon(nullptr)
-	,GrappleEndTime(0.5f) //fix
+	, BlendPoseVariable(0)
+	, PeekingItem(nullptr)
+	, CurrentWeapon(nullptr)
+	, GrappleEndTime(0.5f) //fix
 	, bIsWeaponEquippedBack(false)
 {
 	PrimaryActorTick.bCanEverTick = true;
@@ -54,7 +54,6 @@ APlayerCharacter::APlayerCharacter()
 	CableComp->NumSegments = 2;
 	CableComp->SetVisibility(false);
 
-	OriginRootRotator = RootComponent->GetComponentRotation();
 	Tags.Add("Player");
 }
 
@@ -169,19 +168,20 @@ void APlayerCharacter::Shoot()
 	{
 		if (CurrentWeapon->GetCurrentAmmo() <= 0)
 		{
-			//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Black, FString::Printf(TEXT("you need to reload!")));
 			return;
 		}
 		if (bCanFire)
 		{
 			//Real shooting 
-			CurrentWeapon->Fire();			
-			//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Black, FString::Printf(TEXT("shoot %d"), CurrentWeapon->GetCurrentAmmo()));		
+			CurrentWeapon->Fire();	
+			//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Black, FString::Printf(TEXT("auto? %d"), CurrentWeapon->GetAutoFire()));	
+			//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Black, CurrentWeapon->GetName());
 			bCanFire = false;	
 
 			//auto fire
 			if (CurrentWeapon->GetAutoFire())
 			{
+				//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Black, CurrentWeapon->GetName());
 				GetWorld()->GetTimerManager().SetTimer(FireRateTimerHandle, this, &APlayerCharacter::ResetShoot, CurrentWeapon->GetFireRate(), true);			
 			}
 		}
@@ -306,31 +306,43 @@ void APlayerCharacter::EquipWeaponBack(int32 WeaponIdx)
 {
 	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString::Printf(TEXT("equip weapon")));
 
-	if (CurrentWeapon)
-	{
-		CurrentWeapon = nullptr;
-	}
-
 	if (WeaponIdx == 1)
 	{
-		CurrentWeapon = GetWorld()->SpawnActor<AWeaponAR1>();
+		TempWeapon = GetWorld()->SpawnActor<AWeaponAR1>();
 	}
 	else if (WeaponIdx == 2)
 	{
-		CurrentWeapon = GetWorld()->SpawnActor<AWeaponAR2>();
+		TempWeapon = GetWorld()->SpawnActor<AWeaponAR2>();
 	}
 	else if (WeaponIdx == 3)
 	{
-		CurrentWeapon = GetWorld()->SpawnActor<AWeaponSR>();
+		TempWeapon = GetWorld()->SpawnActor<AWeaponSR>();
 	}
 	else if (WeaponIdx == 4)
 	{
 		//CurrentWeapon = GetWorld()->SpawnActor<AWeapon>();
 	}
 
+	//already equip weapon
+	if (CurrentWeapon || bIsWeaponEquippedBack)
+	{
+		TObjectPtr<AWeapon> Dummy;
+		Dummy = TempWeapon;
+		TempWeapon = CurrentWeapon;
+		CurrentWeapon = Dummy;
+		TempWeapon->Destroy();
+	}
+	else
+	{
+		CurrentWeapon = TempWeapon;
+		TempWeapon->Destroy();
+	}
+
 	CurrentWeapon->SetActorEnableCollision(false);
+
 	FName WeaponSocket(TEXT("back_socket"));
 	CurrentWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponSocket);
+	bIsWeaponEquippedBack = true;
 }
 
 int32 APlayerCharacter::GetCurrentWeaponAmmo()
@@ -495,7 +507,6 @@ void APlayerCharacter::Grapple(const FInputActionValue& value)
 {	
 	if (!bIsWeaponEquipped)
 	{
-
 		FVector Start = UGameplayStatics::GetPlayerCameraManager(GetWorld(), 0)->GetCameraLocation();	
 		FVector End = Start + UKismetMathLibrary::GetForwardVector(UGameplayStatics::GetPlayerCameraManager(GetWorld(), 0)->GetCameraRotation()) * 1500.f;
 		TArray<AActor*> ActorsToIgnore;
@@ -513,27 +524,20 @@ void APlayerCharacter::Grapple(const FInputActionValue& value)
 }
 
 void APlayerCharacter::ShowInventory(const FInputActionValue& value)
-{
-	if (value.Get<bool>())
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Blue, FString::Printf(TEXT("Show")));
-		//if pressed UI
-		if (GetController())
-		{
-			Cast<APlayerCharacterController>(GetController())->ShowInventoryUI();
-		}
-	}
+{	
+	//if pressed UI
+	if (GetController())
+	{		
+		Cast<APlayerCharacterController>(GetController())->ShowInventoryUI();		
+	}	
 }
 
 void APlayerCharacter::StopShowInventory(const FInputActionValue& value)
-{
-	GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Blue, FString::Printf(TEXT("Remove")));
-	//if(!value.Get<bool>())
-	/*if (GetController())
+{	
+	if (GetController())
 	{
 		Cast<APlayerCharacterController>(GetController())->StopShowInventoryUI();
-
-	}*/
+	}	
 }
 
 void APlayerCharacter::PossessToDrone(const FInputActionValue& value)
