@@ -22,8 +22,12 @@ void UDefaultGameInstance::UseAmmo(int32 Amount)
 
 void UDefaultGameInstance::AddItem(int32 ItemIdx, int32 ItemAmount)
 {
-	if(InventoryItem.Contains(ItemIdx))
+	if (InventoryItem.Contains(ItemIdx))
+	{
 		InventoryItem[ItemIdx] += ItemAmount;
+		if (ItemIdx == 2)
+			AddAmmo(ItemAmount);
+	}
 	else
 		InventoryItem.Add(ItemIdx, ItemAmount);
 }

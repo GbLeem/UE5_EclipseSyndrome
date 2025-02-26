@@ -27,8 +27,6 @@ public:
 	void ResetShoot() { bCanFire = true; }
 	UFUNCTION()
 	void Reloading();
-	UFUNCTION()
-	void PickUpItem();
 
 	//call item's activate Item
 	void BeginTraceForPickItem();
@@ -111,9 +109,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
 	int32 CurrentInventoryAmmos;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
-	TArray<ABaseItem*> Inventory;
-
 	//for animation
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
 	int32 BlendPoseVariable;
@@ -128,6 +123,8 @@ public:
 	TObjectPtr<AWeapon> CurrentWeapon;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon")
 	TObjectPtr<AWeapon> TempWeapon;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon")
+	TMap<int32, TObjectPtr<AWeapon>> PlayerWeaponInventory;
 
 
 private:

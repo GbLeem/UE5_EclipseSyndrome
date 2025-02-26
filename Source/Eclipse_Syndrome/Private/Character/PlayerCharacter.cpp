@@ -170,18 +170,20 @@ void APlayerCharacter::Shoot()
 		{
 			return;
 		}
+		GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("before: % d"), bCanFire));
+
 		if (bCanFire)
 		{
 			//Real shooting 
-			CurrentWeapon->Fire();	
-			//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Black, FString::Printf(TEXT("auto? %d"), CurrentWeapon->GetAutoFire()));	
-			//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Black, CurrentWeapon->GetName());
+			CurrentWeapon->Fire();		
+
 			bCanFire = false;	
+			GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Blue, FString::Printf(TEXT("after : %d"), bCanFire));
 
 			//auto fire
 			if (CurrentWeapon->GetAutoFire())
 			{
-				//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Black, CurrentWeapon->GetName());
+				GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Black, CurrentWeapon->GetName());
 				GetWorld()->GetTimerManager().SetTimer(FireRateTimerHandle, this, &APlayerCharacter::ResetShoot, CurrentWeapon->GetFireRate(), true);			
 			}
 		}
@@ -214,13 +216,6 @@ void APlayerCharacter::Reloading()
 			}		
 		}
 	}	
-}
-
-//only ammo and health item
-void APlayerCharacter::PickUpItem()
-{
-	if (PeekingItem)
-		Inventory.Add(Cast<ABaseItem>(PeekingItem));
 }
 
 
@@ -304,8 +299,11 @@ void APlayerCharacter::GrappleEnd()
 
 void APlayerCharacter::EquipWeaponBack(int32 WeaponIdx)
 {
-	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString::Printf(TEXT("equip weapon")));
-
+	//attack animation -> can't change weapon
+	if (bIsWeaponEquipped)
+		return;
+	GetWorldTimerManager().ClearTimer(FireRateTimerHandle);
+	//idle animation -> spawn weapon by index
 	if (WeaponIdx == 1)
 	{
 		TempWeapon = GetWorld()->SpawnActor<AWeaponAR1>();
@@ -321,11 +319,11 @@ void APlayerCharacter::EquipWeaponBack(int32 WeaponIdx)
 	else if (WeaponIdx == 4)
 	{
 		//CurrentWeapon = GetWorld()->SpawnActor<AWeapon>();
-	}
+	}	
 
 	//already equip weapon
 	if (CurrentWeapon || bIsWeaponEquippedBack)
-	{
+	{		
 		TObjectPtr<AWeapon> Dummy;
 		Dummy = TempWeapon;
 		TempWeapon = CurrentWeapon;
@@ -334,12 +332,10 @@ void APlayerCharacter::EquipWeaponBack(int32 WeaponIdx)
 	}
 	else
 	{
-		CurrentWeapon = TempWeapon;
-		//TempWeapon->Destroy();
+		CurrentWeapon = TempWeapon;		
 	}
 
 	CurrentWeapon->SetActorEnableCollision(false);
-
 	FName WeaponSocket(TEXT("back_socket"));
 	CurrentWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponSocket);
 	bIsWeaponEquippedBack = true;
@@ -421,7 +417,7 @@ void APlayerCharacter::Reload(const FInputActionValue& value)
 
 void APlayerCharacter::StartShoot(const FInputActionValue& value)
 {
-	if (bCanFire&& bIsWeaponEquipped)
+	if (bCanFire && bIsWeaponEquipped)
 	{
 		Shoot();	
 	}
@@ -432,6 +428,7 @@ void APlayerCharacter::StopShoot(const FInputActionValue& value)
 {
 	if(CurrentWeapon && !CurrentWeapon->GetAutoFire())
 	{
+		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Green, CurrentWeapon->GetName());
 		bCanFire = true;
 	}
 }
@@ -456,7 +453,6 @@ void APlayerCharacter::PickUp(const FInputActionValue& value)
 
 		else if(PeekingItem->ActorHasTag("Item"))
 		{
-			//PickUpItem();
 			if (GetGameInstance())
 			{
 				UDefaultGameInstance* DefaultGameInstance = Cast<UDefaultGameInstance>(GetGameInstance());

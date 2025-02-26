@@ -52,7 +52,6 @@ float AZombieEnemy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEve
 		}
 	}
 
-	GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, TEXT("Zombie Attacked by character!")); // 추후 삭제
 
 	return ActualDamage;
 }

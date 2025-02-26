@@ -165,8 +165,7 @@ void APlayerCharacterController::ShowInventoryUI()
 		InventoryUIInstance->AddToViewport();
 		bShowMouseCursor = true;		
 		bIsInventoryUIOpen = true;
-		SetInputMode(FInputModeGameAndUI());
-		//SetInputMode(FInputModeUIOnly());
+		SetInputMode(FInputModeGameAndUI());		
 	}	
 }
 
