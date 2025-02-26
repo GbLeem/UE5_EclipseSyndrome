@@ -549,6 +549,61 @@ void APlayerCharacter::PossessToDrone(const FInputActionValue& value)
 void APlayerCharacter::DroneMoveCommand(const FInputActionValue& value)
 {
 	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString::Printf(TEXT("drone move command")));
+
+	if (!value.Get<bool>())
+	{
+		FVector TargetLocation = FVector::ZeroVector;
+		
+		//trace 하기
+		APlayerCharacterController* PlayerController = Cast<APlayerCharacterController>(GetController());
+		if (PlayerController)
+		{
+			int32 ScreenWidth;
+			int32 ScreenHeight;
+
+			PlayerController->GetViewportSize(ScreenWidth, ScreenHeight);
+			const FVector2D ScreenCenter(ScreenWidth * 0.5f, ScreenHeight * 0.5f);
+
+			FVector WorldLocation;
+			FVector WorldDirection;
+			if (PlayerController->DeprojectScreenPositionToWorld(ScreenCenter.X, ScreenCenter.Y, WorldLocation, WorldDirection))
+			{
+				const FVector TraceStart = WorldLocation + WorldDirection * 100.f;
+				const FVector TraceEnd = TraceStart + (WorldDirection * 1200.f);
+				TargetLocation = TraceEnd;
+
+				FHitResult HitResult;
+				FCollisionQueryParams TraceParams;
+				TraceParams.AddIgnoredActor(this);
+
+				bool bHit = GetWorld()->LineTraceSingleByChannel(HitResult, TraceStart, TraceEnd, ECC_Visibility, TraceParams);
+
+				FColor LineColor = bHit ? FColor::Orange : FColor::Cyan;
+				DrawDebugLine(GetWorld(), TraceStart, TraceEnd, LineColor, false, 2.0f, 0, 2.0f);
+
+				if (bHit)
+				{						
+					TargetLocation = HitResult.Location;// + HitResult.ImpactNormal * 100.0f;
+				}
+			}
+		}
+
+		// 드론을 찾아와서 컨트롤러를 가져옴
+		if (ADefaultGameState* DefaultGameState = Cast<ADefaultGameState>(GetWorld()->GetGameState()))
+		{
+			if (APawn* DronePawn = DefaultGameState->GetDrone())
+			{
+				if (AController* DroneController = Cast<ADrone>(DronePawn)->GetController())
+				{
+					if (ADroneAIController* DroneAIController = Cast<ADroneAIController>(DroneController))
+					{
+						// movecommand를 해줌 이때, 타겟 로케이션이랑 상태 전환해주어야하는데..
+						DroneAIController->DroneMoveCommand(TargetLocation);
+					}
+				}
+			}
+		}
+	}
 }
 
 void APlayerCharacter::SetEnhancedInput()
