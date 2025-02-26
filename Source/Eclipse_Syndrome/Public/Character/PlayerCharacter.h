@@ -78,8 +78,8 @@ protected:
 	void Grapple(const FInputActionValue& value);
 	UFUNCTION()
 	void ShowInventory(const FInputActionValue& value);
-	UFUNCTION()
-	void StopShowInventory(const FInputActionValue& value);
+	/*UFUNCTION()
+	void StopShowInventory(const FInputActionValue& value);*/
 	UFUNCTION()
 	void PossessToDrone(const FInputActionValue& value);
 	UFUNCTION()

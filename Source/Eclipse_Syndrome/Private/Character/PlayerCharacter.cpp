@@ -122,10 +122,10 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 			if (PlayerController->ShowInventoryAction)
 			{
 				EnhancedInputComponent->BindAction(PlayerController->ShowInventoryAction,
-					ETriggerEvent::Triggered, this, &APlayerCharacter::ShowInventory);
+					ETriggerEvent::Started, this, &APlayerCharacter::ShowInventory);
 
-				EnhancedInputComponent->BindAction(PlayerController->ShowInventoryAction,
-					ETriggerEvent::Completed, this, &APlayerCharacter::StopShowInventory);
+				//EnhancedInputComponent->BindAction(PlayerController->ShowInventoryAction,
+				//	ETriggerEvent::Completed, this, &APlayerCharacter::StopShowInventory);
 			}
 			if (PlayerController->DroneMoveCommandAction)
 			{
@@ -335,7 +335,7 @@ void APlayerCharacter::EquipWeaponBack(int32 WeaponIdx)
 	else
 	{
 		CurrentWeapon = TempWeapon;
-		TempWeapon->Destroy();
+		//TempWeapon->Destroy();
 	}
 
 	CurrentWeapon->SetActorEnableCollision(false);
@@ -527,18 +527,26 @@ void APlayerCharacter::ShowInventory(const FInputActionValue& value)
 {	
 	//if pressed UI
 	if (GetController())
-	{		
-		Cast<APlayerCharacterController>(GetController())->ShowInventoryUI();		
+	{			
+		if (!Cast<APlayerCharacterController>(GetController())->bIsInventoryUIOpen)
+		{
+			Cast<APlayerCharacterController>(GetController())->ShowInventoryUI();		
+		}
+		else
+		{
+			Cast<APlayerCharacterController>(GetController())->StopShowInventoryUI();
+		}
 	}	
+
 }
 
-void APlayerCharacter::StopShowInventory(const FInputActionValue& value)
-{	
-	if (GetController())
-	{
-		Cast<APlayerCharacterController>(GetController())->StopShowInventoryUI();
-	}	
-}
+//void APlayerCharacter::StopShowInventory(const FInputActionValue& value)
+//{	
+//	if (GetController())
+//	{
+//		Cast<APlayerCharacterController>(GetController())->StopShowInventoryUI();
+//	}	
+//}
 
 void APlayerCharacter::PossessToDrone(const FInputActionValue& value)
 {
