@@ -456,7 +456,6 @@ void APlayerCharacter::StopShoot(const FInputActionValue& value)
 {
 	if(CurrentWeapon && !CurrentWeapon->GetAutoFire())
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Green, CurrentWeapon->GetName());
 		bCanFire = true;
 	}
 }
