@@ -2,7 +2,7 @@
 
 AWeaponSR::AWeaponSR()
 {
-    FireRate = 2.f;
+    FireRate = 10.f;
     FireRange = 6000.f;
     Damage = 35.f;
     MaxAmmo = 15;

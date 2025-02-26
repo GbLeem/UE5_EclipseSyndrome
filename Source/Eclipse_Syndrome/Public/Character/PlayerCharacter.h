@@ -27,8 +27,6 @@ public:
 	void ResetShoot() { bCanFire = true; }
 	UFUNCTION()
 	void Reloading();
-	UFUNCTION()
-	void PickUpItem();
 
 	//call item's activate Item
 	void BeginTraceForPickItem();
@@ -40,9 +38,18 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void EquipWeaponBack(int32 WeaponIdx);
+	UFUNCTION(BlueprintCallable)
+	void UseHealthItem();
 
 	//getter
 	int32 GetCurrentWeaponAmmo();
+
+	//for possess drone
+	void SetEnhancedInput();
+
+	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, 
+		AController* EventInstigator, AActor* DamageCauser) override;
+
 protected:
 	//for input action
 	UFUNCTION()
@@ -71,13 +78,12 @@ protected:
 	void Grapple(const FInputActionValue& value);
 	UFUNCTION()
 	void ShowInventory(const FInputActionValue& value);
-	UFUNCTION()
-	void StopShowInventory(const FInputActionValue& value);
+	/*UFUNCTION()
+	void StopShowInventory(const FInputActionValue& value);*/
 	UFUNCTION()
 	void PossessToDrone(const FInputActionValue& value);
 	UFUNCTION()
-	void DroneMoveCommand(const FInputActionValue& value);
-
+	void DroneMoveCommand(const FInputActionValue& value);	
 
 //variables
 public:
@@ -96,17 +102,14 @@ public:
 	float NormalSpeed;
 
 	//for character health
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health")
+	/*UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health")
 	float MaxHealth;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health")
-	float CurrentHealth;
+	float CurrentHealth;*/
 
 	//for character item (inventory ammo)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
 	int32 CurrentInventoryAmmos;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
-	TArray<ABaseItem*> Inventory;
 
 	//for animation
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
@@ -115,9 +118,20 @@ public:
 	bool bIsWeaponEquipped; //for change character animation(idle<->weapon)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
 	bool bCanGrapple; //can move character(attach to grapple actor)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
+	TObjectPtr<UAnimMontage> ReloadAnimMontage;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
+	TObjectPtr<UAnimMontage> DamageAnimMontage;
 
-	void SetEnhancedInput();
-	
+	//for equip weapon
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon")
+	TObjectPtr<AWeapon> CurrentWeapon;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon")
+	TObjectPtr<AWeapon> TempWeapon;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon")
+	TMap<int32, TObjectPtr<AWeapon>> PlayerWeaponInventory;
+
+
 private:
 	bool bCanFire;  //character flag
 	bool bCanReload; //for reloading animation
@@ -127,8 +141,6 @@ private:
 	FTimerHandle FireRateTimerHandle;
 	FTimerHandle GrappleTimerHandle;
 	TObjectPtr<AActor> PeekingItem;
-	AWeapon* CurrentWeapon;
 	FHitResult GrappleHitPoint; //grapple target actor point
 	float GrappleEndTime;
-	FRotator OriginRootRotator;
 };

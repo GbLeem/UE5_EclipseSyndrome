@@ -125,20 +125,29 @@ void UBTTask_FollowWithAvoidance::FindPath(const TObjectPtr<ADroneAIController>&
 	{
 		TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
 		ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_Visibility));
-		if (CurOctreeVolume->IsValidDestLocation(DesiredTarget, ObjectTypes, AActor::StaticClass()))
+		// 나중에 문제가 발생할 때 되돌릴 용
+		// if (CurOctreeVolume->IsValidDestLocation(DesiredTarget, ObjectTypes, AActor::StaticClass()))
+		// {
+		// 	FVector DroneLocation = DroneAIController->GetPawn()->GetActorLocation();
+		// 	PathPoints.Empty();
+		// 	if (CurOctreeVolume->FindPath(DroneLocation, DesiredTarget, ObjectTypes, AActor::StaticClass(), PathPoints))
+		// 	{
+		// 		bEndFollowPath = false;
+		// 		CurIndex = 0;
+		// 	}
+		// }
+		// else
+		// {
+		// 	bCanFindPath = false;
+		// 	GetWorld()->GetTimerManager().SetTimer(PathTimerHandle, this, &UBTTask_FollowWithAvoidance::CanFindPath, 1.0f, false);
+		// }
+
+		FVector DroneLocation = DroneAIController->GetPawn()->GetActorLocation();
+		PathPoints.Empty();
+		if (CurOctreeVolume->FindPath(DroneLocation, DesiredTarget, ObjectTypes, AActor::StaticClass(), PathPoints))
 		{
-			FVector DroneLocation = DroneAIController->GetPawn()->GetActorLocation();
-			PathPoints.Empty();
-			if (CurOctreeVolume->FindPath(DroneLocation, DesiredTarget, ObjectTypes, AActor::StaticClass(), PathPoints))
-			{
-				bEndFollowPath = false;
-				CurIndex = 0;
-			}
-		}
-		else
-		{
-			bCanFindPath = false;
-			GetWorld()->GetTimerManager().SetTimer(PathTimerHandle, this, &UBTTask_FollowWithAvoidance::CanFindPath, 1.0f, false);
+			bEndFollowPath = false;
+			CurIndex = 0;
 		}
 	}
 }
@@ -166,6 +175,8 @@ void UBTTask_FollowWithAvoidance::FollowPath(const TObjectPtr<ADroneAIController
 			}
 			else
 			{
+				// 나중에 문제가 생기면 되돌릴 때 CanFindPath 지워야함.
+				CanFindPath();
 				bEndFollowPath = true;
 			}
 		}

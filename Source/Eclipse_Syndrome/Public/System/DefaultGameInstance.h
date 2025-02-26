@@ -25,16 +25,28 @@ public:
 	void AddWeapon(int32 WeaponIdx);
 	UFUNCTION()
 	bool FindWeaponByIdx(int32 WeaponIdx);
+	UFUNCTION()
+	void PlusHealth(int32 Amount);
+	UFUNCTION()
+	void MinusHealth(int32 Amount);
 
 public:
+	//for HUD ammo text ui
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "PlayerData")
 	int32 InventoryAmmo;
 
+	//for Inventory UI
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "PlayerData")
 	TMap<int32, int32> InventoryItem;
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "PlayerData")
 	TArray<int32> WeaponInventoryItem;
+
+	//health
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "PlayerData")
+	float PlayerMaxHealth;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "PlayerData")
+	float PlayerCurrentHealth;
+
 
 private:
 

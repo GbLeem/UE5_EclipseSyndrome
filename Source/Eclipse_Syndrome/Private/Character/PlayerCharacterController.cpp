@@ -11,14 +11,7 @@
 #include "InputMappingContext.h"
 
 APlayerCharacterController::APlayerCharacterController()
-	:DefaultInputMappingContext(nullptr)
-	,MoveAction(nullptr)
-	,LookAction(nullptr)
-	,JumpAction(nullptr)
-	,SprintAction(nullptr)
-	,ShootAction(nullptr)
-	,ReloadAction(nullptr)
-	,PickUpAction(nullptr)
+	:bIsInventoryUIOpen(false)
 {
 	//player IMC & IA setting
 	static ConstructorHelpers::FObjectFinder<UInputMappingContext> IMC_Default(TEXT("/Game/HJ/Input/IMC_Default.IMC_Default"));
@@ -117,7 +110,7 @@ APlayerCharacterController::APlayerCharacterController()
 	//ui BP setting
 	static ConstructorHelpers::FClassFinder<UUserWidget>HUDWidgetBP(TEXT("/Game/HJ/UI/WBP_HUD.WBP_HUD_C"));
 	if (HUDWidgetBP.Succeeded())
-	{
+	{	
 		HUDWidgetClass = HUDWidgetBP.Class;
 	}
 	static ConstructorHelpers::FClassFinder<UUserWidget>InventoryWidgetBP(TEXT("/Game/HJ/UI/WBP_Inventory.WBP_Inventory_C"));
@@ -162,29 +155,35 @@ void APlayerCharacterController::ShowHUD()
 
 void APlayerCharacterController::ShowInventoryUI()
 {
-	if (!InventoryUIInstance)
+	if (InventoryUIClass && !InventoryUIInstance)
 	{
-		InventoryUIInstance = CreateWidget<UUserWidget>(GetWorld(), InventoryUIClass);
+		InventoryUIInstance = CreateWidget<UUserWidget>(this, InventoryUIClass);
 	}
 
 	if (InventoryUIInstance && !InventoryUIInstance->IsInViewport())
 	{
 		InventoryUIInstance->AddToViewport();
 		bShowMouseCursor = true;		
-		SetInputMode(FInputModeUIOnly());
-	}
+		bIsInventoryUIOpen = true;
+		SetInputMode(FInputModeGameAndUI());		
+	}	
 }
 
 void APlayerCharacterController::StopShowInventoryUI()
 {
-	if (InventoryUIInstance && InventoryUIInstance->IsInViewport())
-	{
-		InventoryUIInstance->RemoveFromParent();
-		InventoryUIInstance = nullptr;
+	//if (!bIsInventoryUIOpen)
+	//{
+		//if (InventoryUIInstance && InventoryUIInstance->IsInViewport())
+		//{
+			InventoryUIInstance->RemoveFromParent();
+			InventoryUIInstance = nullptr;
 
-		bShowMouseCursor = false;
-		SetInputMode(FInputModeGameOnly());
-	}
+			bShowMouseCursor = false;
+			SetInputMode(FInputModeGameOnly());
+
+			bIsInventoryUIOpen = false;
+		//}
+	//}	
 }
 
 void APlayerCharacterController::BeginPlay()
@@ -202,7 +201,7 @@ void APlayerCharacterController::BeginPlay()
 		}
 	}
 
-	ShowHUD();
+	ShowHUD();	
 }
 
 void APlayerCharacterController::ChangePossess(const TObjectPtr<APawn>& NewPawn)

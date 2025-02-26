@@ -15,14 +15,7 @@
 
 
 AWeapon::AWeapon()
-    :FireRate(0.05f)
-    ,FireRange(5000.f)
-    ,Damage(10.f)
-    ,MaxAmmo(30)
-    ,CurrentAmmo(30)
-    ,bAutoFire(true)
-    ,bIsPeeking(false)
-    , WeaponNumber(0)
+    :WeaponNumber(0)
 {
     PrimaryActorTick.bCanEverTick = true;
 
@@ -92,15 +85,15 @@ void AWeapon::Fire()
 
             if (HitResult.BoneName == "head")  // Headshot
             {
-                FinalDamage *= 2.0f; // Damage *2
-                GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Yellow, TEXT("Headshot!")); // 추후 삭제
+                FinalDamage *= 2.0f;
             }
             else // Bodyshot
             {
-                GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, TEXT("Bodyshot!")); // 추후 삭제
-            }            
+            }   
+           
+            GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, HitResult.GetActor()->GetName());          
 
-            UGameplayStatics::ApplyPointDamage(HitResult.GetActor(), Damage, HitResult.ImpactNormal, HitResult, nullptr, this, nullptr);
+            UGameplayStatics::ApplyDamage(HitResult.GetActor(), Damage, nullptr, this, UDamageType::StaticClass());
         }
     }
     DrawDebugLine(GetWorld(), MuzzleLocation, EndLocation, DrawColor, false, 1.0f, 0, 2.0f); //트레이스 빨간선 
@@ -112,7 +105,6 @@ void AWeapon::Fire()
 // Reload
 void AWeapon::Reload(int32 Amount)
 {	
-    //GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("reloading!!")));
     CurrentAmmo += Amount;
 }
 
@@ -170,7 +162,6 @@ FVector AWeapon::CalculateDestination()
 void AWeapon::ShowUI()
 {
     ItemHoverUI->SetVisibility(true);
-    //CanPickUp = true;
 }
 
 void AWeapon::StopUI()

@@ -7,6 +7,8 @@
 #include "Kismet/GameplayStatics.h"
 #include "Drone/Drone.h"
 #include "System/DefaultGameState.h"
+#include "Volume/AOctreeVolume.h"
+#include "Volume/NavNode.h"
 
 ADroneAIController::ADroneAIController()
 	: BaseDroneOffset(FVector(25, 80, 100))
@@ -56,36 +58,40 @@ void ADroneAIController::Tick(float DeltaTime)
 		const bool bPlayerStopped = PlayerVelocity.Length() < 10.0f;
 		const bool bDroneAlmostStopped = DroneVelocity.Length() <= 10.0f;
 		const bool bPlayerClose = DistanceToPlayer < 300.0f;
-		const bool bPlayerFar = DistanceToPlayer > 1000.0f;
+		const bool bPlayerFar = DistanceToPlayer > 500.0f;
 	
 		float DistanceChange = FMath::Abs(DistanceToPlayer - LastDistanceToPlayer);
-	
-		if (bPlayerStopped && bDroneAlmostStopped && bPlayerClose && DistanceChange < 5.0f)
+
+		if (!bExecuteCommand)
 		{
-			IdleTransitionTime += DeltaTime;
-			FollowTransitionTime = 0.0f;
-	
-			if (IdleTransitionTime >= 1.0f)
+			if (bPlayerStopped && bDroneAlmostStopped && bPlayerClose && DistanceChange < 5.0f)
 			{
-				BlackboardComp->SetValueAsEnum("CurrentState", 0); // Idle State
-			}
-		}
-		else if (bPlayerFar)
-		{
-			BlackboardComp->SetValueAsEnum("CurrentState", 1); // Follow State
-			IdleTransitionTime = 0.0f;
-			FollowTransitionTime = 0.0f;
-		}
-		else
-		{
-			FollowTransitionTime += DeltaTime;
-			IdleTransitionTime = 0.0f;
+				IdleTransitionTime += DeltaTime;
+				FollowTransitionTime = 0.0f;
 	
-			if (FollowTransitionTime >= 0.5f && DistanceChange > 5.0f)
+				if (IdleTransitionTime >= 1.0f)
+				{
+					BlackboardComp->SetValueAsEnum("CurrentState", 0); // Idle State
+				}
+			}
+			else if (bPlayerFar)
 			{
 				BlackboardComp->SetValueAsEnum("CurrentState", 1); // Follow State
+				IdleTransitionTime = 0.0f;
+				FollowTransitionTime = 0.0f;
+			}
+			else
+			{
+				FollowTransitionTime += DeltaTime;
+				IdleTransitionTime = 0.0f;
+	
+				if (FollowTransitionTime >= 0.5f && DistanceChange > 5.0f)
+				{
+					BlackboardComp->SetValueAsEnum("CurrentState", 1); // Follow State
+				}
 			}
 		}
+		
 		LastDistanceToPlayer = DistanceToPlayer;
 	
 		DroneRotation(Player);
@@ -147,7 +153,8 @@ void ADroneAIController::ApplySmoothMovement(float DeltaTime)
 		TargetRotation = PlayerPawnPtr->GetActorRotation();
 	}
 	// Follow State
-	else if (BlackboardComp->GetValueAsEnum("CurrentState") == 1)
+	else if (BlackboardComp->GetValueAsEnum("CurrentState") == 1
+		|| BlackboardComp->GetValueAsEnum("CurrentState") == 2)
 	{
 		FVector DroneLocation = ControlledDrone->GetActorLocation();
 		FVector DirectionToPlayer = (TargetLocation - DroneLocation).GetSafeNormal();
@@ -206,4 +213,24 @@ void ADroneAIController::UpdateHappyMovement(float DeltaTime)
 	SetNewTargetLocation(TargetLocations);
 	ApplySmoothMovement(DeltaTime);
 	ApplyPIDControl(DeltaTime, true);
+}
+
+void ADroneAIController::DroneMoveCommand(const FVector& NewCommandLocation)
+{
+	MoveCommandLocation = NewCommandLocation;
+	
+	// if (TObjectPtr<AAOctreeVolume> OctreeVolume = Cast<ADrone>(GetPawn())->GetOctreeVolume())
+	// {
+	// 	TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
+	// 	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_Visibility));
+	// 	if (!OctreeVolume->IsValidDestLocation(NewCommandLocation, ObjectTypes, AActor::StaticClass()))
+	// 	{
+	// 		;
+	// 		MoveCommandLocation = OctreeVolume->ConvertCoordinatesToLocation(OctreeVolume->FindNearestValidNode(NewCommandLocation, ObjectTypes, AActor::StaticClass())->Coordinates);
+	// 	}
+	// }
+	
+	bExecuteCommand = true;
+	BlackboardComp->SetValueAsVector("MoveCommandLocation", MoveCommandLocation);
+	BlackboardComp->SetValueAsEnum("CurrentState", 2);
 }
