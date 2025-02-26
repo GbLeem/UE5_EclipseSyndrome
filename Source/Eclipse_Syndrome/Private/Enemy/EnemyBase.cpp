@@ -71,11 +71,7 @@ float AEnemyBase::GetDamage() const
 
 void AEnemyBase::OnDeath()
 {
-	UCharacterMovementComponent* MovementComponent = GetCharacterMovement();
-	if (MovementComponent)
-	{
-		StopEnemy();
-	}
+	StopEnemy();
 }
 
 float AEnemyBase::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
@@ -96,5 +92,10 @@ void AEnemyBase::Attack(AActor* TargetActor)
 {
 	// Apply damage
 	UGameplayStatics::ApplyDamage(TargetActor, Damage, nullptr, this, UDamageType::StaticClass());
+}
+
+void AEnemyBase::DestroyEnemy()
+{
+	Destroy();
 }
 
