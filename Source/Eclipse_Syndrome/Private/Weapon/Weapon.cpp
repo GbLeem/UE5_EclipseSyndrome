@@ -85,18 +85,15 @@ void AWeapon::Fire()
 
             if (HitResult.BoneName == "head")  // Headshot
             {
-                FinalDamage *= 2.0f; // Damage *2
-                //GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Yellow, TEXT("Headshot!")); // 추후 삭제
+                FinalDamage *= 2.0f;
             }
             else // Bodyshot
             {
-                //GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, TEXT("Bodyshot!")); // 추후 삭제
             }   
-
-            GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, HitResult.GetActor()->GetName());
+           
+            GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, HitResult.GetActor()->GetName());          
 
             UGameplayStatics::ApplyDamage(HitResult.GetActor(), Damage, nullptr, this, UDamageType::StaticClass());
-            APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(GetWorld()->GetFirstLocalPlayerFromController());                      
         }
     }
     DrawDebugLine(GetWorld(), MuzzleLocation, EndLocation, DrawColor, false, 1.0f, 0, 2.0f); //트레이스 빨간선 
@@ -108,7 +105,6 @@ void AWeapon::Fire()
 // Reload
 void AWeapon::Reload(int32 Amount)
 {	
-    //GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("reloading!!")));
     CurrentAmmo += Amount;
 }
 
@@ -166,7 +162,6 @@ FVector AWeapon::CalculateDestination()
 void AWeapon::ShowUI()
 {
     ItemHoverUI->SetVisibility(true);
-    //CanPickUp = true;
 }
 
 void AWeapon::StopUI()

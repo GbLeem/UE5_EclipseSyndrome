@@ -95,5 +95,7 @@ public:
 	TObjectPtr<UUserWidget> InventoryUIInstance;
 
 	//for UI
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Inventory UI")
 	bool bIsInventoryUIOpen;
+	
 };

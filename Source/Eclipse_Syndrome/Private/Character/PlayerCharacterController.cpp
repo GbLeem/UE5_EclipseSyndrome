@@ -110,7 +110,7 @@ APlayerCharacterController::APlayerCharacterController()
 	//ui BP setting
 	static ConstructorHelpers::FClassFinder<UUserWidget>HUDWidgetBP(TEXT("/Game/HJ/UI/WBP_HUD.WBP_HUD_C"));
 	if (HUDWidgetBP.Succeeded())
-	{
+	{	
 		HUDWidgetClass = HUDWidgetBP.Class;
 	}
 	static ConstructorHelpers::FClassFinder<UUserWidget>InventoryWidgetBP(TEXT("/Game/HJ/UI/WBP_Inventory.WBP_Inventory_C"));
@@ -155,31 +155,26 @@ void APlayerCharacterController::ShowHUD()
 
 void APlayerCharacterController::ShowInventoryUI()
 {
-	if (!InventoryUIInstance)
+	if (InventoryUIClass && !InventoryUIInstance)
 	{
-		InventoryUIInstance = CreateWidget<UUserWidget>(GetWorld(), InventoryUIClass);
+		InventoryUIInstance = CreateWidget<UUserWidget>(this, InventoryUIClass);
 	}
 
 	if (InventoryUIInstance && !InventoryUIInstance->IsInViewport())
 	{
 		InventoryUIInstance->AddToViewport();
 		bShowMouseCursor = true;		
-		/*FInputModeGameAndUI InputMode;
-		InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
-		InputMode.SetWidgetToFocus(InventoryUIInstance->TakeWidget());
-		SetInputMode(InputMode);*/
-		SetInputMode(FInputModeGameAndUI());
-
-		//bIsInventoryUIOpen = true;
-	}
+		bIsInventoryUIOpen = true;
+		SetInputMode(FInputModeGameAndUI());		
+	}	
 }
 
 void APlayerCharacterController::StopShowInventoryUI()
 {
-	if (!bIsInventoryUIOpen)
-	{
-		if (InventoryUIInstance && InventoryUIInstance->IsInViewport())
-		{
+	//if (!bIsInventoryUIOpen)
+	//{
+		//if (InventoryUIInstance && InventoryUIInstance->IsInViewport())
+		//{
 			InventoryUIInstance->RemoveFromParent();
 			InventoryUIInstance = nullptr;
 
@@ -187,8 +182,8 @@ void APlayerCharacterController::StopShowInventoryUI()
 			SetInputMode(FInputModeGameOnly());
 
 			bIsInventoryUIOpen = false;
-		}
-	}
+		//}
+	//}	
 }
 
 void APlayerCharacterController::BeginPlay()
@@ -206,7 +201,7 @@ void APlayerCharacterController::BeginPlay()
 		}
 	}
 
-	ShowHUD();
+	ShowHUD();	
 }
 
 void APlayerCharacterController::ChangePossess(const TObjectPtr<APawn>& NewPawn)

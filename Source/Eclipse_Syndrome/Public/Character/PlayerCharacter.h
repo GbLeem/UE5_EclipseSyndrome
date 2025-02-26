@@ -27,8 +27,6 @@ public:
 	void ResetShoot() { bCanFire = true; }
 	UFUNCTION()
 	void Reloading();
-	UFUNCTION()
-	void PickUpItem();
 
 	//call item's activate Item
 	void BeginTraceForPickItem();
@@ -40,6 +38,8 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void EquipWeaponBack(int32 WeaponIdx);
+	UFUNCTION(BlueprintCallable)
+	void UseHealthItem();
 
 	//getter
 	int32 GetCurrentWeaponAmmo();
@@ -78,8 +78,8 @@ protected:
 	void Grapple(const FInputActionValue& value);
 	UFUNCTION()
 	void ShowInventory(const FInputActionValue& value);
-	UFUNCTION()
-	void StopShowInventory(const FInputActionValue& value);
+	/*UFUNCTION()
+	void StopShowInventory(const FInputActionValue& value);*/
 	UFUNCTION()
 	void PossessToDrone(const FInputActionValue& value);
 	UFUNCTION()
@@ -102,17 +102,14 @@ public:
 	float NormalSpeed;
 
 	//for character health
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health")
+	/*UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health")
 	float MaxHealth;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health")
-	float CurrentHealth;
+	float CurrentHealth;*/
 
 	//for character item (inventory ammo)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
 	int32 CurrentInventoryAmmos;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
-	TArray<ABaseItem*> Inventory;
 
 	//for animation
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
@@ -121,13 +118,18 @@ public:
 	bool bIsWeaponEquipped; //for change character animation(idle<->weapon)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
 	bool bCanGrapple; //can move character(attach to grapple actor)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
+	TObjectPtr<UAnimMontage> ReloadAnimMontage;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
+	TObjectPtr<UAnimMontage> DamageAnimMontage;
 
-	
 	//for equip weapon
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon")
 	TObjectPtr<AWeapon> CurrentWeapon;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon")
 	TObjectPtr<AWeapon> TempWeapon;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon")
+	TMap<int32, TObjectPtr<AWeapon>> PlayerWeaponInventory;
 
 
 private:
