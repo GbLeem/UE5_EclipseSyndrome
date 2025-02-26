@@ -4,6 +4,8 @@
 
 UDefaultGameInstance::UDefaultGameInstance()
 	:InventoryAmmo(100)
+	,PlayerMaxHealth(100)
+	,PlayerCurrentHealth(100)
 {
 	InventoryItem.Add(1, 0);
 	InventoryItem.Add(2, InventoryAmmo);
@@ -42,4 +44,20 @@ bool UDefaultGameInstance::FindWeaponByIdx(int32 WeaponIdx)
 	if (WeaponInventoryItem.Contains(WeaponIdx))
 		return true;
 	return false;
+}
+
+void UDefaultGameInstance::PlusHealth(int32 Amount)
+{
+	if (PlayerCurrentHealth + Amount <= PlayerMaxHealth)
+		PlayerCurrentHealth += Amount;
+	else
+		PlayerCurrentHealth = PlayerMaxHealth;
+}
+
+void UDefaultGameInstance::MinusHealth(int32 Amount)
+{
+	if (PlayerCurrentHealth - Amount <= 0)
+		PlayerCurrentHealth = 0;
+	else
+		PlayerCurrentHealth -= Amount;
 }

@@ -38,6 +38,8 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void EquipWeaponBack(int32 WeaponIdx);
+	UFUNCTION(BlueprintCallable)
+	void UseHealthItem();
 
 	//getter
 	int32 GetCurrentWeaponAmmo();
@@ -100,10 +102,10 @@ public:
 	float NormalSpeed;
 
 	//for character health
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health")
+	/*UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health")
 	float MaxHealth;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health")
-	float CurrentHealth;
+	float CurrentHealth;*/
 
 	//for character item (inventory ammo)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
@@ -116,8 +118,11 @@ public:
 	bool bIsWeaponEquipped; //for change character animation(idle<->weapon)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
 	bool bCanGrapple; //can move character(attach to grapple actor)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
+	TObjectPtr<UAnimMontage> ReloadAnimMontage;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
+	TObjectPtr<UAnimMontage> DamageAnimMontage;
 
-	
 	//for equip weapon
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon")
 	TObjectPtr<AWeapon> CurrentWeapon;
