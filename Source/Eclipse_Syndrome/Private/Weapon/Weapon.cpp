@@ -94,20 +94,9 @@ void AWeapon::Fire()
             }   
 
             GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, HitResult.GetActor()->GetName());
-            APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(GetWorld()->GetFirstLocalPlayerFromController());
-            if (PlayerCharacter)
-            {
-               UGameplayStatics::ApplyDamage(HitResult.GetActor(), Damage, nullptr, PlayerCharacter, UDamageType::StaticClass());
-            }
-            /*if (GetWorld()->GetFirstPlayerController())
-            {
-                APlayerCharacterController* PlayerCharacterController = Cast<APlayerCharacterController>(GetWorld()->GetFirstPlayerController());
-                if (PlayerCharacterController)
-                {
-                }
-            }*/
-            //UGameplayStatics::ApplyPointDamage(HitResult.GetActor(), Damage, HitResult.ImpactNormal, HitResult, nullptr, this, nullptr);
-            
+
+            UGameplayStatics::ApplyDamage(HitResult.GetActor(), Damage, nullptr, this, UDamageType::StaticClass());
+            APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(GetWorld()->GetFirstLocalPlayerFromController());                      
         }
     }
     DrawDebugLine(GetWorld(), MuzzleLocation, EndLocation, DrawColor, false, 1.0f, 0, 2.0f); //트레이스 빨간선 
