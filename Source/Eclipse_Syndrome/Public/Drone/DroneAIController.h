@@ -101,6 +101,10 @@ public:
 	
 	void UpdateHappyMovement(float DeltaTime);
 
+	void DroneMoveCommand(const FVector& NewCommandLocation);
+
+	void EndExecuteCommand() { bExecuteCommand = false; }
+
 private:
 	float TargetRollSpeed = 0.0f;
 	float CurrentRollSpeed = 0.0f;
@@ -108,4 +112,8 @@ private:
 	float MaxRollSpeed = 170.0f;
 	bool bHasUpdatedRollSpeed = false;
 	float CurrentRollAngle = 0.0f;
+
+	FVector MoveCommandLocation = FVector::ZeroVector;
+	
+	bool bExecuteCommand = false;
 };

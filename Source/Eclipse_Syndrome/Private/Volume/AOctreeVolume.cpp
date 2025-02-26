@@ -248,13 +248,28 @@ void AAOctreeVolume::Tick(float DeltaTime)
 
 bool AAOctreeVolume::FindPath(const FVector& start, const FVector& destination, const TArray<TEnumAsByte<EObjectTypeQuery> >& object_types, UClass* actor_class_filter, TArray<FVector>& out_path)
 {
+	FVector StartLocation = start;
+	if (!IsValidDestLocation(start, object_types, actor_class_filter))
+	{
+		StartLocation = ConvertCoordinatesToLocation(FindNearestValidNode(StartLocation, object_types, actor_class_filter)->Coordinates);
+		DrawDebugSphere(GetWorld(), StartLocation, 20, 20, FColor::Purple, false , 100.f);
+	}
+	
+	FVector TargetLocation = destination;
+	if (!IsValidDestLocation(TargetLocation, object_types, actor_class_filter))
+	{
+		TargetLocation = ConvertCoordinatesToLocation(FindNearestValidNode(TargetLocation, object_types, actor_class_filter)->Coordinates);
+		DrawDebugSphere(GetWorld(), TargetLocation, 20, 20, FColor::Purple, false , 100.f);
+	}
+	
 	// Clear the out path
 	out_path.Empty();
 	std::multiset<NavNode*, NodeCompare> openSet;
 	std::unordered_map<NavNode*, NavNode*> cameFrom;
 	std::unordered_map<NavNode*, float> gScores;
-	NavNode* startNode = GetNode(ConvertLocationToCoordinates(start));
-	NavNode* endNode = GetNode(ConvertLocationToCoordinates(destination));
+	NavNode* startNode = GetNode(ConvertLocationToCoordinates(StartLocation));
+	NavNode* endNode = GetNode(ConvertLocationToCoordinates(TargetLocation));
+	
 	auto h = [endNode](NavNode* node)
 	{
 		return FVector::Distance(FVector(endNode->Coordinates), FVector(node->Coordinates));
@@ -409,4 +424,42 @@ NavNode* AAOctreeVolume::GetNode(FIntVector coordinates) const
 	const int32 divisionPerLevel = DivisionsX * DivisionsY;
 	const int32 index = (coordinates.Z * divisionPerLevel) + (coordinates.Y * DivisionsX) + coordinates.X;
 	return &Nodes[index];
+}
+
+
+
+
+NavNode* AAOctreeVolume::FindNearestValidNode(const FVector& location, const TArray<TEnumAsByte<EObjectTypeQuery>>& object_types, UClass* actor_class_filter)
+{
+	const FIntVector center = ConvertLocationToCoordinates(location);
+	const int32 searchRadius = 5; // 탐색 반경 (필요에 따라 조절)
+
+	NavNode* nearestNode = nullptr;
+	float nearestDistance = FLT_MAX;
+
+	for (int32 x = -searchRadius; x <= searchRadius; x++)
+	{
+		for (int32 y = -searchRadius; y <= searchRadius; y++)
+		{
+			for (int32 z = -searchRadius; z <= searchRadius; z++)
+			{
+				FIntVector offset = FIntVector(x, y, z);
+				NavNode* node = GetNode(center + offset);
+
+				if (node && IsValidDestLocation(ConvertCoordinatesToLocation(node->Coordinates), object_types, actor_class_filter))
+				{
+					float distance = FVector::Distance(location, ConvertCoordinatesToLocation(node->Coordinates));
+					if (distance < nearestDistance)
+					{
+						nearestNode = node;
+						nearestDistance = distance;
+					}
+				}
+			}
+		}
+	}
+
+	DrawDebugSphere(GetWorld(), ConvertCoordinatesToLocation(nearestNode->Coordinates), 30, 30, FColor::Orange, false , 100.f);
+	
+	return nearestNode;
 }

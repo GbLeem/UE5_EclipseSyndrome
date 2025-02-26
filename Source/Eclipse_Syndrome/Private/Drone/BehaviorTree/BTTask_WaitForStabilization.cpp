@@ -6,7 +6,7 @@
 #include "Kismet/GameplayStatics.h"
 
 UBTTask_WaitForStabilization::UBTTask_WaitForStabilization()
-	: WaitTime(1.0f)
+	: WaitTime(0.0f)
 	, AccumulateTime(0.0f)
 	, bLocationStable(false)
 {
@@ -20,11 +20,17 @@ EBTNodeResult::Type UBTTask_WaitForStabilization::ExecuteTask(UBehaviorTreeCompo
 	AccumulateTime = 0.0f;
 	bLocationStable = false;
 
+	WaitTime = OwnerComp.GetBlackboardComponent()->GetValueAsEnum("CurrentState") == 3 ? 5.0f : 1.0f;
+
 	return EBTNodeResult::InProgress;
 }
 
 void UBTTask_WaitForStabilization::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
 {
+	if (OwnerComp.GetBlackboardComponent()->GetValueAsEnum("CurrentState") != 3
+		&& OwnerComp.GetBlackboardComponent()->GetValueAsEnum("CurrentState") != 0)
+		FinishLatentTask(OwnerComp, EBTNodeResult::Failed);
+	
 	Super::TickTask(OwnerComp, NodeMemory, DeltaSeconds);
 
 	const TObjectPtr<AAIController> AIController = OwnerComp.GetAIOwner();
@@ -37,7 +43,7 @@ void UBTTask_WaitForStabilization::TickTask(UBehaviorTreeComponent& OwnerComp, u
 	}
 
 	// 드론이 안정적으로 멈췄는지 확인
-	bLocationStable = IsDroneStable(OwnerComp, DeltaSeconds);
+	bLocationStable = OwnerComp.GetBlackboardComponent()->GetValueAsEnum("CurrentState") == 3 ? true : IsDroneStable(OwnerComp, DeltaSeconds);
 
 	if (bLocationStable)
 	{
@@ -46,6 +52,8 @@ void UBTTask_WaitForStabilization::TickTask(UBehaviorTreeComponent& OwnerComp, u
 		// 안정적으로 도착하고, 대기 시간이 지나면 완료
 		if (AccumulateTime >= WaitTime)
 		{
+			OwnerComp.GetBlackboardComponent()->SetValueAsEnum("CurrentState", 1);
+			Cast<ADroneAIController>(AIController)->EndExecuteCommand();
 			FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
 		}
 	}
