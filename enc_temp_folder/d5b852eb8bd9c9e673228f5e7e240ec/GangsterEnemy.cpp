@@ -99,9 +99,7 @@ FVector AGangsterEnemy::CalculateDestination()
 	if (!Target) return FVector::ZeroVector;
 
 	FVector Start = GunMesh->GetSocketLocation(TEXT("MuzzleSocket"));
-	FVector End = Target->GetActorLocation() + FVector(0, 0, 50);
-
-	DrawDebugLine(GetWorld(), Start, End, FColor::Green, false, 2.0f, 0, 2.0f);
+	FVector End = Target->GetActorLocation() + FVector(0, 0, 0);
 
 	FHitResult HitResult;
 	FCollisionQueryParams Params;
