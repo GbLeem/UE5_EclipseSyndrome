@@ -18,10 +18,22 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Animation")
 	UAnimMontage* HitMontage;
+	UPROPERTY(EditDefaultsOnly, Category = "Animation")
+	UAnimMontage* AttackMontage;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy")
 	float AttackReadyRange;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy")
+	float ShootRange;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon")
+	USkeletalMeshComponent* EnemyMesh;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Weapon")
+	USkeletalMeshComponent* GunMesh;
+
+	virtual void BeginPlay() override;
 	
 	// Interface Function
 	void OnDeath() override;
+	void Attack(AActor* TargetActor) override;
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
+	FVector CalculateDestination();
 };

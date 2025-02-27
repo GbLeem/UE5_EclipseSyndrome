@@ -62,7 +62,7 @@ void UBTTask_GangsterChase::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* N
 	{
 		// Move To Player
 		EPathFollowingRequestResult::Type MoveResult = GangsterAIController->MoveToActor(PlayerCharacter, 5.0f, true, true, false, nullptr, true);
-
+		
 		// When Enemy at Goal
 		if (MoveResult == EPathFollowingRequestResult::AlreadyAtGoal)
 		{
