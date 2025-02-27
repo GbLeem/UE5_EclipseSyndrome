@@ -87,6 +87,12 @@ protected:
 	void PossessToDrone(const FInputActionValue& value);
 	UFUNCTION()
 	void DroneMoveCommand(const FInputActionValue& value);	
+	UFUNCTION()
+	void ChangeView(const FInputActionValue& value);
+	UFUNCTION()
+	void ZoomInOut(const FInputActionValue& value);
+
+
 
 //variables
 public:

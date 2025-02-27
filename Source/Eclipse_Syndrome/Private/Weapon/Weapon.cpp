@@ -90,9 +90,7 @@ void AWeapon::Fire()
         FVector Direction = ShellRotation.RotateVector(FVector(-30.f, 0.f, 0.f));
         ShellActor->EjectShell(Direction);
         ShellActor->SetLifeSpan(3.f);
-    }
-    
-    
+    }    
 
     FHitResult HitResult;
     FCollisionQueryParams Params;
@@ -105,11 +103,9 @@ void AWeapon::Fire()
         //[TODO] -> add damgage available flag
         if (HitResult.GetActor() && !HitResult.GetActor()->ActorHasTag("Player"))
         {                      
-            //GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, HitResult.GetActor()->GetName());          
             UGameplayStatics::ApplyDamage(HitResult.GetActor(), Damage, nullptr, this, UDamageType::StaticClass());                   
         }                    
 
-        //GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Black, HitResult.GetActor()->GetName());
         UGameplayStatics::SpawnDecalAtLocation(GetWorld(), BulletDecal, FVector(5.f, 5.f, 5.f),
             HitResult.Location, UKismetMathLibrary::MakeRotFromX(HitResult.ImpactNormal), 4.f)->SetFadeScreenSize(0.f);
             

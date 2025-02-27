@@ -143,6 +143,16 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 				//EnhancedInputComponent->BindAction(PlayerController->ShowInventoryAction,
 				//	ETriggerEvent::Completed, this, &APlayerCharacter::StopShowInventory);
 			}
+			if (PlayerController->ViewChangeAction)
+			{
+				EnhancedInputComponent->BindAction(PlayerController->ViewChangeAction,
+					ETriggerEvent::Started, this, &APlayerCharacter::ChangeView);
+			}
+			if (PlayerController->ZoomAction)
+			{
+				EnhancedInputComponent->BindAction(PlayerController->ZoomAction,
+					ETriggerEvent::Started, this, &APlayerCharacter::ZoomInOut);
+			}
 			if (PlayerController->DroneMoveCommandAction)
 			{
 				EnhancedInputComponent->BindAction(PlayerController->DroneMoveCommandAction,
@@ -689,6 +699,16 @@ void APlayerCharacter::DroneMoveCommand(const FInputActionValue& value)
 			}
 		}
 	}
+}
+
+void APlayerCharacter::ChangeView(const FInputActionValue& value)
+{
+
+}
+
+void APlayerCharacter::ZoomInOut(const FInputActionValue& value)
+{
+	GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, FString::Printf(TEXT("Zoom In")));
 }
 
 void APlayerCharacter::SetEnhancedInput()
