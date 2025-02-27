@@ -26,6 +26,7 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Animation")
 	UAnimMontage* HitMontage;
 
+	UAnimMontage* SelectedAttackMontage = nullptr;
 	UAnimMontage* GetRandomAttackMontage();
 
 	// Interface Function
