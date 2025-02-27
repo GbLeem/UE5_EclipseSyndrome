@@ -6,6 +6,7 @@
 #include "Components/BoxComponent.h"
 #include "PuzzleBSlot.generated.h"
 
+class APuzzleManager;
 class UBoxComponent;
 
 UCLASS()
@@ -17,13 +18,25 @@ public:
 	APuzzleBSlot();
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 CorrectBlockID; //answer block ID
+	int32 CorrectBlockID; //answer block IDdw a
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	APuzzleBlock* CurrentBlock; // placed block
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UBoxComponent* CollisionBox;
+
+	APuzzleManager* PuzzleManager;
+
+	
+	
+
+
+	float CurrentLerpTime = 0.0f;
+	float LerpDuration = 1.0f;
+	FVector TargetLocation;
+	FRotator TargetRotation;
+
 
 	UFUNCTION()
 	void OnBlockOverlap(
@@ -33,9 +46,12 @@ public:
 	);
 
 
-
 	bool PlaceBlock(APuzzleBlock* Block);
+	
 	void RemoveBlock();
 
+	virtual void Tick(float DeltaTime) override;
+	virtual void BeginPlay() override;
 
+	void SetAllCurrentBlock();
 };

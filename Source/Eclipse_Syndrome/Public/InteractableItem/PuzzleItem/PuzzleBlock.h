@@ -5,6 +5,7 @@
 #include "Components/BoxComponent.h"
 #include "PuzzleBlock.generated.h"
 
+class APuzzleBSlot;
 UCLASS()
 class ECLIPSE_SYNDROME_API APuzzleBlock : public AActor
 {
@@ -20,6 +21,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UBoxComponent* CollisionBox;
 
+	UPROPERTY()
+	APuzzleBSlot* CurrentSlot = nullptr;
 
 	void SetBlockID(int32 NewID);
 

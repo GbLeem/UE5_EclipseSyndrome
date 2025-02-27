@@ -1,6 +1,7 @@
 #include "InteractableItem/PuzzleItem/PuzzleManager.h"
 #include "Kismet/GameplayStatics.h"
 
+
 APuzzleManager::APuzzleManager()
 {
 	static ConstructorHelpers::FClassFinder<APuzzleBlock> BlockBP(TEXT("/Script/Engine.Blueprint'/Game/Yujin/Blueprints/Puzzle/BP_PuzzleBlock.BP_PuzzleBlock'"));
@@ -31,10 +32,11 @@ void APuzzleManager::SetUpSlots()
 			return;
 		}
 	}
+
 	Slots[0]->CorrectBlockID = 5;
-	Slots[1]->CorrectBlockID = 9;
+	Slots[1]->CorrectBlockID = 3;
 	Slots[2]->CorrectBlockID = 1;
-	Slots[3]->CorrectBlockID = 7;
+	Slots[3]->CorrectBlockID = 2;
 }
 
 //if all block id is correct, door will open
@@ -45,10 +47,12 @@ bool APuzzleManager::CheckPuzzleSolved()
 		//
 		if (!Slot || !Slot->CurrentBlock || Slot->CurrentBlock->BlockID != Slot->CorrectBlockID)
 		{
+			UE_LOG(LogTemp, Warning, TEXT("...Wrong one"));
 			return false;
 		}
 	}
 	UE_LOG(LogTemp, Warning, TEXT("Puzzle Solved! Door Opening"));
+	OpenDoor();
 	return true;
 }
 
@@ -73,4 +77,20 @@ void APuzzleManager::AssignBlockIDs()
 			UE_LOG(LogTemp, Error, TEXT("Failed to cast to APuzzleBlock!"));
 		}
 	}
+}
+
+
+void APuzzleManager::OpenDoor()
+{
+	if (Door)
+	{
+		Door->OpenDoor();
+		UE_LOG(LogTemp, Warning, TEXT("Door is now opening!!!!!!!!"));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("Door null!!!!!!!!"));
+	}
+	
+
 }
