@@ -106,7 +106,6 @@ FVector AGangsterEnemy::CalculateDestination()
 	FHitResult HitResult;
 	FCollisionQueryParams Params;
 	Params.AddIgnoredActor(this); // Ignore SelfEnemy
-	Params.AddIgnoredActor(Target); // Ignore Player(Check Obstacle)
 
 	bool bHit = GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility, Params);
 	if (!bHit)
