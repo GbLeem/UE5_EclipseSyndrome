@@ -52,5 +52,6 @@ float AZombieEnemy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEve
 		}
 	}
 
+
 	return ActualDamage;
 }

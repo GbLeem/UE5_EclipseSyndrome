@@ -93,4 +93,9 @@ public:
 	TSubclassOf<UUserWidget> InventoryUIClass;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "HUD")
 	TObjectPtr<UUserWidget> InventoryUIInstance;
+
+	//for UI
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Inventory UI")
+	bool bIsInventoryUIOpen;
+	
 };

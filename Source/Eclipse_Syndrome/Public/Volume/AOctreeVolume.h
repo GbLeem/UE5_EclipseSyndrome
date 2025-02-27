@@ -59,6 +59,11 @@ public:
 	bool IsValidDestLocation(const FVector& destination, const TArray<TEnumAsByte<EObjectTypeQuery> >& object_types, UClass* actor_class_filter);
 	
 	/**
+	 * CustomFunction
+	 */
+	NavNode* FindNearestValidNode(const FVector& location, const TArray<TEnumAsByte<EObjectTypeQuery>>& object_types, UClass* actor_class_filter);
+	
+	/**
 	* Called when an instance of this class is placed (in editor) or spawned.
 	* @param	Transform			The transform the actor was constructed at.
 	*/

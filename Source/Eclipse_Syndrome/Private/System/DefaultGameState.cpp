@@ -5,6 +5,7 @@
 #include "System/DefaultGameInstance.h"
 
 #include "Blueprint/UserWidget.h"
+#include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
 #include "Components/Image.h"
 
@@ -53,6 +54,21 @@ void ADefaultGameState::UpdateHUD()
 					{
 						CurrentAmmoText->SetText(FText::FromString(FString::Printf(TEXT("%d"), PlayerCharacter->GetCurrentWeaponAmmo())));
 					}
+				}
+
+				if (UProgressBar* HealthBar = Cast<UProgressBar>(HUDWidget->GetWidgetFromName(TEXT("HealthBar"))))
+				{
+					if (UGameInstance* GameInstance = GetGameInstance())
+					{
+						if (UDefaultGameInstance* DefaultGameInstance = Cast<UDefaultGameInstance>(GameInstance))
+						{
+							float MaxHealth = DefaultGameInstance->PlayerMaxHealth;
+							float CurrentHealth = DefaultGameInstance->PlayerCurrentHealth;
+							//GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, FString::Printf(TEXT("%f / %f"), CurrentHealth, MaxHealth));
+							HealthBar->SetPercent(CurrentHealth / MaxHealth);
+						}
+					}
+
 				}
 			}
 
@@ -114,9 +130,7 @@ void ADefaultGameState::UpdateHUD()
 							CurrentInventoryAmmoText->SetText(FText::FromString(FString::Printf(TEXT("%d"), DefaultGameInstance->InventoryItem[2])));
 						}
 					}
-				}
-				//Item1Image
-				//Item2Image
+				}				
 			}
 		}
 	}

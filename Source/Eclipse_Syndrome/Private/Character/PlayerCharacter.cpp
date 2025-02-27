@@ -21,19 +21,17 @@
 
 APlayerCharacter::APlayerCharacter()
 	:SprintSpeed(800.f)
-	,NormalSpeed(500.f)
-	,MaxHealth(100.f)
-	,CurrentHealth(100.f)
-	,CurrentInventoryAmmos(100)
-	,bCanFire(false)
-	,bCanReload(false)
+	, NormalSpeed(500.f)
+	, CurrentInventoryAmmos(100)
+	, bCanFire(false)
+	, bCanReload(false)
 	, bCanTraceForItemPeeking(false)
 	, bCanGrapple(false)
 	, bIsWeaponEquipped(false)
-	,BlendPoseVariable(0)
-	,PeekingItem(nullptr)
-	,CurrentWeapon(nullptr)
-	,GrappleEndTime(0.5f) //fix
+	, BlendPoseVariable(0)
+	, PeekingItem(nullptr)
+	, CurrentWeapon(nullptr)
+	, GrappleEndTime(0.5f) //fix
 	, bIsWeaponEquippedBack(false)
 {
 	PrimaryActorTick.bCanEverTick = true;
@@ -54,7 +52,18 @@ APlayerCharacter::APlayerCharacter()
 	CableComp->NumSegments = 2;
 	CableComp->SetVisibility(false);
 
-	OriginRootRotator = RootComponent->GetComponentRotation();
+	static ConstructorHelpers::FObjectFinder<UAnimMontage>ReloadAsset(TEXT("/Game/HJ/Animation/AM_ReloadAR1.AM_ReloadAR1"));
+	if (ReloadAsset.Succeeded())
+	{
+		ReloadAnimMontage = ReloadAsset.Object;
+	}
+
+	static ConstructorHelpers::FObjectFinder<UAnimMontage>DamageAsset(TEXT("/Game/HJ/Animation/AM_Damaged.AM_Damaged"));
+	if (DamageAsset.Succeeded())
+	{
+		DamageAnimMontage = DamageAsset.Object;
+	}
+
 	Tags.Add("Player");
 }
 
@@ -123,10 +132,10 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 			if (PlayerController->ShowInventoryAction)
 			{
 				EnhancedInputComponent->BindAction(PlayerController->ShowInventoryAction,
-					ETriggerEvent::Triggered, this, &APlayerCharacter::ShowInventory);
+					ETriggerEvent::Started, this, &APlayerCharacter::ShowInventory);
 
-				EnhancedInputComponent->BindAction(PlayerController->ShowInventoryAction,
-					ETriggerEvent::Completed, this, &APlayerCharacter::StopShowInventory);
+				//EnhancedInputComponent->BindAction(PlayerController->ShowInventoryAction,
+				//	ETriggerEvent::Completed, this, &APlayerCharacter::StopShowInventory);
 			}
 			if (PlayerController->DroneMoveCommandAction)
 			{
@@ -169,14 +178,14 @@ void APlayerCharacter::Shoot()
 	{
 		if (CurrentWeapon->GetCurrentAmmo() <= 0)
 		{
-			//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Black, FString::Printf(TEXT("you need to reload!")));
 			return;
 		}
+
 		if (bCanFire)
 		{
 			//Real shooting 
-			CurrentWeapon->Fire();			
-			//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Black, FString::Printf(TEXT("shoot %d"), CurrentWeapon->GetCurrentAmmo()));		
+			CurrentWeapon->Fire();		
+
 			bCanFire = false;	
 
 			//auto fire
@@ -202,6 +211,10 @@ void APlayerCharacter::Reloading()
 			PlusAmmo = FMath::Min(PlusAmmo, CurrentInventoryAmmos);
 			CurrentWeapon->Reload(PlusAmmo);
 
+			//Reload Animation
+			UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+			AnimInstance->Montage_Play(ReloadAnimMontage);
+
 			CurrentInventoryAmmos -= PlusAmmo;
 
 			if (UGameInstance* GameInstance = GetGameInstance())
@@ -214,13 +227,6 @@ void APlayerCharacter::Reloading()
 			}		
 		}
 	}	
-}
-
-//only ammo and health item
-void APlayerCharacter::PickUpItem()
-{
-	if (PeekingItem)
-		Inventory.Add(Cast<ABaseItem>(PeekingItem));
 }
 
 
@@ -304,33 +310,63 @@ void APlayerCharacter::GrappleEnd()
 
 void APlayerCharacter::EquipWeaponBack(int32 WeaponIdx)
 {
-	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString::Printf(TEXT("equip weapon")));
-
-	if (CurrentWeapon)
-	{
-		CurrentWeapon = nullptr;
-	}
-
+	//attack animation -> can't change weapon
+	if (bIsWeaponEquipped)
+		return;
+	GetWorldTimerManager().ClearTimer(FireRateTimerHandle);
+	//idle animation -> spawn weapon by index
 	if (WeaponIdx == 1)
 	{
-		CurrentWeapon = GetWorld()->SpawnActor<AWeaponAR1>();
+		TempWeapon = GetWorld()->SpawnActor<AWeaponAR1>();
 	}
 	else if (WeaponIdx == 2)
 	{
-		CurrentWeapon = GetWorld()->SpawnActor<AWeaponAR2>();
+		TempWeapon = GetWorld()->SpawnActor<AWeaponAR2>();
 	}
 	else if (WeaponIdx == 3)
 	{
-		CurrentWeapon = GetWorld()->SpawnActor<AWeaponSR>();
+		TempWeapon = GetWorld()->SpawnActor<AWeaponSR>();
 	}
 	else if (WeaponIdx == 4)
 	{
 		//CurrentWeapon = GetWorld()->SpawnActor<AWeapon>();
+	}	
+
+	//already equip weapon
+	if (CurrentWeapon || bIsWeaponEquippedBack)
+	{		
+		TObjectPtr<AWeapon> Dummy;
+		Dummy = TempWeapon;
+		TempWeapon = CurrentWeapon;
+		CurrentWeapon = Dummy;
+		TempWeapon->Destroy();
+	}
+	else
+	{
+		CurrentWeapon = TempWeapon;		
 	}
 
 	CurrentWeapon->SetActorEnableCollision(false);
 	FName WeaponSocket(TEXT("back_socket"));
 	CurrentWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponSocket);
+	bIsWeaponEquippedBack = true;
+}
+
+void APlayerCharacter::UseHealthItem()
+{
+	if (UGameInstance* GameInstance = GetGameInstance())
+	{
+		UDefaultGameInstance* DefaultGameInstance = Cast<UDefaultGameInstance>(GameInstance);
+		if (DefaultGameInstance)
+		{
+			if (DefaultGameInstance->InventoryItem[1] > 0)
+			{				
+				//[TODO] how to get health amount?
+				DefaultGameInstance->PlusHealth(20.f);
+				DefaultGameInstance->InventoryItem[1] -= 1;
+			}
+		}
+	}
 }
 
 int32 APlayerCharacter::GetCurrentWeaponAmmo()
@@ -409,7 +445,7 @@ void APlayerCharacter::Reload(const FInputActionValue& value)
 
 void APlayerCharacter::StartShoot(const FInputActionValue& value)
 {
-	if (bCanFire&& bIsWeaponEquipped)
+	if (bCanFire && bIsWeaponEquipped)
 	{
 		Shoot();	
 	}
@@ -444,7 +480,6 @@ void APlayerCharacter::PickUp(const FInputActionValue& value)
 
 		else if(PeekingItem->ActorHasTag("Item"))
 		{
-			//PickUpItem();
 			if (GetGameInstance())
 			{
 				UDefaultGameInstance* DefaultGameInstance = Cast<UDefaultGameInstance>(GetGameInstance());
@@ -495,7 +530,6 @@ void APlayerCharacter::Grapple(const FInputActionValue& value)
 {	
 	if (!bIsWeaponEquipped)
 	{
-
 		FVector Start = UGameplayStatics::GetPlayerCameraManager(GetWorld(), 0)->GetCameraLocation();	
 		FVector End = Start + UKismetMathLibrary::GetForwardVector(UGameplayStatics::GetPlayerCameraManager(GetWorld(), 0)->GetCameraRotation()) * 1500.f;
 		TArray<AActor*> ActorsToIgnore;
@@ -513,28 +547,29 @@ void APlayerCharacter::Grapple(const FInputActionValue& value)
 }
 
 void APlayerCharacter::ShowInventory(const FInputActionValue& value)
-{
-	if (value.Get<bool>())
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Blue, FString::Printf(TEXT("Show")));
-		//if pressed UI
-		if (GetController())
+{	
+	//if pressed UI
+	if (GetController())
+	{			
+		if (!Cast<APlayerCharacterController>(GetController())->bIsInventoryUIOpen)
 		{
-			Cast<APlayerCharacterController>(GetController())->ShowInventoryUI();
+			Cast<APlayerCharacterController>(GetController())->ShowInventoryUI();		
 		}
-	}
+		else
+		{
+			Cast<APlayerCharacterController>(GetController())->StopShowInventoryUI();
+		}
+	}	
+
 }
 
-void APlayerCharacter::StopShowInventory(const FInputActionValue& value)
-{
-	GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Blue, FString::Printf(TEXT("Remove")));
-	//if(!value.Get<bool>())
-	/*if (GetController())
-	{
-		Cast<APlayerCharacterController>(GetController())->StopShowInventoryUI();
-
-	}*/
-}
+//void APlayerCharacter::StopShowInventory(const FInputActionValue& value)
+//{	
+//	if (GetController())
+//	{
+//		Cast<APlayerCharacterController>(GetController())->StopShowInventoryUI();
+//	}	
+//}
 
 void APlayerCharacter::PossessToDrone(const FInputActionValue& value)
 {
@@ -549,10 +584,84 @@ void APlayerCharacter::PossessToDrone(const FInputActionValue& value)
 void APlayerCharacter::DroneMoveCommand(const FInputActionValue& value)
 {
 	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString::Printf(TEXT("drone move command")));
+
+	if (!value.Get<bool>())
+	{
+		FVector TargetLocation = FVector::ZeroVector;
+		
+		//trace 하기
+		APlayerCharacterController* PlayerController = Cast<APlayerCharacterController>(GetController());
+		if (PlayerController)
+		{
+			int32 ScreenWidth;
+			int32 ScreenHeight;
+
+			PlayerController->GetViewportSize(ScreenWidth, ScreenHeight);
+			const FVector2D ScreenCenter(ScreenWidth * 0.5f, ScreenHeight * 0.5f);
+
+			FVector WorldLocation;
+			FVector WorldDirection;
+			if (PlayerController->DeprojectScreenPositionToWorld(ScreenCenter.X, ScreenCenter.Y, WorldLocation, WorldDirection))
+			{
+				const FVector TraceStart = WorldLocation + WorldDirection * 100.f;
+				const FVector TraceEnd = TraceStart + (WorldDirection * 1200.f);
+				TargetLocation = TraceEnd;
+
+				FHitResult HitResult;
+				FCollisionQueryParams TraceParams;
+				TraceParams.AddIgnoredActor(this);
+
+				bool bHit = GetWorld()->LineTraceSingleByChannel(HitResult, TraceStart, TraceEnd, ECC_Visibility, TraceParams);
+
+				FColor LineColor = bHit ? FColor::Orange : FColor::Cyan;
+				DrawDebugLine(GetWorld(), TraceStart, TraceEnd, LineColor, false, 2.0f, 0, 2.0f);
+
+				if (bHit)
+				{						
+					TargetLocation = HitResult.Location;// + HitResult.ImpactNormal * 100.0f;
+				}
+			}
+		}
+
+		// 드론을 찾아와서 컨트롤러를 가져옴
+		if (ADefaultGameState* DefaultGameState = Cast<ADefaultGameState>(GetWorld()->GetGameState()))
+		{
+			if (APawn* DronePawn = DefaultGameState->GetDrone())
+			{
+				if (AController* DroneController = Cast<ADrone>(DronePawn)->GetController())
+				{
+					if (ADroneAIController* DroneAIController = Cast<ADroneAIController>(DroneController))
+					{
+						// movecommand를 해줌 이때, 타겟 로케이션이랑 상태 전환해주어야하는데..
+						DroneAIController->DroneMoveCommand(TargetLocation);
+					}
+				}
+			}
+		}
+	}
 }
 
 void APlayerCharacter::SetEnhancedInput()
 {
 	InputComponent->ClearActionBindings();
 	SetupPlayerInputComponent(InputComponent);
+}
+
+float APlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+	float ActualDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+
+	if (UGameInstance* GameInstance = GetGameInstance())
+	{
+		UDefaultGameInstance* DefaultGameInstance = Cast<UDefaultGameInstance>(GameInstance);
+		if (DefaultGameInstance)
+		{
+			DefaultGameInstance->MinusHealth(ActualDamage);
+
+			//Damage Animation
+			UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+			AnimInstance->Montage_Play(DamageAnimMontage);
+		}
+	}
+	return ActualDamage;
 }
