@@ -3,6 +3,8 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Components/StaticMeshComponent.h"
+#include "Math/UnrealMathUtility.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "Components/BoxComponent.h"
 #include "Door.generated.h"
 
@@ -13,6 +15,9 @@ class ECLIPSE_SYNDROME_API ADoor : public AActor
 	GENERATED_BODY()
 	
 public:	
+
+	ADoor();
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Door")
 	UStaticMeshComponent* DoorMesh;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Door")
@@ -20,15 +25,29 @@ public:
 
 	bool bIsOpen = false;
 
-	FTimerHandle DoorOpenTimer;
-	float TotalRotationTime = 1.5f;
-	float RotationSpeed = 90.0f;
-	float TargetYaw = 90.0f;
 
 
-	ADoor();
+	UPROPERTY(EditAnywhere, Category="Door Rotation")
+	float MoveSpeed;
+	UPROPERTY(EditAnywhere, Category = "Door Rotation")
+	float RotationSpeed;
 
+	bool bIsOpening = false;
+	
+	
+	FVector OpenLocation;
+	FRotator OpenRotation;
+	FVector ClosedLocation;
+	FRotator ClosedRotation;
+
+	float MoveDistance;
+
+
+	UFUNCTION()
 	void OpenDoor();
 
-	void RotateDoor();
+	void MoveAndRotateDoor(float DeltaTime);
+
+	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaTime) override;
 };

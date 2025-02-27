@@ -11,26 +11,62 @@ ADoor::ADoor()
 	CollisionBox = CreateDefaultSubobject<UBoxComponent>(TEXT("CollisionBox"));
 	CollisionBox->SetupAttachment(DoorMesh);
 	
-
-	
+	MoveSpeed = 2.0f;
+	RotationSpeed = 90.0f;
 }
 
+
+void ADoor::BeginPlay()
+{
+	Super::BeginPlay();
+	//CurrentYaw = DoorMesh->GetRelativeRotation().Yaw;
+	ClosedLocation = DoorMesh->GetRelativeLocation();
+	ClosedRotation = DoorMesh->GetRelativeRotation();
+
+	OpenLocation = ClosedLocation + FVector(-60.0f, 60.0f, 0.0f);
+	OpenRotation = ClosedRotation + FRotator(0.0f, 90.0f, 0.0f);
+}
+
+void ADoor::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	if(bIsOpening)
+	{
+		MoveAndRotateDoor(DeltaTime);
+	}
+}
 
 void ADoor::OpenDoor()
 {
-	GetWorldTimerManager().SetTimer(DoorOpenTimer, this, &ADoor::RotateDoor, 0.01f, true);
-	
+	bIsOpening = true;
 }
 
-void ADoor::RotateDoor()
+void ADoor::MoveAndRotateDoor(float DeltaTime)
 {
-	FRotator CurrentRotation = GetActorRotation();
-	CurrentRotation.Yaw += RotationSpeed * 0.01f;
-	if (CurrentRotation.Yaw >= TargetYaw)
+	if (!DoorMesh) return;
+	
+	FVector NewLocation = FMath::VInterpTo(DoorMesh->GetRelativeLocation(), OpenLocation, DeltaTime, MoveSpeed);
+	FRotator NewRotation = FMath::RInterpTo(DoorMesh->GetRelativeRotation(), OpenRotation, DeltaTime, MoveSpeed);
+	if (FVector::Dist(NewLocation, OpenLocation) < 1.0f && FMath::Abs(NewRotation.Yaw - OpenRotation.Yaw) < 1.0f)
 	{
-		CurrentRotation.Yaw = TargetYaw;
-		GetWorldTimerManager().ClearTimer(DoorOpenTimer);
+		NewLocation = OpenLocation;
+		NewRotation = OpenRotation;
+		bIsOpening = false;
 	}
 	
-	SetActorRotation(CurrentRotation);
+	DoorMesh->SetRelativeLocation(NewLocation);
+	DoorMesh->SetRelativeRotation(NewRotation);
+	/*if (!DoorMesh) return;
+
+	FRotator NewRotation = DoorMesh->GetRelativeRotation();
+	NewRotation.Yaw = FMath::FInterpTo(NewRotation.Yaw, TargetYaw, DeltaTime, RotationSpeed);
+	
+	if (FMath::Abs(NewRotation.Yaw - TargetYaw) < 1.0f)
+	{
+		NewRotation.Yaw = TargetYaw;
+		bIsOpening = false;
+	}
+	
+	DoorMesh->SetRelativeRotation(NewRotation);*/
 }

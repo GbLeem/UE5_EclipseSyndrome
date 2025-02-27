@@ -10,7 +10,7 @@ AKeyItem::AKeyItem()
 void AKeyItem::BeginPlay()
 {
 	Super::BeginPlay();
-
+	UE_LOG(LogTemp, Error, TEXT("(TEST) BeginPlay called"));
 	FTimerHandle TimerHandle;
 	GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &AKeyItem::TestActivateItem, 5.0f, false);
 }
@@ -18,10 +18,34 @@ void AKeyItem::BeginPlay()
 
 void AKeyItem::TestActivateItem()
 {
-	AActor* FakePlayer = GetWorld()->SpawnActor<AActor>(AActor::StaticClass(), GetActorLocation(), FRotator::ZeroRotator);
-	if (FakePlayer)
+	UE_LOG(LogTemp, Error, TEXT("(TEST) TestActivateItem called"));
+
+	AActor* PlayerActor = GetWorld()->GetFirstPlayerController()->GetPawn();
+
+	if (!PlayerActor)
 	{
-		ActivateItem(FakePlayer);
+		UE_LOG(LogTemp, Error, TEXT("(TEST) no player found"));
+		return;
+	}
+
+
+
+	AGarageDoor* FoundDoor = nullptr;
+	
+	for (TActorIterator<AGarageDoor> It(GetWorld()); It; ++It)
+	{
+		FoundDoor = *It;
+		break;
+	}
+
+	if (FoundDoor)
+	{
+		UE_LOG(LogTemp, Error, TEXT("(TEST) door found"));
+		ActivateItem(PlayerActor);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("(TEST) door found"));
 	}
 }
 
