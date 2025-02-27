@@ -54,6 +54,7 @@ public:
 	virtual void OnDeath() override;
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 	virtual void Attack(AActor* TargetActor) override;
+	virtual void DestroyEnemy() override;
 
 	// General Function
 

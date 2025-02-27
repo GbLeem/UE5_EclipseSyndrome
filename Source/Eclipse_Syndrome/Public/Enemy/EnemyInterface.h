@@ -27,4 +27,5 @@ public:
 	virtual float GetDamage() const = 0;
 	virtual void OnDeath() = 0;
 	virtual void Attack(AActor* TargetActor) = 0;
+	virtual void DestroyEnemy() = 0;
 };
