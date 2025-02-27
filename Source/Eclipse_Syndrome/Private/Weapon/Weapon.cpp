@@ -2,8 +2,10 @@
 
 #include "Character/PlayerCharacter.h"
 #include "Character/PlayerCharacterController.h"
+#include "Weapon/WeaponShell.h"
 
 #include "Blueprint/UserWidget.h"
+#include "Components/DecalComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/SphereComponent.h"
 #include "Components/WidgetComponent.h"
@@ -11,6 +13,7 @@
 #include "DrawDebugHelpers.h"
 #include "Engine/Engine.h"
 #include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "Particles/ParticleSystem.h"
 
 
@@ -39,6 +42,12 @@ AWeapon::AWeapon()
     if (ItemUIClass.Succeeded())
     {
         ItemHoverUI->SetWidgetClass(ItemUIClass.Class);
+    }    
+    
+    static ConstructorHelpers::FObjectFinder< UMaterialInterface>DecalAsset(TEXT("/Game/HJ/Material/M_Bullet.M_Bullet"));
+    if (DecalAsset.Succeeded())
+    {
+        BulletDecal = DecalAsset.Object;
     }
 
     Tags.Add("Weapon");
@@ -56,7 +65,6 @@ void AWeapon::Tick(float DeltaTime)
     bIsPeeking = false;
 }
 
-//[TODO] effect, sound, damage system
 void AWeapon::Fire()
 {
     if (CurrentAmmo <= 0)
@@ -65,67 +73,56 @@ void AWeapon::Fire()
         return;
     }
 
+    CurrentAmmo--;
+
     FVector MuzzleLocation = GunMesh->GetSocketLocation(TEXT("MuzzleSocket"));
-    FVector FireDirection = CalculateDestination() - MuzzleLocation;
+    FVector FireDirection = CalculateDestination()- MuzzleLocation;
+    FVector EndLocation = MuzzleLocation + FireDirection * FireRange;       
 
-    FVector EndLocation = MuzzleLocation + FireDirection * FireRange;  // 사거리 변수 사용
+    //shell effect    
+    FVector ShellLocation = GunMesh->GetSocketLocation(TEXT("ShellSocket"));
+    FRotator ShellRotation = GunMesh->GetSocketRotation(TEXT("ShellSocket"));
 
-    // 트레이스
+    FActorSpawnParameters SpawnParams;
+    AWeaponShell* ShellActor = GetWorld()->SpawnActor<AWeaponShell>(AWeaponShell::StaticClass(), ShellLocation, ShellRotation, SpawnParams);
+    if (ShellActor)
+    {
+        FVector Direction = ShellRotation.RotateVector(FVector(-30.f, 0.f, 0.f));
+        ShellActor->EjectShell(Direction);
+        ShellActor->SetLifeSpan(3.f);
+    }
+    
+    
+
     FHitResult HitResult;
     FCollisionQueryParams Params;
-    Params.AddIgnoredActor(this);  // 총기 자신은 무시
-
-    bool bHit = GetWorld()->LineTraceSingleByChannel(HitResult, MuzzleLocation, EndLocation, ECC_Visibility, Params);
-    FColor DrawColor = bHit ? FColor::Green : FColor::Red;
-    if (bHit)
-    {
-        if (HitResult.GetActor())
-        {
-            float FinalDamage = Damage; // Damage
-
-            if (HitResult.BoneName == "head")  // Headshot
-            {
-                FinalDamage *= 2.0f;
-            }
-            else // Bodyshot
-            {
-            }   
-           
-            GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, HitResult.GetActor()->GetName());          
-
-            UGameplayStatics::ApplyDamage(HitResult.GetActor(), Damage, nullptr, this, UDamageType::StaticClass());
-        }
-    }
-    DrawDebugLine(GetWorld(), MuzzleLocation, EndLocation, DrawColor, false, 1.0f, 0, 2.0f); //트레이스 빨간선 
+    Params.AddIgnoredActor(this);
     
-    // 탄약 감소
-    CurrentAmmo--;
+    bool bHit = GetWorld()->LineTraceSingleByChannel(HitResult, MuzzleLocation, EndLocation, ECC_Visibility, Params);
+
+    if (bHit)
+    {           
+        //[TODO] -> add damgage available flag
+        if (HitResult.GetActor() && !HitResult.GetActor()->ActorHasTag("Player"))
+        {                      
+            //GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, HitResult.GetActor()->GetName());          
+            UGameplayStatics::ApplyDamage(HitResult.GetActor(), Damage, nullptr, this, UDamageType::StaticClass());                   
+        }                    
+
+        //GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Black, HitResult.GetActor()->GetName());
+        UGameplayStatics::SpawnDecalAtLocation(GetWorld(), BulletDecal, FVector(5.f, 5.f, 5.f),
+            HitResult.Location, UKismetMathLibrary::MakeRotFromX(HitResult.ImpactNormal), 4.f)->SetFadeScreenSize(0.f);
+            
+    }
+
+    FColor DrawColor = bHit ? FColor::Green : FColor::Red;
+    DrawDebugLine(GetWorld(), MuzzleLocation, EndLocation, DrawColor, false, 1.0f, 0, 2.0f);
 }
 
 // Reload
 void AWeapon::Reload(int32 Amount)
 {	
     CurrentAmmo += Amount;
-}
-
-
-//TEST  Crosshair 이거는 잘모르겠네요 삭제하셔도 상관없는 코드 헤드샷 판정??
-bool AWeapon::GetAimHitResult(FHitResult& OutHitResult)
-{
-    APlayerController* PlayerController = GetWorld()->GetFirstPlayerController();
-    if (!PlayerController) return false;
-
-    FVector CameraLocation;
-    FRotator CameraRotation;
-    PlayerController->GetPlayerViewPoint(CameraLocation, CameraRotation);
-
-    FVector TraceStart = CameraLocation;
-    FVector TraceEnd = TraceStart + (CameraRotation.Vector() * FireRange);
-
-    FCollisionQueryParams QueryParams;
-    QueryParams.AddIgnoredActor(this); // 총기 자신은 무시
-
-    return GetWorld()->LineTraceSingleByChannel(OutHitResult, TraceStart, TraceEnd, ECC_Visibility, QueryParams);
 }
 
 FVector AWeapon::CalculateDestination()
@@ -144,14 +141,13 @@ FVector AWeapon::CalculateDestination()
         if (PlayerCharacterController->DeprojectScreenPositionToWorld(ScreenCenter.X, ScreenCenter.Y, WorldLocation, WorldDirection))
         {
             FVector TraceStart = WorldLocation + WorldDirection;
-            FVector TraceEnd = TraceStart + WorldDirection * FireRange;
+            FVector TraceEnd = TraceStart + WorldDirection * FireRange / 2;
                     
             FHitResult HitResult;
             FCollisionQueryParams TraceParams;
             TraceParams.AddIgnoredActor(this);
 
             GetWorld()->LineTraceSingleByChannel(HitResult, TraceStart, TraceEnd, ECC_Visibility, TraceParams);
-            //DrawDebugLine(GetWorld(), TraceStart, TraceEnd, FColor::Blue, false, 2.f, 0, 2.f);
 
             return TraceEnd;
         }                    
@@ -194,4 +190,3 @@ void AWeapon::OnItemEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* Othe
         }
     }
 }
-

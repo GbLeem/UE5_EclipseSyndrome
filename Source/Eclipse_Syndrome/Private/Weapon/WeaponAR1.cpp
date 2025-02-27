@@ -14,6 +14,11 @@ AWeaponAR1::AWeaponAR1()
     bIsPeeking = false;
     WeaponNumber = 1;
 
+    MinPitchRecoil = -0.1f;
+    MaxPitchRecoil = 0.3f;
+    MinYawRecoil = -0.1f;
+    MaxYawRecoil = 0.2f;
+
     static ConstructorHelpers::FObjectFinder<UStaticMesh>StaticMeshAsset(TEXT("/Game/HJ/Assets/QuantumCharacter/Mesh/Rifle/SM_Rifle_Olive.SM_Rifle_Olive"));
     if (StaticMeshAsset.Succeeded())
     {

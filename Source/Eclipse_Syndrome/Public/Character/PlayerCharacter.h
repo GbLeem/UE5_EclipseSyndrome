@@ -28,6 +28,11 @@ public:
 	UFUNCTION()
 	void Reloading();
 
+	//recoil
+	UFUNCTION()
+	void Recoil();
+	void CalculateRecoilValue();
+
 	//call item's activate Item
 	void BeginTraceForPickItem();
 	void StartPeek();
@@ -78,8 +83,6 @@ protected:
 	void Grapple(const FInputActionValue& value);
 	UFUNCTION()
 	void ShowInventory(const FInputActionValue& value);
-	/*UFUNCTION()
-	void StopShowInventory(const FInputActionValue& value);*/
 	UFUNCTION()
 	void PossessToDrone(const FInputActionValue& value);
 	UFUNCTION()
@@ -101,12 +104,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 	float NormalSpeed;
 
-	//for character health
-	/*UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health")
-	float MaxHealth;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health")
-	float CurrentHealth;*/
-
 	//for character item (inventory ammo)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
 	int32 CurrentInventoryAmmos;
@@ -125,12 +122,12 @@ public:
 
 	//for equip weapon
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon")
-	TObjectPtr<AWeapon> CurrentWeapon;
+	TObjectPtr<AWeapon> CurrentWeapon;	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon")
-	TObjectPtr<AWeapon> TempWeapon;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon")
-	TMap<int32, TObjectPtr<AWeapon>> PlayerWeaponInventory;
+	TMap<int32, AWeapon*> PlayerWeaponInventory;
 
+	//for reloading notify
+	bool bIsReloading;
 
 private:
 	bool bCanFire;  //character flag
@@ -143,4 +140,10 @@ private:
 	TObjectPtr<AActor> PeekingItem;
 	FHitResult GrappleHitPoint; //grapple target actor point
 	float GrappleEndTime;
+
+	//temp recoil value
+	float MinPitchRecoil;
+	float MaxPitchRecoil;
+	float MinYawRecoil;
+	float MaxYawRecoil;
 };

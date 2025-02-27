@@ -11,6 +11,11 @@ AWeaponSR::AWeaponSR()
     bIsPeeking = false;
     WeaponNumber = 3;
 
+    MinPitchRecoil = 3.5f;
+    MaxPitchRecoil = 5.5f;
+    MinYawRecoil = 2.2f;
+    MaxYawRecoil = 4.2f;
+
     static ConstructorHelpers::FObjectFinder<UStaticMesh>StaticMeshAsset(TEXT("/Game/HJ/Assets/FPS_Weapon_Bundle/Weapons/Meshes/KA_Val/SM_KA_Val_Y.SM_KA_Val_Y"));
     if (StaticMeshAsset.Succeeded())
     {
