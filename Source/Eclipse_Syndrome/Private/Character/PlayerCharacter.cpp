@@ -33,6 +33,7 @@ APlayerCharacter::APlayerCharacter()
 	, CurrentWeapon(nullptr)
 	, GrappleEndTime(0.5f) //fix
 	, bIsWeaponEquippedBack(false)
+	, bIsReloading(false)
 {
 	PrimaryActorTick.bCanEverTick = true;
 
@@ -63,6 +64,11 @@ APlayerCharacter::APlayerCharacter()
 	{
 		DamageAnimMontage = DamageAsset.Object;
 	}
+
+	PlayerWeaponInventory.Add(1, nullptr);
+	PlayerWeaponInventory.Add(2, nullptr);
+	PlayerWeaponInventory.Add(3, nullptr);
+	PlayerWeaponInventory.Add(4, nullptr);
 
 	Tags.Add("Player");
 }
@@ -174,7 +180,7 @@ void APlayerCharacter::BeginPlay()
 
 void APlayerCharacter::Shoot()
 {	
-	if (CurrentWeapon)
+	if (CurrentWeapon && !bIsReloading)
 	{
 		if (CurrentWeapon->GetCurrentAmmo() <= 0)
 		{
@@ -184,8 +190,10 @@ void APlayerCharacter::Shoot()
 		if (bCanFire)
 		{
 			//Real shooting 
-			CurrentWeapon->Fire();		
+			CurrentWeapon->Fire();	
 
+			//apply recoil
+			Recoil();
 			bCanFire = false;	
 
 			//auto fire
@@ -206,14 +214,19 @@ void APlayerCharacter::Reloading()
 		{
 			return;
 		}
-		if (PlusAmmo > 0)
+		if (PlusAmmo > 0 && bIsWeaponEquipped)
 		{
 			PlusAmmo = FMath::Min(PlusAmmo, CurrentInventoryAmmos);
 			CurrentWeapon->Reload(PlusAmmo);
+			
+			bIsReloading = true;
 
 			//Reload Animation
 			UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-			AnimInstance->Montage_Play(ReloadAnimMontage);
+			if (AnimInstance)
+			{								
+				AnimInstance->Montage_Play(ReloadAnimMontage);
+			}
 
 			CurrentInventoryAmmos -= PlusAmmo;
 
@@ -229,6 +242,31 @@ void APlayerCharacter::Reloading()
 	}	
 }
 
+void APlayerCharacter::Recoil()
+{
+	APlayerCharacterController* PlayerCharacterController = Cast<APlayerCharacterController>(GetController());
+	if (PlayerCharacterController)
+	{
+		CalculateRecoilValue();
+
+		float PitchRecoil = FMath::RandRange(MinPitchRecoil, MaxPitchRecoil);
+		float YawRecoil = FMath::RandRange(MinYawRecoil, MaxYawRecoil);
+
+		PlayerCharacterController->AddPitchInput(-PitchRecoil);
+		PlayerCharacterController->AddYawInput(YawRecoil);		
+	}
+}
+
+void APlayerCharacter::CalculateRecoilValue()
+{
+	if (CurrentWeapon)
+	{
+		MinPitchRecoil = CurrentWeapon->MinPitchRecoil;
+		MaxPitchRecoil = CurrentWeapon->MaxPitchRecoil;
+		MinYawRecoil = CurrentWeapon->MinYawRecoil;
+		MaxYawRecoil = CurrentWeapon->MaxYawRecoil;
+	}
+}
 
 void APlayerCharacter::BeginTraceForPickItem()
 {
@@ -313,38 +351,60 @@ void APlayerCharacter::EquipWeaponBack(int32 WeaponIdx)
 	//attack animation -> can't change weapon
 	if (bIsWeaponEquipped)
 		return;
-	GetWorldTimerManager().ClearTimer(FireRateTimerHandle);
-	//idle animation -> spawn weapon by index
-	if (WeaponIdx == 1)
-	{
-		TempWeapon = GetWorld()->SpawnActor<AWeaponAR1>();
-	}
-	else if (WeaponIdx == 2)
-	{
-		TempWeapon = GetWorld()->SpawnActor<AWeaponAR2>();
-	}
-	else if (WeaponIdx == 3)
-	{
-		TempWeapon = GetWorld()->SpawnActor<AWeaponSR>();
-	}
-	else if (WeaponIdx == 4)
-	{
-		//CurrentWeapon = GetWorld()->SpawnActor<AWeapon>();
-	}	
 
-	//already equip weapon
-	if (CurrentWeapon || bIsWeaponEquippedBack)
-	{		
-		TObjectPtr<AWeapon> Dummy;
-		Dummy = TempWeapon;
-		TempWeapon = CurrentWeapon;
-		CurrentWeapon = Dummy;
-		TempWeapon->Destroy();
+	//timer reset
+	GetWorldTimerManager().ClearTimer(FireRateTimerHandle);
+	
+	//no weapon exist(check by idx) -> spawn
+	if (PlayerWeaponInventory[WeaponIdx] == nullptr)
+	{
+		if (WeaponIdx == 1)
+		{
+			PlayerWeaponInventory[WeaponIdx] = GetWorld()->SpawnActor<AWeaponAR1>();
+		}
+		else if (WeaponIdx == 2)
+		{
+			PlayerWeaponInventory[WeaponIdx] = GetWorld()->SpawnActor<AWeaponAR2>();
+		}
+		else if (WeaponIdx == 3)
+		{
+			PlayerWeaponInventory[WeaponIdx] = GetWorld()->SpawnActor<AWeaponSR>();
+		}
+		else if (WeaponIdx == 4)
+		{
+		}	
 	}
+
+	if (IsValid(CurrentWeapon))
+	{
+		TObjectPtr<AWeapon> Temp = PlayerWeaponInventory[WeaponIdx];
+		int32 Idx = CurrentWeapon->GetWeaponNumber();
+		PlayerWeaponInventory[Idx] = CurrentWeapon;
+		PlayerWeaponInventory[Idx]->SetActorHiddenInGame(true);
+		CurrentWeapon = Temp;
+		CurrentWeapon->SetActorHiddenInGame(false);
+	}	
 	else
 	{
-		CurrentWeapon = TempWeapon;		
+		CurrentWeapon = PlayerWeaponInventory[WeaponIdx];
 	}
+
+	////no weapon Equipped
+	//if (!IsValid(CurrentWeapon) && !bIsWeaponEquippedBack)
+	//{
+	//	CurrentWeapon = PlayerWeaponInventory[WeaponIdx];		
+	//	PlayerWeaponInventory[WeaponIdx] = nullptr;
+	//	bIsWeaponEquippedBack = true;
+	//}
+	////weapon equipped
+	//else if(IsValid(CurrentWeapon) && bIsWeaponEquippedBack)
+	//{
+	//	int32 Idx = CurrentWeapon->GetWeaponNumber();
+	//	PlayerWeaponInventory[Idx] = CurrentWeapon;
+	//	PlayerWeaponInventory[Idx]->SetActorHiddenInGame(true);
+	//	CurrentWeapon = PlayerWeaponInventory[WeaponIdx];
+	//	CurrentWeapon->SetActorHiddenInGame(false);
+	//}
 
 	CurrentWeapon->SetActorEnableCollision(false);
 	FName WeaponSocket(TEXT("back_socket"));
@@ -377,7 +437,6 @@ int32 APlayerCharacter::GetCurrentWeaponAmmo()
 	}
 	return 0;
 }
-
 
 void APlayerCharacter::Move(const FInputActionValue& value)
 {
@@ -439,7 +498,6 @@ void APlayerCharacter::StopSprint(const FInputActionValue& value)
 
 void APlayerCharacter::Reload(const FInputActionValue& value)
 {
-	//TODO		
 	Reloading();		
 }
 
@@ -499,7 +557,7 @@ void APlayerCharacter::PickUp(const FInputActionValue& value)
 void APlayerCharacter::EquipWeapon1(const FInputActionValue& value)
 {
 	//equip -> idle
-	if (bIsWeaponEquipped)
+	if (bIsWeaponEquipped && !bIsReloading)
 	{
 		BlendPoseVariable = 0;
 		bCanFire = false;
@@ -562,14 +620,6 @@ void APlayerCharacter::ShowInventory(const FInputActionValue& value)
 	}	
 
 }
-
-//void APlayerCharacter::StopShowInventory(const FInputActionValue& value)
-//{	
-//	if (GetController())
-//	{
-//		Cast<APlayerCharacterController>(GetController())->StopShowInventoryUI();
-//	}	
-//}
 
 void APlayerCharacter::PossessToDrone(const FInputActionValue& value)
 {

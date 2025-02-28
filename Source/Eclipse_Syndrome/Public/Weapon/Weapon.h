@@ -6,6 +6,7 @@
 
 class USphereComponent;
 class UWidgetComponent;
+class UMaterialInterface;
 
 UCLASS()
 class ECLIPSE_SYNDROME_API AWeapon : public AActor
@@ -22,12 +23,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void Reload(int32 Amount);
 
-	// TEST  Crosshair
-	bool GetAimHitResult(FHitResult& OutHitResult);
-
 	//for shooting
 	FVector CalculateDestination();
-	
+
 	//for ui
 	void ShowUI();
 	void StopUI();
@@ -38,6 +36,7 @@ public:
 	int32 GetMaxAmmo() { return MaxAmmo; }
 	float GetFireRate() { return FireRate; }
 	int32 GetWeaponNumber() { return WeaponNumber; }
+	
 
 	UFUNCTION()
 	virtual void OnItemOverlap
@@ -73,6 +72,9 @@ protected:
 	//ui
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
 	TObjectPtr<UWidgetComponent> ItemHoverUI;
+	
+	//Decal
+	UMaterialInterface* BulletDecal;
 
 	//[FOR GUN's feature]
     UPROPERTY(EditAnywhere, Category = "Gun Settings")
@@ -88,8 +90,14 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Gun Settings")
     int32 CurrentAmmo;	
 	UPROPERTY(EditAnywhere, Category = "Gun Settings")
-	int32 WeaponNumber; //for ui [TEST - 2/25]
+	int32 WeaponNumber;	
 
 public:
 	bool bIsPeeking;
+	FVector RecoilValue;
+
+	float MinPitchRecoil;
+	float MaxPitchRecoil;
+	float MinYawRecoil;
+	float MaxYawRecoil;
 };
