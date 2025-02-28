@@ -13,5 +13,8 @@ UCLASS()
 class ECLIPSE_SYNDROME_API UGangsterAttackAnimNotify : public UAnimNotify
 {
 	GENERATED_BODY()
+
+public:
+	virtual void Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation) override;
 	
 };
