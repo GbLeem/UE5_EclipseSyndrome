@@ -11,7 +11,7 @@ enum class EEnemyStateEnum : uint8
 {
 	Chasing     UMETA(DisplayName = "Chasing"),
 	Shooting    UMETA(DisplayName = "Shooting"),
-	AttackReady UMETA(DisplayName = "AttackReady")
+	Advancing   UMETA(DisplayName = "Advancing")
 };
 
 UCLASS()

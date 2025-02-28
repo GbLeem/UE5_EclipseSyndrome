@@ -28,23 +28,24 @@ void AGangsterAIController::UpdateAttackRange()
 
 	float Distance = FVector::Dist(ControlledPawn->GetActorLocation(), Player->GetActorLocation());
 
-	// Update Current
+	// Update Current EnemyState
 	if (Distance <= 450)
 	{
-		CurrentState = EEnemyStateEnum::AttackReady; // Stop
+		CurrentState = EEnemyStateEnum::Shooting; // Stop and shoot
 	}
 	else if (Distance > 450 && Distance <= 2000)
-	{
-		if (CurrentState != EEnemyStateEnum::AttackReady) // Past CurrentState is not AttackReady
-		{
-			CurrentState = EEnemyStateEnum::Shooting; // Stop and Shooting
-		}
+	{	
+		CurrentState = EEnemyStateEnum::Advancing; // Walk and Shoot
 	}
 	else if (Distance > 2000)
 	{
 		CurrentState = EEnemyStateEnum::Chasing; // Chasing
 	}
-	GetBlackboardComponent()->SetValueAsEnum(TEXT("EnemyState"), static_cast<uint8>(CurrentState));
+	if (CurrentState != static_cast<EEnemyStateEnum>(GetBlackboardComponent()->GetValueAsEnum(TEXT("EnemyState"))))
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Magenta, TEXT("change state"));
+		GetBlackboardComponent()->SetValueAsEnum(TEXT("EnemyState"), static_cast<uint8>(CurrentState));
+	}
 }
 
 void AGangsterAIController::OnPossess(APawn* InPawn)
