@@ -138,4 +138,35 @@ private:
 	TObjectPtr<AActor> PeekingItem;
 	FHitResult GrappleHitPoint; //grapple target actor point
 	float GrappleEndTime;
+
+
+public:
+	// for Swing test
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Swing|Property")
+	bool bIsSwinging = false;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Swing|Property")
+	float MaxSwingSpeed = 2500.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Swing|Property")
+	float SwingBoostStrength = 30000.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Swing|PullMovement|Property")
+	float PullMovementMinSpeed = 300.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Swing|PullMovement|Property")
+	float PullMovementMaxSpeed = 1500.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Swing|PullMovement|Property")
+	float MinDistance = 100.0f;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Swing|Property")
+	float MaxWebLength = 1200.0f;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Swing|Property")
+	FVector AnchorLocation;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Swing|Property")
+	bool bIsSwingCooldown = false;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Swing|Property")
+	bool bIsPullingToAnchor = false;
+	
+	void HandleSwingMovement(float DeltaTime);
+	void HandlePullMovement(float DeltaTime);
+	void EndSwing();
 };
