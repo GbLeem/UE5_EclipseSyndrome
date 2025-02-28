@@ -24,4 +24,5 @@ AWeaponAR1::AWeaponAR1()
     {
         GunMesh->SetStaticMesh(StaticMeshAsset.Object);
     }
+    GunMesh->SetRelativeLocation(FVector(0.f, 10.f, -10.f));
 }

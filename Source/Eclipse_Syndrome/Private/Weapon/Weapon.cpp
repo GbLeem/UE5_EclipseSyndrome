@@ -38,6 +38,9 @@ AWeapon::AWeapon()
     ItemHoverUI->SetWidgetSpace(EWidgetSpace::Screen);
     ItemHoverUI->SetVisibility(false);
 
+    AimLocation = CreateDefaultSubobject<USceneComponent>(TEXT("Aim Location"));
+    AimLocation->SetupAttachment(RootComponent);
+
     static ConstructorHelpers::FClassFinder<UUserWidget>ItemUIClass(TEXT("/Game/HJ/UI/WBP_Item.WBP_Item_C"));
     if (ItemUIClass.Succeeded())
     {
@@ -159,6 +162,18 @@ void AWeapon::ShowUI()
 void AWeapon::StopUI()
 {
     ItemHoverUI->SetVisibility(false);
+}
+
+FVector AWeapon::GetFPSSocketLocation()
+{
+    FVector FPSSocket = FVector::ZeroVector;
+
+    if (GunMesh)
+    {
+        FPSSocket = GunMesh->GetSocketLocation(TEXT("WeaponCamera"));
+        GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Black, FString::Printf(TEXT("%f %f %f"), FPSSocket.X, FPSSocket.Y, FPSSocket.Z));
+    }
+    return FPSSocket;
 }
 
 void AWeapon::OnItemOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)

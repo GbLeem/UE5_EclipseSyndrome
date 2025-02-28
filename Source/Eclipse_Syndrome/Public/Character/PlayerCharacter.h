@@ -22,6 +22,9 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	virtual void BeginPlay() override;
 
+	//crouch animation -> fail
+	//virtual void Landed(const FHitResult& Hit) override;
+
 	UFUNCTION()
 	void Shoot();
 	void ResetShoot() { bCanFire = true; }
@@ -91,18 +94,31 @@ protected:
 	void ChangeView(const FInputActionValue& value);
 	UFUNCTION()
 	void ZoomInOut(const FInputActionValue& value);
-
+	UFUNCTION()
+	void CrouchCharacter(const FInputActionValue& value);
 
 
 //variables
 public:
 	//components
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Component")
+	/*UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Component")
 	TObjectPtr<USpringArmComponent> SpringArmComp;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Component")
-	TObjectPtr<UCameraComponent> CameraComp;
+	TObjectPtr<UCameraComponent> CameraComp;*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Component")
 	TObjectPtr<UCableComponent> CableComp;
+	
+
+
+	//change view component
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Component")
+	TObjectPtr<USpringArmComponent> FPSSpringArmComp;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Component")
+	TObjectPtr<USpringArmComponent> TPSSpringArmComp;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Component")
+	TObjectPtr<UChildActorComponent> FPSCamera;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Component")
+	TObjectPtr<UChildActorComponent> TPSCamera;
 
 	//for character speed
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
@@ -147,9 +163,21 @@ private:
 	FHitResult GrappleHitPoint; //grapple target actor point
 	float GrappleEndTime;
 
-	//temp recoil value
+	//recoil value
 	float MinPitchRecoil;
 	float MaxPitchRecoil;
 	float MinYawRecoil;
 	float MaxYawRecoil;
+
+public:
+	//camera change value
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
+	bool bIsTPSMode;
+
+	//Crouch System
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
+	bool bIsCrouch;
+
+	//sprint only forward 
+	bool bMoveForward;
 };

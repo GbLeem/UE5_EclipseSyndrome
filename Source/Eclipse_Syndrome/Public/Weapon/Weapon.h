@@ -37,6 +37,9 @@ public:
 	float GetFireRate() { return FireRate; }
 	int32 GetWeaponNumber() { return WeaponNumber; }
 	
+	//for aim [TEST]
+	FVector GetFPSSocketLocation();
+	FVector GetAimLocation() { return AimLocation->GetRelativeLocation(); }
 
 	UFUNCTION()
 	virtual void OnItemOverlap
@@ -92,7 +95,11 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Gun Settings")
 	int32 WeaponNumber;	
 
+
 public:
+	UPROPERTY(EditAnywhere, Category = "Gun Settings")
+	TObjectPtr<USceneComponent> AimLocation;
+
 	bool bIsPeeking;
 	FVector RecoilValue;
 

@@ -1,5 +1,6 @@
 #include "Character/PlayerCharacter.h"
 
+#include "Character/PlayerCamera.h"
 #include "Character/PlayerCharacterController.h"
 #include "Item/BaseItem.h"
 #include "System/DefaultGameState.h"
@@ -34,16 +35,22 @@ APlayerCharacter::APlayerCharacter()
 	, GrappleEndTime(0.5f) //fix
 	, bIsWeaponEquippedBack(false)
 	, bIsReloading(false)
+	, bIsTPSMode(true)
+	, bIsCrouch(false)
+	,bMoveForward(true)
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	SpringArmComp = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
+	/*SpringArmComp = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
 	SpringArmComp->SetupAttachment(RootComponent);
 	SpringArmComp->bUsePawnControlRotation = true;
 
 	CameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	CameraComp->SetupAttachment(SpringArmComp);
-	CameraComp->bUsePawnControlRotation = false;
+	CameraComp->bUsePawnControlRotation = false;*/
+
+	GetMesh()->SetRelativeLocation(FVector(0.f, 0.f, -88.f));
+	GetMesh()->SetRelativeRotation(FRotator(0.f, -90.f, 0.f));
 
 	CableComp = CreateDefaultSubobject<UCableComponent>(TEXT("Hook"));
 	CableComp->SetupAttachment(GetMesh());	
@@ -52,6 +59,32 @@ APlayerCharacter::APlayerCharacter()
 	CableComp->CableWidth = 5.f;
 	CableComp->NumSegments = 2;
 	CableComp->SetVisibility(false);
+
+	FPSSpringArmComp = CreateDefaultSubobject<USpringArmComponent>(TEXT("FPS Spring Arm"));
+	FPSSpringArmComp->SetupAttachment(RootComponent);
+	FPSCamera = CreateDefaultSubobject<UChildActorComponent>(TEXT("FPS Camera actor"));
+	FPSCamera->SetupAttachment(FPSSpringArmComp);
+	FPSCamera->SetChildActorClass(APlayerCamera::StaticClass());
+	FPSSpringArmComp->TargetArmLength = 0.f;
+	//FPSSpringArmComp->SetRelativeLocation(FVector(35.f, 10.f, 0.f));
+	//FPSSpringArmComp->SetRelativeRotation(FRotator(0.f, 30.f, 0.f)); //[FIX] - Camera rotation is bad
+	FPSSpringArmComp->TargetOffset = FVector(0.f, 0.f, 30.f); //[FIX]
+	FPSSpringArmComp->bUsePawnControlRotation = true;
+
+	TPSSpringArmComp = CreateDefaultSubobject<USpringArmComponent>(TEXT("TPS Spring Arm"));
+	TPSSpringArmComp->SetupAttachment(RootComponent);
+	TPSCamera = CreateDefaultSubobject<UChildActorComponent>(TEXT("TPS Camera actor"));
+	TPSCamera->SetupAttachment(TPSSpringArmComp);
+	TPSCamera->SetChildActorClass(APlayerCamera::StaticClass());
+	TPSSpringArmComp->TargetArmLength = 200.f;
+	TPSSpringArmComp->TargetOffset = FVector(0.f, 0.f, 100.f);
+	TPSSpringArmComp->bUsePawnControlRotation = true;
+
+	/*static ConstructorHelpers::FObjectFinder<USkeletalMesh>SkeletalMesh(TEXT("/Game/HJ/Assets/QuantumCharacter/Mesh/SKM_QuantumCharacter.SKM_QuantumCharacter"));
+	if (SkeletalMesh.Succeeded())
+	{
+		GetMesh()->SetSkeletalMesh(SkeletalMesh.Object);
+	}*/
 
 	static ConstructorHelpers::FObjectFinder<UAnimMontage>ReloadAsset(TEXT("/Game/HJ/Animation/AM_ReloadAR1.AM_ReloadAR1"));
 	if (ReloadAsset.Succeeded())
@@ -64,6 +97,23 @@ APlayerCharacter::APlayerCharacter()
 	{
 		DamageAnimMontage = DamageAsset.Object;
 	}
+
+	/*static ConstructorHelpers::FClassFinder<UAnimInstance> AnimClass(TEXT("/Game/HJ/Animation/ABP_PlayerCharacter.ABP_PlayerCharacter_C"));
+	if (AnimClass.Succeeded())
+	{
+		GetMesh()->SetAnimInstanceClass(AnimClass.Class);
+	}*/
+
+	//crouch setting
+	if (GetMovementComponent())
+	{
+		GetMovementComponent()->GetNavAgentPropertiesRef().bCanCrouch = true;				
+	}
+	if (GetCharacterMovement())
+	{
+		GetCharacterMovement()->bCanWalkOffLedgesWhenCrouching = true;
+	}
+
 
 	PlayerWeaponInventory.Add(1, nullptr);
 	PlayerWeaponInventory.Add(2, nullptr);
@@ -139,9 +189,6 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 			{
 				EnhancedInputComponent->BindAction(PlayerController->ShowInventoryAction,
 					ETriggerEvent::Started, this, &APlayerCharacter::ShowInventory);
-
-				//EnhancedInputComponent->BindAction(PlayerController->ShowInventoryAction,
-				//	ETriggerEvent::Completed, this, &APlayerCharacter::StopShowInventory);
 			}
 			if (PlayerController->ViewChangeAction)
 			{
@@ -152,6 +199,11 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 			{
 				EnhancedInputComponent->BindAction(PlayerController->ZoomAction,
 					ETriggerEvent::Started, this, &APlayerCharacter::ZoomInOut);
+			}
+			if (PlayerController->CrouchAction)
+			{
+				EnhancedInputComponent->BindAction(PlayerController->CrouchAction,
+					ETriggerEvent::Started, this, &APlayerCharacter::CrouchCharacter);
 			}
 			if (PlayerController->DroneMoveCommandAction)
 			{
@@ -178,7 +230,7 @@ void APlayerCharacter::Tick(float DeltaTime)
 			Cast<AWeapon>(PeekingItem)->bIsPeeking = true;
 		if (PeekingItem->ActorHasTag("Item"))
 			Cast<ABaseItem>(PeekingItem)->bIsPeeking = true;
-	}
+	}	
 }
 
 void APlayerCharacter::BeginPlay()
@@ -186,6 +238,13 @@ void APlayerCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	Cast<ADefaultGameState>(GetWorld()->GetGameState())->SetPlayerCharacter(this);
+
+	APlayerCharacterController* PlayerCharacterController = Cast<APlayerCharacterController>(GetController());
+	if (PlayerCharacterController)
+	{
+		PlayerCharacterController->SetViewTargetWithBlend(TPSCamera->GetChildActor());
+	}
+
 }
 
 void APlayerCharacter::Shoot()
@@ -399,23 +458,6 @@ void APlayerCharacter::EquipWeaponBack(int32 WeaponIdx)
 		CurrentWeapon = PlayerWeaponInventory[WeaponIdx];
 	}
 
-	////no weapon Equipped
-	//if (!IsValid(CurrentWeapon) && !bIsWeaponEquippedBack)
-	//{
-	//	CurrentWeapon = PlayerWeaponInventory[WeaponIdx];		
-	//	PlayerWeaponInventory[WeaponIdx] = nullptr;
-	//	bIsWeaponEquippedBack = true;
-	//}
-	////weapon equipped
-	//else if(IsValid(CurrentWeapon) && bIsWeaponEquippedBack)
-	//{
-	//	int32 Idx = CurrentWeapon->GetWeaponNumber();
-	//	PlayerWeaponInventory[Idx] = CurrentWeapon;
-	//	PlayerWeaponInventory[Idx]->SetActorHiddenInGame(true);
-	//	CurrentWeapon = PlayerWeaponInventory[WeaponIdx];
-	//	CurrentWeapon->SetActorHiddenInGame(false);
-	//}
-
 	CurrentWeapon->SetActorEnableCollision(false);
 	FName WeaponSocket(TEXT("back_socket"));
 	CurrentWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponSocket);
@@ -464,6 +506,10 @@ void APlayerCharacter::Move(const FInputActionValue& value)
 	{
 		AddMovementInput(GetActorRightVector(), MoveInput.Y);
 	}
+	if (MoveInput.X > 0)
+		bMoveForward = true;
+	else
+		bMoveForward = false;
 }
 
 void APlayerCharacter::Look(const FInputActionValue& value)
@@ -492,7 +538,7 @@ void APlayerCharacter::StopJump(const FInputActionValue& value)
 
 void APlayerCharacter::StartSprint(const FInputActionValue& value)
 {
-	if (GetCharacterMovement())
+	if (GetCharacterMovement() && bMoveForward)
 	{
 		GetCharacterMovement()->MaxWalkSpeed = SprintSpeed;
 	}
@@ -589,7 +635,7 @@ void APlayerCharacter::EquipWeapon1(const FInputActionValue& value)
 		bCanFire = true; // for attack
 		bIsWeaponEquipped = true;
 
-		FName WeaponSocket(TEXT("hand_socket"));
+		FName WeaponSocket(TEXT("handFPSSocket"));
 		CurrentWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponSocket);
 	}
 }
@@ -708,7 +754,50 @@ void APlayerCharacter::ChangeView(const FInputActionValue& value)
 
 void APlayerCharacter::ZoomInOut(const FInputActionValue& value)
 {
-	GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, FString::Printf(TEXT("Zoom In")));
+	//GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, FString::Printf(TEXT("Zoom In")));
+
+	if (bIsWeaponEquipped)
+	{
+		if (GetController())
+		{
+			APlayerCharacterController* PlayerCharacterController = Cast<APlayerCharacterController>(GetController());
+
+			if (PlayerCharacterController)
+			{
+				if (bIsTPSMode)
+				{
+					//[TEST]	
+					FLatentActionInfo LatentInfo;
+					LatentInfo.CallbackTarget = this;
+					FPSSpringArmComp->SetWorldLocation(CurrentWeapon->AimLocation->GetComponentLocation());					
+					//========
+
+					PlayerCharacterController->SetViewTargetWithBlend(FPSCamera->GetChildActor(), 0.2f);
+					bIsTPSMode = false;
+				}
+				else
+				{
+					PlayerCharacterController->SetViewTargetWithBlend(TPSCamera->GetChildActor(), 0.2f);
+					bIsTPSMode = true;
+				}
+			}
+		}
+	}
+}
+
+void APlayerCharacter::CrouchCharacter(const FInputActionValue& value)
+{
+	if (!bIsCrouch)
+	{		
+		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, FString::Printf(TEXT("crouch")));
+		Crouch();
+		bIsCrouch = true;
+	}
+	else
+	{
+		UnCrouch();
+		bIsCrouch = false;
+	}
 }
 
 void APlayerCharacter::SetEnhancedInput()

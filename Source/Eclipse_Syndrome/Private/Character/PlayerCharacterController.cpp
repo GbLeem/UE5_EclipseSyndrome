@@ -84,6 +84,11 @@ APlayerCharacterController::APlayerCharacterController()
 	{
 		ZoomAction = IA_Zoom.Object;
 	}
+	static ConstructorHelpers::FObjectFinder<UInputAction> IA_Crouch(TEXT("/Game/HJ/Input/IA_Crouch.IA_Crouch"));
+	if (IA_Crouch.Succeeded())
+	{
+		CrouchAction = IA_Crouch.Object;
+	}
 
 	//for drone possess
 	static ConstructorHelpers::FObjectFinder<UInputAction> IA_DroneMoveCommand(TEXT("/Game/HJ/Input/IA_DroneMoveCommand.IA_DroneMoveCommand"));
