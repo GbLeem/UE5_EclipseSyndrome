@@ -9,6 +9,7 @@
 
 UBTTaskNode_GangsterAttack::UBTTaskNode_GangsterAttack()
 {
+	bNotifyTick = true;
 }
 
 EBTNodeResult::Type UBTTaskNode_GangsterAttack::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
@@ -34,8 +35,8 @@ EBTNodeResult::Type UBTTaskNode_GangsterAttack::ExecuteTask(UBehaviorTreeCompone
 		return EBTNodeResult::Failed;
 	}
 
-	// Attack
-	EnemyCharacter->Attack(TargetActor);
+	// Change Speed
+	EnemyCharacter->ChangeSpeedAim();
 
 	// Play attack animation
 	if (EnemyCharacter && EnemyCharacter->GetMesh())

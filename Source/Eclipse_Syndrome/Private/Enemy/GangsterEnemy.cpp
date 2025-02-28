@@ -5,6 +5,7 @@
 #include "Enemy/GangsterAIController.h"
 #include "Character/PlayerCharacter.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 
 AGangsterEnemy::AGangsterEnemy()
@@ -16,6 +17,7 @@ AGangsterEnemy::AGangsterEnemy()
 	AttackRange = 700.0f;
 	AttackReadyRange = 450.0f;
 	ShootRange = 5000.0f;
+	AimSpeed = 200.0f;
 
 	// AI
 	AIControllerClass = AGangsterAIController::StaticClass();
@@ -24,6 +26,15 @@ AGangsterEnemy::AGangsterEnemy()
 	// Components
 	EnemyMesh = GetMesh();
 	GunMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("GunMesh"));
+}
+
+void AGangsterEnemy::ChangeSpeedAim()
+{
+	UCharacterMovementComponent* MovementComponent = GetCharacterMovement();
+	if (MovementComponent)
+	{
+		MovementComponent->MaxWalkSpeed = AimSpeed;
+	}
 }
 
 void AGangsterEnemy::BeginPlay()
@@ -108,21 +119,6 @@ FVector AGangsterEnemy::CalculateDestination()
 	Params.AddIgnoredActor(this); // Ignore SelfEnemy
 
 	bool bHit = GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility, Params);
-	if (!bHit)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, TEXT("bHit is Failed"));
-	}
-	if (HitResult.GetActor() != Target)
-	{
-		if (HitResult.GetActor())
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, HitResult.GetActor()->GetName());
-		}
-		else
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, TEXT("Null"));
-		}
-	}
 	if (bHit && HitResult.GetActor() == Target)
 	{
 		return HitResult.ImpactPoint;  // 조준 성공 시 목표 지점 반환
