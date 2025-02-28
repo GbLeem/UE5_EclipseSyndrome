@@ -72,11 +72,17 @@ void APuzzleBSlot::OnBlockOverlap(
 
 	APuzzleBlock* OverlappingBlock = Cast<APuzzleBlock>(OtherActor);
 	//if otherActor type == APuzzleBlock, OverlappingBlock / else nullptr
-	if (!OverlappingBlock || OverlappingBlock->CurrentSlot && OverlappingBlock->CurrentSlot != this)
+	if (!OverlappingBlock) return;
+	
+	//if current block exists, and overlapping block is not current block,
+	//push back the overlapping block
+	if (CurrentBlock && OverlappingBlock != CurrentBlock)
 	{
+		FVector PushBackLocation = OverlappingBlock->GetActorLocation() + FVector(20.0f, 0.0f, 0.0f);
+		OverlappingBlock->SetActorLocation(PushBackLocation);
+		UE_LOG(LogTemp, Warning, TEXT("Slot already occupied! %s is pushed back."), *OverlappingBlock->GetName());
 		return;
 	}
-
 	//if overlappingBlock has current slot, but current slot is not this 
 	UE_LOG(LogTemp, Warning, TEXT("Block Overlapped: %s"), *OverlappingBlock->GetName());
 	/*FVector SnapOffset = FVector(0.0f, 30.0f, 5.0f);*/
@@ -93,6 +99,7 @@ void APuzzleBSlot::OnBlockOverlap(
 
 
 	CurrentBlock = OverlappingBlock;
+	CurrentBlock->CurrentSlot = this;
 
 	SetAllCurrentBlock();
 	///original code
@@ -108,24 +115,31 @@ void APuzzleBSlot::OnBlockOverlap(
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Gear was placed wrongly, slot: %d, block:%d placed"), CorrectBlockID, OverlappingBlock->BlockID);
 	}
-	/*UE_LOG(LogTemp, Warning, TEXT("BlockID %d placed in SlotID %d"), OverlappingBlock->BlockID, CorrectBlockID);*/
 	
 }
 
 
 bool APuzzleBSlot::PlaceBlock(APuzzleBlock* Block)
 {
-	if (!Block || CurrentBlock) 
+	if (!Block) return false;
 		// if no block or block already exists -> return false
+	if(CurrentBlock)
 	{
-		return false;
+
+		FVector PushBackLocation = CurrentBlock->GetActorLocation() + FVector(20.0f, 0.0f, 0.0f);
+		CurrentBlock->SetActorLocation(PushBackLocation);
+		UE_LOG(LogTemp, Warning, TEXT("Slot already occupied"));
+		
 	}
+
+	
 	FVector SlotLocation = GetActorLocation();
 	Block->SetActorLocation(SlotLocation, false, nullptr, ETeleportType::TeleportPhysics);
-	/*Block->CollisionBox->SetSimulatePhysics(false);*/
 
 
 	CurrentBlock = Block;
+	CurrentBlock->CurrentSlot = this;
+
 	if (CurrentBlock->BlockID == CorrectBlockID)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Gear was placed correctly, slot: %d, block:%d placed"), CorrectBlockID, Block->BlockID);

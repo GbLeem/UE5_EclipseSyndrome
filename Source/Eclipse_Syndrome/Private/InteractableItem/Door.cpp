@@ -19,7 +19,6 @@ ADoor::ADoor()
 void ADoor::BeginPlay()
 {
 	Super::BeginPlay();
-	//CurrentYaw = DoorMesh->GetRelativeRotation().Yaw;
 	ClosedLocation = DoorMesh->GetRelativeLocation();
 	ClosedRotation = DoorMesh->GetRelativeRotation();
 
@@ -57,16 +56,4 @@ void ADoor::MoveAndRotateDoor(float DeltaTime)
 	
 	DoorMesh->SetRelativeLocation(NewLocation);
 	DoorMesh->SetRelativeRotation(NewRotation);
-	/*if (!DoorMesh) return;
-
-	FRotator NewRotation = DoorMesh->GetRelativeRotation();
-	NewRotation.Yaw = FMath::FInterpTo(NewRotation.Yaw, TargetYaw, DeltaTime, RotationSpeed);
-	
-	if (FMath::Abs(NewRotation.Yaw - TargetYaw) < 1.0f)
-	{
-		NewRotation.Yaw = TargetYaw;
-		bIsOpening = false;
-	}
-	
-	DoorMesh->SetRelativeRotation(NewRotation);*/
 }
