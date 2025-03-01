@@ -8,6 +8,7 @@
 #include "Weapon/WeaponAR1.h"
 #include "Weapon/WeaponAR2.h"
 #include "Weapon/WeaponSR.h"
+#include "InteractableItem/PuzzleItem/KeyItem.h"
 
 #include "CableComponent.h"
 #include "Camera/CameraComponent.h"
@@ -168,6 +169,7 @@ void APlayerCharacter::Tick(float DeltaTime)
 			Cast<AWeapon>(PeekingItem)->bIsPeeking = true;
 		if (PeekingItem->ActorHasTag("Item"))
 			Cast<ABaseItem>(PeekingItem)->bIsPeeking = true;
+		//Add Puzzle
 	}
 }
 
@@ -424,6 +426,33 @@ void APlayerCharacter::UseHealthItem()
 				//[TODO] how to get health amount?
 				DefaultGameInstance->PlusHealth(20.f);
 				DefaultGameInstance->InventoryItem[1] -= 1;
+			}
+		}
+	}
+}
+
+//[fixing]Connecting with Character
+void APlayerCharacter::UseKeyItem()
+{
+	UE_LOG(LogTemp, Warning, TEXT("UseKeyItem called"));
+	if (UGameInstance* GameInstance = GetGameInstance())
+	{
+		UDefaultGameInstance* DefaultGameInstance = Cast<UDefaultGameInstance>(GameInstance);
+		if (DefaultGameInstance)
+		{
+			if (DefaultGameInstance->InventoryItem[3] > 0)
+			{
+				AKeyItem* KeyItem = Cast<AKeyItem>(UGameplayStatics::GetActorOfClass(GetWorld(), AKeyItem::StaticClass()));
+				if (KeyItem)
+				{
+					KeyItem->ActivateItem(this);
+					DefaultGameInstance->InventoryItem[3] -= 1;
+				}
+				else
+				{
+					UE_LOG(LogTemp, Error, TEXT("No KeyItem found!"));
+				}
+				DefaultGameInstance->InventoryItem[3] -= 1;
 			}
 		}
 	}

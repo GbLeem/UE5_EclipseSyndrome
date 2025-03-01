@@ -46,6 +46,12 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void UseHealthItem();
 
+	//[fixing]Connecting with Character
+	UFUNCTION(BlueprintCallable)
+	void UseKeyItem();
+
+
+
 	//getter
 	int32 GetCurrentWeaponAmmo();
 
