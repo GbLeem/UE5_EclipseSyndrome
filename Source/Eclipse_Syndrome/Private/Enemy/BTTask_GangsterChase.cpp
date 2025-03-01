@@ -15,68 +15,28 @@ UBTTask_GangsterChase::UBTTask_GangsterChase()
 
 EBTNodeResult::Type UBTTask_GangsterChase::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
-	GangsterAIController = Cast<AGangsterAIController>(OwnerComp.GetAIOwner());
-	if (!GangsterAIController)
+	// Get AI controller
+	AGangsterAIController* AIController = Cast<AGangsterAIController>(OwnerComp.GetAIOwner());
+	if (!AIController)
 	{
 		return EBTNodeResult::Failed;
 	}
 
-	AGangsterEnemy* Gangster = Cast<AGangsterEnemy>(GangsterAIController->GetPawn());
-	if (!Gangster)
+	// Get enemy character
+	AGangsterEnemy* EnemyCharacter = Cast<AGangsterEnemy>(AIController->GetPawn());
+	if (!EnemyCharacter)
 	{
 		return EBTNodeResult::Failed;
 	}
 
-	PlayerCharacter = Cast<APlayerCharacter>(GangsterAIController->GetBlackboardComponent()->GetValueAsObject(TEXT("TargetActor")));
-	if (!PlayerCharacter)
+	// Get player character from blackboard
+	APlayerCharacter* TargetActor = Cast<APlayerCharacter>(OwnerComp.GetBlackboardComponent()->GetValueAsObject("TargetActor"));
+	if (!TargetActor)
 	{
 		return EBTNodeResult::Failed;
 	}
 
-	// Change gangster speed
-	Gangster->ChangeSpeedChase();
-	
-	return EBTNodeResult::InProgress;
-}
-
-void UBTTask_GangsterChase::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
-{
-	// GangsterAIController null check
-	if (!GangsterAIController)
-	{
-		FinishLatentTask(OwnerComp, EBTNodeResult::Failed);
-		return;
-	}
-
-	// PlayerCharacter null check
-	if (!PlayerCharacter)
-	{
-		FinishLatentTask(OwnerComp, EBTNodeResult::Failed);
-		return;
-	}
-
-	// Get PlayerDetected from Blackboard
-	bool PlayerDetected = GangsterAIController->GetBlackboardComponent()->GetValueAsBool(TEXT("PlayerDetected"));
-
-	if (PlayerDetected)
-	{
-		// Move To Player
-		EPathFollowingRequestResult::Type MoveResult = GangsterAIController->MoveToActor(PlayerCharacter, 5.0f, true, true, false, nullptr, true);
-		
-		// When Enemy at Goal
-		if (MoveResult == EPathFollowingRequestResult::AlreadyAtGoal)
-		{
-			FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
-		}
-
-		// When EneyState change
-		if (static_cast<uint8>(CurrentState) != GangsterAIController->GetBlackboardComponent()->GetValueAsEnum(TEXT("EnemyState")))
-		{
-			FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
-		}
-	}
-	else
-	{
-		FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
-	}
+	// Change Speed
+	EnemyCharacter->ChangeSpeedChase();
+	return EBTNodeResult::Succeeded;
 }

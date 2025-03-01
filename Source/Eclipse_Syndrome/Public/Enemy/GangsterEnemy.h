@@ -24,10 +24,15 @@ public:
 	float AttackReadyRange;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy")
 	float ShootRange;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MoveSpeed")
+	float AimSpeed;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon")
 	USkeletalMeshComponent* EnemyMesh;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Weapon")
 	USkeletalMeshComponent* GunMesh;
+
+	UFUNCTION(BlueprintCallable)
+	void ChangeSpeedAim();
 
 	virtual void BeginPlay() override;
 	
