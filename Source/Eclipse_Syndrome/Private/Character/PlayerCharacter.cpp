@@ -9,6 +9,7 @@
 #include "Weapon/WeaponAR2.h"
 #include "Weapon/WeaponSR.h"
 #include "InteractableItem/PuzzleItem/KeyItem.h"
+#include "InteractableItem/PuzzleItem/PuzzleBlock.h"
 
 #include "CableComponent.h"
 #include "Camera/CameraComponent.h"
@@ -169,7 +170,7 @@ void APlayerCharacter::Tick(float DeltaTime)
 			Cast<AWeapon>(PeekingItem)->bIsPeeking = true;
 		if (PeekingItem->ActorHasTag("Item"))
 			Cast<ABaseItem>(PeekingItem)->bIsPeeking = true;
-		//Add Puzzle
+
 	}
 	
 	if (bIsSwinging)
@@ -422,7 +423,7 @@ void APlayerCharacter::UseHealthItem()
 	}
 }
 
-//[fixing]Connecting with Character
+//[YJ fixing]Connecting with Character
 void APlayerCharacter::UseKeyItem()
 {
 	UE_LOG(LogTemp, Warning, TEXT("UseKeyItem called"));
@@ -443,11 +444,38 @@ void APlayerCharacter::UseKeyItem()
 				{
 					UE_LOG(LogTemp, Error, TEXT("No KeyItem found!"));
 				}
-				DefaultGameInstance->InventoryItem[3] -= 1;
 			}
 		}
 	}
 }
+
+
+//[YJ fixing]Connecting with Character
+void APlayerCharacter::UsePuzzleBlockItem()
+{
+	UE_LOG(LogTemp, Warning, TEXT("UsePuzzleBlockItem called"));
+	if (UGameInstance* GameInstance = GetGameInstance())
+	{
+		UDefaultGameInstance* DefaultGameInstance = Cast<UDefaultGameInstance>(GameInstance);
+		if (DefaultGameInstance)
+		{
+			if (DefaultGameInstance->InventoryItem[3] > 0)
+			{
+				/*AKeyItem* KeyItem = Cast<AKeyItem>(UGameplayStatics::GetActorOfClass(GetWorld(), AKeyItem::StaticClass()));
+				if (KeyItem)
+				{
+					KeyItem->ActivateItem(this);
+					DefaultGameInstance->InventoryItem[3] -= 1;
+				}
+				else
+				{
+					UE_LOG(LogTemp, Error, TEXT("No PuzzleItem found!"));
+				}*/
+			}
+		}
+	}
+}
+
 
 int32 APlayerCharacter::GetCurrentWeaponAmmo()
 {
@@ -592,6 +620,8 @@ void APlayerCharacter::PickUp(const FInputActionValue& value)
 					int32 ItemIdx = Cast<ABaseItem>(PeekingItem)->GetItemNumber();
 					int32 ItemAmount = Cast<ABaseItem>(PeekingItem)->GetItemAmount();
 					DefaultGameInstance->AddItem(ItemIdx, ItemAmount);
+					//[YJ Testing]
+					UE_LOG(LogTemp, Warning, TEXT("Picked Up Item: %d"), ItemIdx);
 				}
 			}
 			PeekingItem->Destroy();

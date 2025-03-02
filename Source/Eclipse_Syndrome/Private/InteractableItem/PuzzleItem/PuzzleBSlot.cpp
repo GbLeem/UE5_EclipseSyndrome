@@ -59,7 +59,7 @@ void APuzzleBSlot::Tick(float DeltaTime)
 		{
 
 			
-			CurrentBlock->CollisionBox->SetSimulatePhysics(false);
+			CurrentBlock->SlotCollision->SetSimulatePhysics(false);
 		}
 	}
 }
@@ -69,7 +69,7 @@ void APuzzleBSlot::OnBlockOverlap(
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
 	bool bFromSweep, const FHitResult& SweepResult)
 {
-
+	
 	APuzzleBlock* OverlappingBlock = Cast<APuzzleBlock>(OtherActor);
 	//if otherActor type == APuzzleBlock, OverlappingBlock / else nullptr
 	if (!OverlappingBlock) return;
@@ -94,7 +94,7 @@ void APuzzleBSlot::OnBlockOverlap(
 
 	if (CurrentBlock)
 	{
-		CurrentBlock->CollisionBox->SetSimulatePhysics(false);
+		CurrentBlock->SlotCollision->SetSimulatePhysics(false);
 	}
 
 
@@ -158,7 +158,7 @@ void APuzzleBSlot::RemoveBlock()
 	//if current block exists, remove block when called
 	if (CurrentBlock)
 	{
-		CurrentBlock->CollisionBox->SetSimulatePhysics(true);
+		CurrentBlock->SlotCollision->SetSimulatePhysics(true);
 		
 		UE_LOG(LogTemp, Warning, TEXT("Block ID %d removed from Slot ID %d"), CurrentBlock->BlockID, CorrectBlockID);
 		CurrentBlock = nullptr;

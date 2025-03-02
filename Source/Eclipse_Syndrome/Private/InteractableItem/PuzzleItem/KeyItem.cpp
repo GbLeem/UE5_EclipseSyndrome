@@ -17,7 +17,7 @@ AKeyItem::AKeyItem()
 
 	InteractionBox = CreateDefaultSubobject<UBoxComponent>(TEXT("BoxCollision"));
 	InteractionBox->SetupAttachment(StaticMeshComp);
-	InteractionBox->SetBoxExtent(FVector(1000.f, 1000.f, 1000.f));
+	InteractionBox->SetBoxExtent(FVector(3000.f, 3000.f, 3000.f));
 	InteractionBox->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	InteractionBox->SetCollisionObjectType(ECC_WorldDynamic);
 	InteractionBox->SetCollisionResponseToAllChannels(ECR_Ignore);

@@ -9,6 +9,8 @@ UDefaultGameInstance::UDefaultGameInstance()
 {
 	InventoryItem.Add(1, 0);
 	InventoryItem.Add(2, InventoryAmmo);
+	//[YJ fixing]
+	InventoryItem.Add(3, 0);
 }
 
 void UDefaultGameInstance::AddAmmo(int32 Amount)

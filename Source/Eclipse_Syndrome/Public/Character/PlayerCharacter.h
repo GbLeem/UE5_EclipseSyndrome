@@ -49,7 +49,8 @@ public:
 	//[fixing]Connecting with Character
 	UFUNCTION(BlueprintCallable)
 	void UseKeyItem();
-
+	UFUNCTION(BlueprintCallable)
+	void UsePuzzleBlockItem();
 
 
 	//getter

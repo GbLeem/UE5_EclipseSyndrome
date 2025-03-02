@@ -130,7 +130,20 @@ void ADefaultGameState::UpdateHUD()
 							CurrentInventoryAmmoText->SetText(FText::FromString(FString::Printf(TEXT("%d"), DefaultGameInstance->InventoryItem[2])));
 						}
 					}
-				}				
+				}
+
+				//[YJ fixing]
+				if (UTextBlock* CurrentInventoryAmmoText = Cast<UTextBlock>(InventoryWidget->GetWidgetFromName(TEXT("Item3Text"))))
+				{
+					if (UGameInstance* GameInstance = GetGameInstance())
+					{
+						if (UDefaultGameInstance* DefaultGameInstance = Cast<UDefaultGameInstance>(GameInstance))
+						{
+							CurrentInventoryAmmoText->SetText(FText::FromString(FString::Printf(TEXT("%d"), DefaultGameInstance->InventoryItem[3])));
+						}
+					}
+				}
+
 			}
 		}
 	}

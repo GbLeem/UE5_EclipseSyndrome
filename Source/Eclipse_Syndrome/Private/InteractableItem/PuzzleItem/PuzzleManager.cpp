@@ -64,6 +64,8 @@ void APuzzleManager::AssignBlockIDs()
 	TArray<AActor*> FoundBlocks;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), APuzzleBlock::StaticClass(), FoundBlocks);
 	UE_LOG(LogTemp, Warning, TEXT("Found Blocks: %d"), FoundBlocks.Num());
+
+	
 	for (int i = 0; i < FoundBlocks.Num(); i++)
 	{
 		APuzzleBlock* Block = Cast<APuzzleBlock>(FoundBlocks[i]);
