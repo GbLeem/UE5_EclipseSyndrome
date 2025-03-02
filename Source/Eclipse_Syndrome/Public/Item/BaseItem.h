@@ -43,28 +43,6 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
 	TObjectPtr<UWidgetComponent> ItemHoverUI;
-
-	////currently not working
-	////-> will be deleted when this code is completely useless
-	////Player Overlap
-	//UFUNCTION()
-	//virtual void OnPlayerOverlapBegin(
-	//	UPrimitiveComponent* OverlappedComponent,
-	//	AActor* OtherActor,
-	//	UPrimitiveComponent* OtherComp,
-	//	int32 OtherBodyIndex,
-	//	bool bFromSweep,
-	//	const FHitResult& SweepResult
-	//);
-	////currently not working
-	////-> will be deleted when this code is completely useless
-	//UFUNCTION()
-	//virtual void OnPlayerOverlapEnd(
-	//	UPrimitiveComponent* OverlappedComponent,
-	//	AActor* OtherActor,
-	//	UPrimitiveComponent* OtherComp,
-	//	int32 OtherBodyIndex);
-
 	
 	virtual void CollectItem(AActor* Collector) override;
 

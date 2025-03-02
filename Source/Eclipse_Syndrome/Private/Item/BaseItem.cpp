@@ -16,6 +16,7 @@ ABaseItem::ABaseItem()
 
 	StaticMeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMesh"));
 	StaticMeshComp->SetupAttachment(RootComponent);
+	
 
 	GlowEffect = CreateDefaultSubobject<UNiagaraComponent>(TEXT("GlowEffect"));
 	GlowEffect->SetupAttachment(RootComponent);
@@ -47,41 +48,6 @@ void ABaseItem::Tick(float DeltaTime)
 }
 
 
-////currently not working 
-////-> will be deleted when this code is completely useless
-////Overlap + UMG(coming soon..)
-//void ABaseItem::OnPlayerOverlapBegin(
-//	UPrimitiveComponent* OverlappedComponent,
-//	AActor* OtherActor,
-//	UPrimitiveComponent* OtherComp,
-//	int32 OtherBodyIndex,
-//	bool bFromSweep,
-//	const FHitResult& SweepResult
-//)
-//{
-//	if (OtherActor && OtherActor->IsA(APlayerCharacter::StaticClass()))
-//	{
-//		bCanPickUp = true;
-//		UE_LOG(LogTemp, Warning, TEXT("Press F to collect Item"));
-//	}
-//}
-//
-//
-////currently not working
-////-> will be deleted when this code is completely useless
-//void ABaseItem::OnPlayerOverlapEnd(
-//	UPrimitiveComponent* OverlappedComponent,
-//	AActor* OtherActor,
-//	UPrimitiveComponent* OtherComp,
-//	int32 OtherBodyIndex)
-//{
-//	if (OtherActor && OtherActor->IsA(APlayerCharacter::StaticClass()))
-//	{
-//		bCanPickUp = false;
-//		UE_LOG(LogTemp, Warning, TEXT("Item Player out of range!"));
-//	}
-//}
-
 //Use this code(for player) 
 //Called when player grabbed the Item
 void ABaseItem::CollectItem(AActor* Collector)
@@ -92,20 +58,9 @@ void ABaseItem::CollectItem(AActor* Collector)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Gained item: %s"), *ItemType.ToString());
 		DestroyItem();
-		//Inventory add code here?
 	}
 
 }
-
-/*//For test(press T when spawned)
-void ABaseItem::TestCollectItem()
-{
-	UE_LOG(LogTemp, Warning, TEXT("Gained item: %s"), *ItemType.ToString());
-	DestroyItem();
-
-}
-*/
-
 
 
 //Called when player used the Item
@@ -133,23 +88,3 @@ void ABaseItem::DestroyItem()
 {
 	Destroy();
 }
-
-
-
-/*//for test(press F to grab Item)
-
-void ABaseItem::BeginPlay()
-{
-	Super::BeginPlay();
-
-	APlayerController* PlayerController = GetWorld()->GetFirstPlayerController();
-	if (PlayerController)
-	{
-		EnableInput(PlayerController);
-		if (InputComponent)
-		{
-			InputComponent->BindAction("TestDeleteItem", IE_Pressed, this, &ABaseItem::TestCollectItem);
-		}
-	}
-
-}*/

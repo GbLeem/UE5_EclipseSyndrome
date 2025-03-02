@@ -66,9 +66,6 @@ protected:
 
 
 
-
-
-	//Store Random Spawnable Items
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chest")
 	TArray<TSubclassOf<AActor>> PossibleItems;
 
