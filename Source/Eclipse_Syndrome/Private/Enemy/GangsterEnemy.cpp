@@ -48,7 +48,12 @@ void AGangsterEnemy::BeginPlay()
 
 void AGangsterEnemy::OnDeath()
 {
+	// Ragdoll Effect On
+	EnemyMesh->SetSimulatePhysics(true);
+	EnemyMesh->SetCollisionProfileName(TEXT("Ragdoll"));
 
+	FTimerHandle DestoryHandle;
+	GetWorldTimerManager().SetTimer(DestoryHandle, this, &AGangsterEnemy::DestroyEnemy, 5.0f);
 }
 
 void AGangsterEnemy::Attack(AActor* TargetActor)

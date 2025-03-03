@@ -33,17 +33,26 @@ void AGangsterAIController::UpdateAttackRange()
 	{
 		CurrentState = EEnemyStateEnum::Shooting; // Stop and shoot
 	}
-	else if (Distance > 450 && Distance <= 2000)
+	else if (CurrentState==EEnemyStateEnum::Shooting && Distance > 1000 && Distance <= 1500) // Shooting -> Advancing
 	{	
 		CurrentState = EEnemyStateEnum::Advancing; // Walk and Shoot
 	}
-	else if (Distance > 2000)
+	else if (CurrentState != EEnemyStateEnum::Shooting && Distance > 450 && Distance <= 1500) // Chasing -> Advancing
+	{
+		CurrentState = EEnemyStateEnum::Advancing; // Walk and Shoot
+	}
+	else if (Distance > 1500)
 	{
 		CurrentState = EEnemyStateEnum::Chasing; // Chasing
 	}
+
+	// Update EnemyState(Blackboard) when CurrentState changed
 	if (CurrentState != static_cast<EEnemyStateEnum>(GetBlackboardComponent()->GetValueAsEnum(TEXT("EnemyState"))))
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Magenta, TEXT("change state"));
+		FString StateStr = UEnum::GetValueAsString(CurrentState);
+		FString DebugMessage = FString::Printf(TEXT("change state : %s"), *StateStr);
+		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Magenta, DebugMessage);
+
 		GetBlackboardComponent()->SetValueAsEnum(TEXT("EnemyState"), static_cast<uint8>(CurrentState));
 	}
 }

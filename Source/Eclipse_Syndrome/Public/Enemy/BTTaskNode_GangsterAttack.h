@@ -14,12 +14,7 @@ class ECLIPSE_SYNDROME_API UBTTaskNode_GangsterAttack : public UBTTaskNode
 {
 	GENERATED_BODY()
 
-public:
-	UBTTaskNode_GangsterAttack();
-
-	UBehaviorTreeComponent* CachedOwnerComp; // BT Component
-
 protected:
 	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
-	void OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+	void OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted, UBehaviorTreeComponent* OwnerComp);
 };

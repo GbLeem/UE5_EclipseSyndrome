@@ -70,10 +70,10 @@ void UBTTask_EnemyChase::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* Node
 		}
 
 		// When EneyState change
-		if (static_cast<uint8>(CurrentState) != GangsterAIController->GetBlackboardComponent()->GetValueAsEnum(TEXT("EnemyState")))
+		/*if (static_cast<uint8>(CurrentState) != GangsterAIController->GetBlackboardComponent()->GetValueAsEnum(TEXT("EnemyState")))
 		{
 			FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
-		}
+		}*/
 	}
 	else
 	{

@@ -27,7 +27,7 @@ void UGangsterAttackAnimNotify::Notify(USkeletalMeshComponent* MeshComp, UAnimSe
 	EEnemyStateEnum CurrentEnemyState = static_cast<EEnemyStateEnum>(BlackboardComp->GetValueAsEnum(TEXT("EnemyState")));
 	AActor* TargetActor = Cast<AActor>(BlackboardComp->GetValueAsObject(TEXT("TargetActor")));
 
-	if (CurrentEnemyState == EEnemyStateEnum::Shooting)
+	if (CurrentEnemyState != EEnemyStateEnum::Chasing)
 	{
 		Gangster->Attack(TargetActor);
 	}

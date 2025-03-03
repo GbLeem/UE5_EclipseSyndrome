@@ -20,6 +20,8 @@ public:
 	UAnimMontage* HitMontage;
 	UPROPERTY(EditDefaultsOnly, Category = "Animation")
 	UAnimMontage* AttackMontage;
+	UPROPERTY(EditDefaultsOnly, Category = "Animation")
+	UAnimMontage* WalkAttackMontage;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy")
 	float AttackReadyRange;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy")

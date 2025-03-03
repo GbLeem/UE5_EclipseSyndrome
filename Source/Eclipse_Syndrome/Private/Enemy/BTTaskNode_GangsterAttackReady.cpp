@@ -9,7 +9,7 @@
 
 EBTNodeResult::Type UBTTaskNode_GangsterAttackReady::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
-	GangsterAIController = Cast<AGangsterAIController>(OwnerComp.GetAIOwner());
+	AGangsterAIController* GangsterAIController = Cast<AGangsterAIController>(OwnerComp.GetAIOwner());
 	if (!GangsterAIController)
 	{
 		return EBTNodeResult::Failed;
@@ -21,7 +21,7 @@ EBTNodeResult::Type UBTTaskNode_GangsterAttackReady::ExecuteTask(UBehaviorTreeCo
 		return EBTNodeResult::Failed;
 	}
 
-	PlayerCharacter = Cast<APlayerCharacter>(GangsterAIController->GetBlackboardComponent()->GetValueAsObject(TEXT("TargetActor")));
+	APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(GangsterAIController->GetBlackboardComponent()->GetValueAsObject(TEXT("TargetActor")));
 	if (!PlayerCharacter)
 	{
 		return EBTNodeResult::Failed;
@@ -29,8 +29,41 @@ EBTNodeResult::Type UBTTaskNode_GangsterAttackReady::ExecuteTask(UBehaviorTreeCo
 
 	// Chage gangster speed
 	Gangster->StopEnemy();
-	UE_LOG(LogTemp, Warning, TEXT("Stop Enemy!!!!!!!!!!!!!!!!"));
+	// Play attack animation
+	if (Gangster && Gangster->GetMesh())
+	{
+		UAnimInstance* AnimInstance = Gangster->GetMesh()->GetAnimInstance();
+		if (AnimInstance)
+		{
+			UAnimMontage* AttackMontage = Gangster->AttackMontage;
+			if (AttackMontage)
+			{
+				if (Gangster->Health > 0)
+				{
+					if (!AnimInstance->Montage_IsPlaying(AttackMontage))
+					{
+						AnimInstance->Montage_Play(AttackMontage);
 
+						// binding Montage end event 
+						FOnMontageBlendingOutStarted BlendingOutDelegate;
+						BlendingOutDelegate.BindUObject(this, &UBTTaskNode_GangsterAttackReady::OnAttackMontageEnded, &OwnerComp);
+						AnimInstance->Montage_SetEndDelegate(BlendingOutDelegate, AttackMontage);
+
+						return EBTNodeResult::InProgress;
+					}
+					
+				}
+			}
+		}
+	}
 	FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
 	return EBTNodeResult::Succeeded;
+}
+
+void UBTTaskNode_GangsterAttackReady::OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted, UBehaviorTreeComponent* OwnerComp)
+{
+	if (OwnerComp)
+	{
+		FinishLatentTask(*OwnerComp, EBTNodeResult::Succeeded);
+	}
 }
