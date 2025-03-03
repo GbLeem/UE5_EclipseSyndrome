@@ -23,8 +23,13 @@ public:
 	UFUNCTION()
 	void ActivatePanel(bool IsActivated);
 
+	UFUNCTION(BlueprintCallable)
+	FVector GetPlugPosition() const;
 
+	UFUNCTION(BlueprintCallable)
+	FQuat GetPlugRotation() const;
 
+	bool bIsPlugConnected = false;
 protected:
 	virtual void BeginPlay() override;
 	
@@ -56,4 +61,6 @@ protected:
 		AActor* OtherActor,
 		UPrimitiveComponent* OtherComp,
 		int32 OtherBodyIndex);
+
+
 };

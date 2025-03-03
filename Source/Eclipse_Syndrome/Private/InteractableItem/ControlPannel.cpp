@@ -1,5 +1,6 @@
 #include "InteractableItem/ControlPannel.h"
 #include "Components/BoxComponent.h"
+#include "InteractableItem/PowerPlug.h"
 #include "CableActor.h"
 
 AControlPannel::AControlPannel()
@@ -17,8 +18,6 @@ AControlPannel::AControlPannel()
 		ControlPanelMesh->SetStaticMesh(StaticMeshAsset.Object);
 	}
 
-
-
 	CollisionBox = CreateDefaultSubobject<UBoxComponent>(TEXT("CollisionBox"));
 	CollisionBox->SetupAttachment(RootComponent);
 
@@ -31,6 +30,8 @@ AControlPannel::AControlPannel()
 	CollisionBox->OnComponentBeginOverlap.AddDynamic(this, &AControlPannel::OnOverlapBegin);
 	CollisionBox->OnComponentEndOverlap.AddDynamic(this, &AControlPannel::OnOverlapEnd);
 
+	CollisionBox->SetHiddenInGame(false);
+	CollisionBox->SetVisibility(true);
 }
 
 
@@ -40,17 +41,23 @@ void AControlPannel::BeginPlay()
 
 	if (ControlPanelMesh)
 	{
-		RedMID = ControlPanelMesh->CreateDynamicMaterialInstance(0);
-		GreenMID = ControlPanelMesh->CreateDynamicMaterialInstance(1);
+		RedMID = ControlPanelMesh->CreateDynamicMaterialInstance(5);
+		GreenMID = ControlPanelMesh->CreateDynamicMaterialInstance(4);
 
 		if (RedMID)
 		{
 			RedMID->SetScalarParameterValue(TEXT("EmissivePower"), 10.0f);
+			UE_LOG(LogTemp, Warning, TEXT("RedMID set Successfully"));
 		}
 
 		if (GreenMID)
 		{
 			GreenMID->SetScalarParameterValue(TEXT("EmissivePower"), 0.0f);
+			UE_LOG(LogTemp, Warning, TEXT("GreenMID set Successfully"));
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("both light failed"));
 		}
 	}
 }
@@ -64,9 +71,16 @@ void AControlPannel::OnOverlapBegin(
 	bool bFromSweep,
 	const FHitResult& SweepResult)
 {
+	UE_LOG(LogTemp, Warning, TEXT("ControlPanel Overlapped with: %s"), *OtherActor->GetName());
+
 	//after cable component is finished, fix Actor setting to Cable
-	if (OtherActor)
+	APowerPlug* PowerPlug = Cast<APowerPlug>(OtherActor);
+	if (PowerPlug && PowerPlug->StaticMeshCompo)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("PowerPlug detected, attaching to panel"));
+		PowerPlug->AttachToPanel(this);
+
+		bIsPlugConnected = true;
 		ActivatePanel(true);
 	}
 }
@@ -78,7 +92,11 @@ void AControlPannel::OnOverlapEnd(
 	UPrimitiveComponent* OtherComp,
 	int32 OtherBodyIndex)
 {
-	ActivatePanel(false);
+	if (!bIsPlugConnected)
+	{
+		ActivatePanel(false);
+	}
+	
 }
 
 
@@ -86,10 +104,23 @@ void AControlPannel::ActivatePanel(bool IsActivated)
 {
 	if (RedMID)
 	{
-		RedMID->SetScalarParameterValue(TEXT("EmissvePower"), bIsActivated ? 0.0f : 10.0f);
+		RedMID->SetScalarParameterValue(TEXT("EmissivePower"), IsActivated ? 0.0f : 10.0f);
 	}
 	if (GreenMID)
 	{
-		GreenMID->SetScalarParameterValue(TEXT("EmissvePower"), bIsActivated ? 10.0f : 0.0f);
+		GreenMID->SetScalarParameterValue(TEXT("EmissivePower"), IsActivated ? 10.0f : 0.0f);
 	}
 }
+
+
+FVector AControlPannel::GetPlugPosition() const
+{
+	return CollisionBox->GetComponentLocation();
+}
+
+FQuat AControlPannel::GetPlugRotation() const
+{
+	return CollisionBox->GetComponentQuat();
+}
+
+
