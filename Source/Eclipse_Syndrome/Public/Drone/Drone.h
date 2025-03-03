@@ -4,6 +4,8 @@
 #include "GameFramework/Pawn.h"
 #include "Drone.generated.h"
 
+class AEnemyBase;
+class USphereComponent;
 class AAOctreeVolume;
 struct FInputActionValue;
 class UPhysicsHandleComponent;
@@ -39,6 +41,8 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Drone|Component")
 	TObjectPtr<UCameraComponent> CameraComp;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Drone|Component")
+	TObjectPtr<USphereComponent> DetectionSphere;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Drone|Component")
 	TObjectPtr<UPhysicsHandleComponent> PhysicsHandleComp;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="PathFinding")
@@ -54,6 +58,24 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DroneMovement|Property")
 	float InterpSpeed;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Drone|Property")
+	float DetectionRange;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Drone|Property")
+	float AttackRange;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Drone|Property")
+	float FollowRange;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Drone|Property")
+	float AttackDamage;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Drone|Property")
+	float AttackCooldown;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Drone|Property")
+	float SpreadAngle;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Drone|Property")
+	TSet<TObjectPtr<AEnemyBase>> NearbyEnemies;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Drone|Property")
+	TObjectPtr<AEnemyBase> CurrentTarget;
+	
 private:
 	FVector MoveInput;
 	
@@ -72,9 +94,22 @@ public:
 
 	void SetEnhancedInput();
 
-protected:
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	float GetDetectionRange() { return DetectionRange; }
+	float GetAttackRange() { return AttackRange; }
+	float GetFollowRange() { return FollowRange; }
+	float GetAttackDamage() { return AttackDamage; }
+	float GetAttackCooldown() { return AttackCooldown; }
+	const TSet<TObjectPtr<AEnemyBase>>& GetNearbyEnemies() { return NearbyEnemies; }
+
+	void Attack(AEnemyBase* Target);
 	
+protected:
+	UFUNCTION()
+	void OnDetectionOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	UFUNCTION()
+	void OnDetectionOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,  UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
+	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	UFUNCTION()
 	void Move(const FInputActionValue& Value);
 	UFUNCTION()
@@ -84,7 +119,11 @@ protected:
 	
 private:
 	void ComponentInit();
+	void BindingFunction();
 	void TiltDrone(float DeltaTime);
 	void AddAntiGravity() const;
 	void AddAirResistance() const;
+
+	void AttackSingleArm(AEnemyBase* Target, FName BoneName);
+	FVector GetBulletDirection();
 };

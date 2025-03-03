@@ -15,6 +15,7 @@
 #include "Camera/CameraComponent.h"
 #include "Components/MeshComponent.h"
 #include "EnhancedInputComponent.h"
+#include "BehaviorTree/BlackboardComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -51,8 +52,10 @@ APlayerCharacter::APlayerCharacter()
 	CableComp->SetupAttachment(GetMesh());	
 	FName HandSocket(TEXT("hand_l_socket"));
 	CableComp->SetupAttachment(GetMesh(), HandSocket);	
-	CableComp->CableWidth = 5.f;
-	CableComp->NumSegments = 20;
+	CableComp->CableWidth = 3.f;
+	CableComp->NumSides = 5.f;
+	CableComp->NumSegments = 60;
+	CableComp->TileMaterial = 60;
 	CableComp->SetVisibility(false);
 
 	static ConstructorHelpers::FObjectFinder<UAnimMontage>ReloadAsset(TEXT("/Game/HJ/Animation/AM_ReloadAR1.AM_ReloadAR1"));
@@ -576,6 +579,7 @@ void APlayerCharacter::StartShoot(const FInputActionValue& value)
 {
 	if (bCanFire && bIsWeaponEquipped)
 	{
+		StartDroneAttack();
 		Shoot();	
 	}
 	if (bIsSwinging)
@@ -679,7 +683,7 @@ void APlayerCharacter::Grapple(const FInputActionValue& value)
 			CableComp->EndLocation = FVector::ZeroVector;
 			AnchorLocation = GrappleHitPoint.GetActor()->GetActorLocation();
 			float Distance = FVector::Dist(GetActorLocation(), AnchorLocation);
-			CableComp->CableLength = FVector::Dist(GetMesh()->GetSocketLocation(TEXT("hand_l_socket")), AnchorLocation) / 19.f;
+			CableComp->CableLength = FVector::Dist(GetMesh()->GetSocketLocation(TEXT("hand_l_socket")), AnchorLocation); // CableComp->NumSegments;
 			MaxWebLength = Distance;
 			
 			bIsSwinging = true;
@@ -786,6 +790,20 @@ void APlayerCharacter::GrappleEnd()
 	bCanGrapple = false;	
 }
 
+void APlayerCharacter::StartDroneAttack()
+{
+	if (ADefaultGameState* DefaultGameState = Cast<ADefaultGameState>(GetWorld()->GetGameState()))
+	{
+		if (ADrone* Drone = DefaultGameState->GetDrone())
+		{
+			if (AAIController* AIController = Cast<AAIController>(Drone->GetController()))
+			{
+				Cast<ADroneAIController>(AIController)->DroneAttack();
+			}
+		}
+	}
+}
+
 void APlayerCharacter::ShowInventory(const FInputActionValue& value)
 {	
 	//if pressed UI
@@ -809,6 +827,7 @@ void APlayerCharacter::PossessToDrone(const FInputActionValue& value)
 	{
 		Cast<APlayerCharacterController>(GetController())->SetPlayerPawn(this);
 		Cast<APlayerCharacterController>(GetController())->ChangeMappingContext(1);
+		Cast<ADefaultGameState>(GetWorld()->GetGameState())->GetDrone()->GetCameraSceneComponent()->SetRelativeRotation(FRotator(0, 0, 0));
 		Cast<APlayerCharacterController>(GetController())->ChangePossess(Cast<ADefaultGameState>(GetWorld()->GetGameState())->GetDrone());
 	}
 }
@@ -850,7 +869,7 @@ void APlayerCharacter::DroneMoveCommand(const FInputActionValue& value)
 
 				if (bHit)
 				{						
-					TargetLocation = HitResult.Location;// + HitResult.ImpactNormal * 100.0f;
+					TargetLocation = HitResult.Location + HitResult.ImpactNormal * 10.0f;
 				}
 			}
 		}

@@ -5,7 +5,11 @@
 #include "PhysicsEngine/PhysicsHandleComponent.h"
 #include "EnhancedInputComponent.h"
 #include "InputActionValue.h"
+#include "BehaviorTree/BlackboardComponent.h"
 #include "Character/PlayerCharacterController.h"
+#include "Components/SphereComponent.h"
+#include "Enemy/EnemyBase.h"
+#include "Kismet/GameplayStatics.h"
 #include "System/DefaultGameState.h"
 
 ADrone::ADrone()
@@ -14,6 +18,12 @@ ADrone::ADrone()
 	, AirResistance(0.9f)
 	, MaxTiltAngle(20.0f)
 	, InterpSpeed(1.0f)
+	, DetectionRange(5000.0f)
+	, AttackRange(1500.0f)
+	, FollowRange(500.0f)
+	, AttackDamage(5.0f)
+	, AttackCooldown(0.3f)
+	, SpreadAngle(5.0f)
 {
 	PrimaryActorTick.bCanEverTick = true;
 	ComponentInit();
@@ -65,6 +75,18 @@ void ADrone::ComponentInit()
 
 	CameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	CameraComp->SetupAttachment(SpringArmComp, USpringArmComponent::SocketName);
+
+	DetectionSphere = CreateDefaultSubobject<USphereComponent>(TEXT("DetectionSphere"));
+	DetectionSphere->SetupAttachment(CapsuleComp);
+	DetectionSphere->InitSphereRadius(DetectionRange);
+
+	BindingFunction();
+}
+
+void ADrone::BindingFunction()
+{
+	DetectionSphere->OnComponentBeginOverlap.AddDynamic(this, &ADrone::OnDetectionOverlapBegin);
+	DetectionSphere->OnComponentEndOverlap.AddDynamic(this, &ADrone::OnDetectionOverlapEnd);
 }
 
 void ADrone::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -192,4 +214,78 @@ void ADrone::SetEnhancedInput()
 {
 	InputComponent->ClearActionBindings();
 	SetupPlayerInputComponent(InputComponent);
+}
+
+void ADrone::Attack(AEnemyBase* Target)
+{
+	AttackSingleArm(Target, TEXT("barrel-gun_R_1__end"));
+	AttackSingleArm(Target, TEXT("barrel-gun_L_1__end"));
+	
+}
+
+void ADrone::AttackSingleArm(AEnemyBase* Target, const FName BoneName)
+{
+	FVector MuzzleLocation = SkeletalMeshComp->GetBoneLocation(BoneName);
+
+	FVector BulletDirection = GetBulletDirection();
+	FVector EndLocation = MuzzleLocation + (BulletDirection * AttackRange);
+	
+	FHitResult HitResult;
+
+	FCollisionQueryParams QueryParams;
+	QueryParams.AddIgnoredActor(this);
+
+	bool bHit = GetWorld()->LineTraceSingleByChannel(
+		HitResult,
+		MuzzleLocation,
+		EndLocation,
+		ECC_Visibility,
+		QueryParams
+	);
+
+	if (bHit && HitResult.GetActor() == Target)
+	{
+		UGameplayStatics::ApplyDamage(Target, AttackDamage, nullptr, this, UDamageType::StaticClass());
+	}
+	DrawDebugLine(GetWorld(), MuzzleLocation, EndLocation, bHit ? FColor::Red : FColor::Blue, false, 1.0f, 0, 2.0f);
+}
+
+FVector ADrone::GetBulletDirection()
+{
+	FVector Forward = CameraSceneComp->GetForwardVector();
+
+	FRotator RandomSpread = FRotator(
+		FMath::RandRange(-SpreadAngle, SpreadAngle),
+		FMath::RandRange(-SpreadAngle, SpreadAngle),
+		0.0f
+	);
+
+	return RandomSpread.RotateVector(Forward).GetSafeNormal();
+}
+
+void ADrone::OnDetectionOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
+                                     UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	AEnemyBase* Enemy = Cast<AEnemyBase>(OtherActor);
+	if (Enemy && !NearbyEnemies.Contains(Enemy))
+	{
+		NearbyEnemies.Add(Enemy);
+	}
+}
+
+void ADrone::OnDetectionOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	AEnemyBase* Enemy = Cast<AEnemyBase>(OtherActor);
+	if (Enemy)
+		{
+		NearbyEnemies.Remove(Enemy);
+
+		if (CurrentTarget == Enemy)
+		{
+			Cast<AAIController>(GetController())->GetBlackboardComponent()->ClearValue(TEXT("TargetEnemy"));
+			Cast<AAIController>(GetController())->GetBlackboardComponent()->SetValueAsInt(TEXT("AttackType"), 0);
+			CurrentTarget = nullptr;
+		}
+	}
 }

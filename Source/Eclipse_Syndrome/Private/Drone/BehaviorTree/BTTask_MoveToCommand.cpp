@@ -1,7 +1,5 @@
 #include "Drone/BehaviorTree/BTTask_MoveToCommand.h"
-
 #include "BehaviorTree/BlackboardComponent.h"
-#include "Components/CapsuleComponent.h"
 #include "Drone/Drone.h"
 #include "Drone/DroneAIController.h"
 #include "Volume/AOctreeVolume.h"
@@ -27,7 +25,9 @@ EBTNodeResult::Type UBTTask_MoveToCommand::ExecuteTask(UBehaviorTreeComponent& O
 
 void UBTTask_MoveToCommand::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
 {
-	if (OwnerComp.GetBlackboardComponent()->GetValueAsEnum("CurrentState") != 2)
+	if (!(OwnerComp.GetBlackboardComponent()->GetValueAsEnum("CurrentState") == 2
+		|| (OwnerComp.GetBlackboardComponent()->GetValueAsEnum("CurrentState") == 4
+			&& OwnerComp.GetBlackboardComponent()->GetValueAsInt(TEXT("AttackType")) == 3)))
 		FinishLatentTask(OwnerComp, EBTNodeResult::Failed);
 	
 	Super::TickTask(OwnerComp, NodeMemory, DeltaSeconds);
@@ -56,9 +56,21 @@ void UBTTask_MoveToCommand::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* N
 			if (FVector::Dist(DesiredTarget, Drone->GetActorLocation()) < 50.0f
 				&& Drone->GetVelocity().Size() <= SpeedThreshold)
 			{
-				OwnerComp.GetBlackboardComponent()->SetValueAsEnum("CurrentState", 3);
-				FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
-				return;
+				// 만약 지금 전투 중이라면,
+				if (OwnerComp.GetBlackboardComponent()->GetValueAsEnum(TEXT("CurrentState")) == 4
+					&& OwnerComp.GetBlackboardComponent()->GetValueAsInt(TEXT("AttackType")) == 3)
+				{
+					OwnerComp.GetBlackboardComponent()->SetValueAsInt(TEXT("AttackType"), 2);
+					FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
+					return;
+				}
+				else
+				{
+					OwnerComp.GetBlackboardComponent()->SetValueAsEnum("CurrentState", 3);
+					DroneAIController->EndExecuteCommand();
+					FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
+					return;
+				}
 			}
 			
 			return;
@@ -152,7 +164,7 @@ void UBTTask_MoveToCommand::FollowPath(const TObjectPtr<ADroneAIController>& Dro
 
 	DroneAIController->SetNewTargetLocation(TargetLocation);
 	DroneAIController->ApplySmoothMovement(DeltaTime);
-	DroneAIController->ApplyPIDControl(DeltaTime, !bEndFollowPath);
+	DroneAIController->ApplyPIDControl(DeltaTime, true);//!bEndFollowPath);
 }
 
 void UBTTask_MoveToCommand::DrawDebugPath()

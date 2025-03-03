@@ -6,6 +6,7 @@
 #include "Components/CapsuleComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Drone/Drone.h"
+#include "Enemy/EnemyBase.h"
 #include "System/DefaultGameState.h"
 #include "Volume/AOctreeVolume.h"
 #include "Volume/NavNode.h"
@@ -126,10 +127,17 @@ void ADroneAIController::ApplyPIDControl(float DeltaTime, bool IsFollowPath)
 	float BaseSpeedFactor = DistanceToTarget / 500.0f; 
 	float PathSpeedBoost = IsFollowPath ? PathFindModeAcceleration : 1.0f;
 	float SpeedFactor = FMath::Clamp(BaseSpeedFactor * PathSpeedBoost, 0.1f, 1.0f);
-	
+
 	PIDForce = PIDForce.GetClampedToMaxSize(MaxSpeed * SpeedFactor);
+
+	float MinSpeed = 15000.0f;
+	if (PIDForce.Size() < MinSpeed)
+	{
+		PIDForce = PIDForce.GetSafeNormal() * MinSpeed;
+	}
 	
 	ControlledDrone->GetComponentByClass<UCapsuleComponent>()->AddForce(PIDForce);
+	UE_LOG(LogTemp, Warning, TEXT("PIDForce: %f"), PIDForce.Size());
 	ControlledDrone->SetMoveInput(PIDForce.GetSafeNormal());
 	PreviousError = Error;
 }
@@ -147,6 +155,7 @@ void ADroneAIController::ApplySmoothMovement(float DeltaTime)
 	FRotator CurrentRotation = ControlledDrone->GetCameraSceneComponent()->GetRelativeRotation();
 	FRotator TargetRotation;
 
+	float InterpSpeed = 3.0f;
 	// Idle State
 	if (BlackboardComp->GetValueAsEnum("CurrentState") == 0)
 	{
@@ -168,51 +177,27 @@ void ADroneAIController::ApplySmoothMovement(float DeltaTime)
 		}
 	}
 
+	// Attack State
+	else if (BlackboardComp->GetValueAsEnum("CurrentState") == 4)
+	{
+		if (UObject* Target = BlackboardComp->GetValueAsObject("TargetEnemy"))
+		{
+			FVector EnemyLocation = Cast<AActor>(Target)->GetActorLocation();
+			FVector DroneLocation = ControlledDrone->GetActorLocation();
+			FVector DirectionToTarget = (EnemyLocation - DroneLocation).GetSafeNormal();
+			TargetRotation = DirectionToTarget.Rotation();
+			InterpSpeed = 10.0f;
+		}
+	}
+
 	FRotator NewRotation = FMath::RInterpTo(
 		CurrentRotation,
 		TargetRotation,
 		GetWorld()->GetDeltaSeconds(),
-		3.0f
+		InterpSpeed
 	);
 
 	ControlledDrone->GetCameraSceneComponent()->SetRelativeRotation(NewRotation);
-}
-
-
-void ADroneAIController::UpdateHappyMovement(float DeltaTime)
-{
-	const TObjectPtr<ADrone> ControlledDrone = Cast<ADrone>(GetPawn());
-	if (!ControlledDrone) return;
-
-	const TObjectPtr<APawn> Player = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
-	if (!Player) return;
-
-	const FVector PlayerLocation = Player->GetActorLocation() + BaseDroneOffset;
-
-	const float Time = GetWorld()->GetTimeSeconds();
-
-	float BounceHeight = FMath::Abs(FMath::Sin(Time * 1.0f)) * 50.0f;
-
-	float EaseFactor = (FMath::Cos(Time * 2.0f) + 1.0f) / 2.0f;
-
-	FVector RandomShake = FVector(
-		FMath::Sin(Time * 2.0f + FMath::RandRange(-0.5f, 0.5f)) * 2.0f,
-		FMath::Cos(Time * 2.0f + FMath::RandRange(-0.5f, 0.5f)) * 2.0f,
-		0.0f
-	);
-
-	FVector TargetLocations = PlayerLocation + RandomShake + FVector(0.0f, 0.0f, BounceHeight * EaseFactor);
-
-	// 좌우 틸트 회전 (Roll)
-	float TiltAngle = FMath::Sin(Time * 3.0f) * 15.0f; // 좌우 기울기 각도
-	FRotator NewTiltRotation = ControlledDrone->GetCameraSceneComponent()->GetRelativeRotation();
-	NewTiltRotation.Roll = FMath::FInterpTo(NewTiltRotation.Roll, TiltAngle, DeltaTime, 8.0f);
-	// 회전 적용
-	ControlledDrone->GetCameraSceneComponent()->SetRelativeRotation(NewTiltRotation);
-	
-	SetNewTargetLocation(TargetLocations);
-	ApplySmoothMovement(DeltaTime);
-	ApplyPIDControl(DeltaTime, true);
 }
 
 void ADroneAIController::DroneMoveCommand(const FVector& NewCommandLocation)
@@ -233,4 +218,11 @@ void ADroneAIController::DroneMoveCommand(const FVector& NewCommandLocation)
 	bExecuteCommand = true;
 	BlackboardComp->SetValueAsVector("MoveCommandLocation", MoveCommandLocation);
 	BlackboardComp->SetValueAsEnum("CurrentState", 2);
+}
+
+void ADroneAIController::DroneAttack()
+{
+	bExecuteCommand = true;
+	BlackboardComp->SetValueAsEnum(TEXT("CurrentState"), 4);
+	BlackboardComp->SetValueAsInt(TEXT("AttackType"), 0);
 }
