@@ -46,6 +46,13 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void UseHealthItem();
 
+	//[fixing]Connecting with Character
+	UFUNCTION(BlueprintCallable)
+	void UseKeyItem();
+	UFUNCTION(BlueprintCallable)
+	void UsePuzzleBlockItem();
+
+
 	//getter
 	int32 GetCurrentWeaponAmmo();
 
@@ -176,4 +183,6 @@ public:
 	void HandleSwingMovement(float DeltaTime);
 	void HandlePullMovement(float DeltaTime);
 	void EndSwing();
+
+	void StartDroneAttack();
 };

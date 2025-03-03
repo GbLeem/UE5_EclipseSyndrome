@@ -78,7 +78,7 @@ void AChest::OnPlayerOverlapEnd(
 {
 	if (OtherActor && OtherActor->IsA(APlayerCharacter::StaticClass()))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Player out of Range. Delete Message"));
+		UE_LOG(LogTemp, Warning, TEXT("Player out of Range"));
 		bPlayerInRange = false; 
 		bCanOpenChest = false;
 
