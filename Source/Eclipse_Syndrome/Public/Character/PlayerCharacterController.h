@@ -83,6 +83,8 @@ public:
 	TObjectPtr<UInputAction> DroneLookAction;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DroneInput|Property")
 	TObjectPtr<UInputAction> DronePossessAction;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DroneInput|Property")
+	TObjectPtr<UInputAction> DroneGrabAction;
 	
 	//UI
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "HUD")

@@ -9,6 +9,7 @@
 #include "Character/PlayerCharacterController.h"
 #include "Components/SphereComponent.h"
 #include "Enemy/EnemyBase.h"
+#include "Item/ItemInterface.h"
 #include "Kismet/GameplayStatics.h"
 #include "System/DefaultGameState.h"
 
@@ -48,6 +49,12 @@ void ADrone::Tick(float DeltaTime)
 
 	TiltDrone(DeltaTime);
 	MoveInput = FVector::ZeroVector;
+
+	if (bIsGrabbing)
+	{
+		FVector HoldLocation = GetActorLocation() + -GetActorUpVector() * 30.f;
+		PhysicsHandleComp->SetTargetLocationAndRotation(HoldLocation, GetActorRotation());
+	}
 }
 
 void ADrone::ComponentInit()
@@ -122,6 +129,14 @@ void ADrone::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 					,this
 					, &ADrone::PossessToCharacter);
 			}
+
+			if (PlayerController->DronePossessAction)
+			{
+				EnhancedInput->BindAction(PlayerController->DroneGrabAction
+					, ETriggerEvent::Started
+					,this
+					, &ADrone::Grab);
+			}
 		}
 	}
 }
@@ -175,6 +190,49 @@ void ADrone::PossessToCharacter(const FInputActionValue& Value)
 		Cast<APlayerCharacterController>(GetController())->ChangeMappingContext(0);
 		Cast<APlayerCharacterController>(GetController())->ChangePossess(Cast<ADefaultGameState>(GetWorld()->GetGameState())->GetPlayerCharacter());
 	}
+}
+
+void ADrone::Grab(const FInputActionValue& Value)
+{
+	static bool ToggleGrabbing = false;
+	if (!Value.Get<bool>())
+	{
+		if (!ToggleGrabbing)
+		{
+			FVector Start = GetActorLocation();
+			// GrabLength, GrabDirection
+			FVector End = Start + 300.0f * -GetActorUpVector();
+
+			FHitResult HitResult;
+			FCollisionQueryParams Params;
+			Params.AddIgnoredActor(this);
+
+			DrawDebugLine(GetWorld(), Start, End, FColor::Red, false);
+			if (GetWorld()->SweepSingleByChannel(HitResult,Start,End,FQuat::Identity,ECC_Visibility,FCollisionShape::MakeSphere(50.f),Params))
+			{
+				// Grabbable
+				if (HitResult.GetActor()->ActorHasTag("Grabbable"))
+				{
+					Cast<UPrimitiveComponent>(HitResult.GetActor()->GetRootComponent())->SetSimulatePhysics(true);
+					PhysicsHandleComp->GrabComponentAtLocationWithRotation(Cast<UPrimitiveComponent>(HitResult.GetActor()->GetRootComponent()), NAME_None, HitResult.ImpactPoint, GetActorRotation());
+					bIsGrabbing = true;
+					ToggleGrabbing = true;
+				}
+			}
+		}
+		else
+		{
+			DetachGrabActor(true);
+			ToggleGrabbing = false;
+		}
+	}
+}
+
+void ADrone::DetachGrabActor(bool OnPhysics)
+{
+	PhysicsHandleComp->GetGrabbedComponent()->SetSimulatePhysics(OnPhysics);
+	PhysicsHandleComp->ReleaseComponent();
+	bIsGrabbing = false;
 }
 
 void ADrone::TiltDrone(float DeltaTime)
