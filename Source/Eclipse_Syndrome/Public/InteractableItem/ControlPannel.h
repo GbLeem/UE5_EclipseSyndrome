@@ -9,7 +9,7 @@
 class UBoxComponent;
 class UStaticMeshComponent;
 class UMaterialInstanceDynamic;
-
+class ALevelTwoDoor;
 
 UCLASS()
 class ECLIPSE_SYNDROME_API AControlPannel : public AActor
@@ -23,8 +23,13 @@ public:
 	UFUNCTION()
 	void ActivatePanel(bool IsActivated);
 
+	UFUNCTION(BlueprintCallable)
+	FVector GetPlugPosition() const;
 
+	UFUNCTION(BlueprintCallable)
+	FQuat GetPlugRotation() const;
 
+	bool bIsPlugConnected = false;
 protected:
 	virtual void BeginPlay() override;
 	
@@ -41,6 +46,8 @@ protected:
 
 	bool bIsActivated = false;
 
+	ALevelTwoDoor* LevelTwoDoor;
+
 	UFUNCTION()
 	void OnOverlapBegin(
 		UPrimitiveComponent* Overlappedcomponent,
@@ -56,4 +63,6 @@ protected:
 		AActor* OtherActor,
 		UPrimitiveComponent* OtherComp,
 		int32 OtherBodyIndex);
+
+
 };
