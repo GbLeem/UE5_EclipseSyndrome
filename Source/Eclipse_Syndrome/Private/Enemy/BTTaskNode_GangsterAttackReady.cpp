@@ -29,6 +29,7 @@ EBTNodeResult::Type UBTTaskNode_GangsterAttackReady::ExecuteTask(UBehaviorTreeCo
 
 	// Chage gangster speed
 	Gangster->StopEnemy();
+
 	// Play attack animation
 	if (Gangster && Gangster->GetMesh())
 	{

@@ -41,9 +41,6 @@ UAnimMontage* AZombieEnemy::GetRandomAttackMontage()
 void AZombieEnemy::OnDeath()
 {
 	Super::OnDeath();
-	/*AZombieAIController* AIController = Cast<AZombieAIController>(GetController());
-	if (!AIController) return;
-	AIController->GetBlackboardComponent()->SetValueAsBool(TEXT("IsAlive"), false);*/
 }
 
 float AZombieEnemy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)

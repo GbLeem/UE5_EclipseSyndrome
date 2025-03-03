@@ -52,7 +52,7 @@ void AGangsterEnemy::Attack(AActor* TargetActor)
 	FVector MuzzleLocation = GunMesh->GetSocketLocation(TEXT("MuzzleSocket"));
 	FVector TargetLocation = CalculateDestination();
 
-	if (TargetLocation.IsZero()) // 장애물에 가려져 있으면 발사하지 않음
+	if (TargetLocation.IsZero()) // Does not fire if obscured by obstacles
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Yellow, TEXT("Target is behind cover!"));
 		return;
@@ -141,10 +141,10 @@ FVector AGangsterEnemy::CalculateDestination()
 	bool bHit = GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility, Params);
 	if (bHit && HitResult.GetActor() == Target)
 	{
-		return HitResult.ImpactPoint;  // 조준 성공 시 목표 지점 반환
+		return HitResult.ImpactPoint;  // Returns to target point when aiming is successful
 	}
 
-	return FVector::ZeroVector; // 장애물에 막혀 있으면 사격 취소
+	return FVector::ZeroVector; // Cancel shooting if blocked by an obstacle
 }
 
 
