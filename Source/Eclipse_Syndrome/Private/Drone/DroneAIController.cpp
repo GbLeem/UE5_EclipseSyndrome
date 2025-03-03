@@ -137,7 +137,6 @@ void ADroneAIController::ApplyPIDControl(float DeltaTime, bool IsFollowPath)
 	}
 	
 	ControlledDrone->GetComponentByClass<UCapsuleComponent>()->AddForce(PIDForce);
-	UE_LOG(LogTemp, Warning, TEXT("PIDForce: %f"), PIDForce.Size());
 	ControlledDrone->SetMoveInput(PIDForce.GetSafeNormal());
 	PreviousError = Error;
 }
