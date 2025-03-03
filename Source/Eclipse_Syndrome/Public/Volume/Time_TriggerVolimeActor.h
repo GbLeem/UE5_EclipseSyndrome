@@ -29,4 +29,5 @@ private:
 						bool bFromSweep, const FHitResult& SweepResult);
 
 	void RemoveMesh();
+
 };
