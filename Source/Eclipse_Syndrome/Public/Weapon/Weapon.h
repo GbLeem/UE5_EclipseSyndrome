@@ -7,6 +7,7 @@
 class USphereComponent;
 class UWidgetComponent;
 class UMaterialInterface;
+class USpringArmComponent;
 
 UCLASS()
 class ECLIPSE_SYNDROME_API AWeapon : public AActor
@@ -36,10 +37,6 @@ public:
 	int32 GetMaxAmmo() { return MaxAmmo; }
 	float GetFireRate() { return FireRate; }
 	int32 GetWeaponNumber() { return WeaponNumber; }
-	
-	//for aim [TEST]
-	FVector GetFPSSocketLocation();
-	FVector GetAimLocation() { return AimLocation->GetRelativeLocation(); }
 
 	UFUNCTION()
 	virtual void OnItemOverlap
@@ -97,9 +94,6 @@ protected:
 
 
 public:
-	UPROPERTY(EditAnywhere, Category = "Gun Settings")
-	TObjectPtr<USceneComponent> AimLocation;
-
 	bool bIsPeeking;
 	FVector RecoilValue;
 
@@ -107,4 +101,11 @@ public:
 	float MaxPitchRecoil;
 	float MinYawRecoil;
 	float MaxYawRecoil;
+
+	//for zoom in
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Component")
+	TObjectPtr<USpringArmComponent> WeaponSpringArmComp;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Component")
+	TObjectPtr<UChildActorComponent> WeaponCameraComp;
 };

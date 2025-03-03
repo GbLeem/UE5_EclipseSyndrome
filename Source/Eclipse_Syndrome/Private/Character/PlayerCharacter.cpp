@@ -37,17 +37,10 @@ APlayerCharacter::APlayerCharacter()
 	, bIsReloading(false)
 	, bIsTPSMode(true)
 	, bIsCrouch(false)
-	,bMoveForward(true)
+	, bMoveForward(true)
+	, bIsRolling(false)
 {
 	PrimaryActorTick.bCanEverTick = true;
-
-	/*SpringArmComp = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
-	SpringArmComp->SetupAttachment(RootComponent);
-	SpringArmComp->bUsePawnControlRotation = true;
-
-	CameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
-	CameraComp->SetupAttachment(SpringArmComp);
-	CameraComp->bUsePawnControlRotation = false;*/
 
 	GetMesh()->SetRelativeLocation(FVector(0.f, 0.f, -88.f));
 	GetMesh()->SetRelativeRotation(FRotator(0.f, -90.f, 0.f));
@@ -60,16 +53,13 @@ APlayerCharacter::APlayerCharacter()
 	CableComp->NumSegments = 2;
 	CableComp->SetVisibility(false);
 
-	FPSSpringArmComp = CreateDefaultSubobject<USpringArmComponent>(TEXT("FPS Spring Arm"));
+	/*FPSSpringArmComp = CreateDefaultSubobject<USpringArmComponent>(TEXT("FPS Spring Arm"));
 	FPSSpringArmComp->SetupAttachment(RootComponent);
 	FPSCamera = CreateDefaultSubobject<UChildActorComponent>(TEXT("FPS Camera actor"));
 	FPSCamera->SetupAttachment(FPSSpringArmComp);
 	FPSCamera->SetChildActorClass(APlayerCamera::StaticClass());
 	FPSSpringArmComp->TargetArmLength = 0.f;
-	//FPSSpringArmComp->SetRelativeLocation(FVector(35.f, 10.f, 0.f));
-	//FPSSpringArmComp->SetRelativeRotation(FRotator(0.f, 30.f, 0.f)); //[FIX] - Camera rotation is bad
-	FPSSpringArmComp->TargetOffset = FVector(0.f, 0.f, 30.f); //[FIX]
-	FPSSpringArmComp->bUsePawnControlRotation = true;
+	FPSSpringArmComp->bUsePawnControlRotation = true;*/
 
 	TPSSpringArmComp = CreateDefaultSubobject<USpringArmComponent>(TEXT("TPS Spring Arm"));
 	TPSSpringArmComp->SetupAttachment(RootComponent);
@@ -98,6 +88,11 @@ APlayerCharacter::APlayerCharacter()
 		DamageAnimMontage = DamageAsset.Object;
 	}
 
+	static ConstructorHelpers::FObjectFinder<UAnimMontage>RollingAsset(TEXT("/Game/HJ/Animation/Rolling/AM_Rolling.AM_Rolling"));
+	if (RollingAsset.Succeeded())
+	{
+		RollingAnimMontage = RollingAsset.Object;
+	}
 	/*static ConstructorHelpers::FClassFinder<UAnimInstance> AnimClass(TEXT("/Game/HJ/Animation/ABP_PlayerCharacter.ABP_PlayerCharacter_C"));
 	if (AnimClass.Succeeded())
 	{
@@ -230,7 +225,10 @@ void APlayerCharacter::Tick(float DeltaTime)
 			Cast<AWeapon>(PeekingItem)->bIsPeeking = true;
 		if (PeekingItem->ActorHasTag("Item"))
 			Cast<ABaseItem>(PeekingItem)->bIsPeeking = true;
-	}	
+	}
+	Velocity = GetCharacterMovement()->Velocity;
+
+	GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, FString::Printf(TEXT("vel : %f %f %f"), Velocity.X, Velocity.Y, Velocity.Z));
 }
 
 void APlayerCharacter::BeginPlay()
@@ -496,7 +494,7 @@ void APlayerCharacter::Move(const FInputActionValue& value)
 	{
 		return;
 	}
-
+	
 	const FVector2D MoveInput = value.Get<FVector2D>();
 	if (!FMath::IsNearlyZero(MoveInput.X))
 	{
@@ -559,7 +557,7 @@ void APlayerCharacter::Reload(const FInputActionValue& value)
 
 void APlayerCharacter::StartShoot(const FInputActionValue& value)
 {
-	if (bCanFire && bIsWeaponEquipped)
+	if (bCanFire && bIsWeaponEquipped && !bIsRolling)
 	{
 		Shoot();	
 	}
@@ -747,16 +745,24 @@ void APlayerCharacter::DroneMoveCommand(const FInputActionValue& value)
 	}
 }
 
+//[TODO] Change Name / this function is for rolling 
 void APlayerCharacter::ChangeView(const FInputActionValue& value)
 {
-
+	if (bMoveForward && !bIsReloading && !bIsRolling)
+	{
+		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+		if (AnimInstance)
+		{
+			bIsRolling = true;
+			AnimInstance->Montage_Play(RollingAnimMontage);
+			//GetCharacterMovement()->MaxWalkSpeed = 1000.f;
+		}
+	}
 }
 
 void APlayerCharacter::ZoomInOut(const FInputActionValue& value)
-{
-	//GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, FString::Printf(TEXT("Zoom In")));
-
-	if (bIsWeaponEquipped)
+{	
+	if (bIsWeaponEquipped && !bIsRolling)
 	{
 		if (GetController())
 		{
@@ -766,18 +772,19 @@ void APlayerCharacter::ZoomInOut(const FInputActionValue& value)
 			{
 				if (bIsTPSMode)
 				{
-					//[TEST]	
-					FLatentActionInfo LatentInfo;
-					LatentInfo.CallbackTarget = this;
-					FPSSpringArmComp->SetWorldLocation(CurrentWeapon->AimLocation->GetComponentLocation());					
-					//========
-
-					PlayerCharacterController->SetViewTargetWithBlend(FPSCamera->GetChildActor(), 0.2f);
+					if (CurrentWeapon)
+					{
+						CurrentWeapon->WeaponSpringArmComp->bUsePawnControlRotation = true;
+						PlayerCharacterController->SetViewTargetWithBlend(CurrentWeapon->WeaponCameraComp->GetChildActor(), 0.2f);
+					}					
 					bIsTPSMode = false;
 				}
 				else
 				{
+					//GetMesh()->SetVisibility(true);
+
 					PlayerCharacterController->SetViewTargetWithBlend(TPSCamera->GetChildActor(), 0.2f);
+
 					bIsTPSMode = true;
 				}
 			}
@@ -808,19 +815,24 @@ void APlayerCharacter::SetEnhancedInput()
 
 float APlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
-	float ActualDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
-
-	if (UGameInstance* GameInstance = GetGameInstance())
+	//[TEST] no damage when character rolls
+	if (!bIsRolling)
 	{
-		UDefaultGameInstance* DefaultGameInstance = Cast<UDefaultGameInstance>(GameInstance);
-		if (DefaultGameInstance)
-		{
-			DefaultGameInstance->MinusHealth(ActualDamage);
+		float ActualDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 
-			//Damage Animation
-			UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-			AnimInstance->Montage_Play(DamageAnimMontage);
+		if (UGameInstance* GameInstance = GetGameInstance())
+		{
+			UDefaultGameInstance* DefaultGameInstance = Cast<UDefaultGameInstance>(GameInstance);
+			if (DefaultGameInstance)
+			{
+				DefaultGameInstance->MinusHealth(ActualDamage);
+
+				//Damage Animation
+				UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+				AnimInstance->Montage_Play(DamageAnimMontage);
+			}
 		}
+		return ActualDamage;	
 	}
-	return ActualDamage;
+	return DamageAmount;
 }

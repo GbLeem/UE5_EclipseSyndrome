@@ -1,5 +1,6 @@
 #include "Weapon/Weapon.h"
 
+#include "Character/PlayerCamera.h"
 #include "Character/PlayerCharacter.h"
 #include "Character/PlayerCharacterController.h"
 #include "Weapon/WeaponShell.h"
@@ -9,6 +10,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "Components/SphereComponent.h"
 #include "Components/WidgetComponent.h"
+#include "GameFramework/SpringArmComponent.h"
 #include "Components/Image.h"
 #include "DrawDebugHelpers.h"
 #include "Engine/Engine.h"
@@ -37,9 +39,16 @@ AWeapon::AWeapon()
     ItemHoverUI->SetupAttachment(GunMesh);
     ItemHoverUI->SetWidgetSpace(EWidgetSpace::Screen);
     ItemHoverUI->SetVisibility(false);
+   
+    WeaponSpringArmComp = CreateDefaultSubobject<USpringArmComponent>(TEXT("Spring Arm"));
+    WeaponSpringArmComp->SetupAttachment(RootComponent);
+    WeaponSpringArmComp->TargetArmLength = 0.f;
+    WeaponSpringArmComp->SetRelativeRotation(FRotator(0.f, 90.f, 0.f));
+    //WeaponSpringArmComp->bUsePawnControlRotation = true;
 
-    AimLocation = CreateDefaultSubobject<USceneComponent>(TEXT("Aim Location"));
-    AimLocation->SetupAttachment(RootComponent);
+    WeaponCameraComp = CreateDefaultSubobject<UChildActorComponent>(TEXT("Weapon Camera"));
+    WeaponCameraComp->SetupAttachment(WeaponSpringArmComp);
+    WeaponCameraComp->SetChildActorClass(APlayerCamera::StaticClass());
 
     static ConstructorHelpers::FClassFinder<UUserWidget>ItemUIClass(TEXT("/Game/HJ/UI/WBP_Item.WBP_Item_C"));
     if (ItemUIClass.Succeeded())
@@ -162,18 +171,6 @@ void AWeapon::ShowUI()
 void AWeapon::StopUI()
 {
     ItemHoverUI->SetVisibility(false);
-}
-
-FVector AWeapon::GetFPSSocketLocation()
-{
-    FVector FPSSocket = FVector::ZeroVector;
-
-    if (GunMesh)
-    {
-        FPSSocket = GunMesh->GetSocketLocation(TEXT("WeaponCamera"));
-        GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Black, FString::Printf(TEXT("%f %f %f"), FPSSocket.X, FPSSocket.Y, FPSSocket.Z));
-    }
-    return FPSSocket;
 }
 
 void AWeapon::OnItemOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)

@@ -111,12 +111,12 @@ public:
 
 
 	//change view component
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Component")
-	TObjectPtr<USpringArmComponent> FPSSpringArmComp;
+	/*UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Component")
+	TObjectPtr<USpringArmComponent> FPSSpringArmComp;*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Component")
 	TObjectPtr<USpringArmComponent> TPSSpringArmComp;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Component")
-	TObjectPtr<UChildActorComponent> FPSCamera;
+	/*UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Component")
+	TObjectPtr<UChildActorComponent> FPSCamera;*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Component")
 	TObjectPtr<UChildActorComponent> TPSCamera;
 
@@ -141,6 +141,8 @@ public:
 	TObjectPtr<UAnimMontage> ReloadAnimMontage;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
 	TObjectPtr<UAnimMontage> DamageAnimMontage;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
+	TObjectPtr<UAnimMontage> RollingAnimMontage;
 
 	//for equip weapon
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon")
@@ -150,6 +152,9 @@ public:
 
 	//for reloading notify
 	bool bIsReloading;
+
+	//for rolling notify
+	bool bIsRolling;
 
 private:
 	bool bCanFire;  //character flag
@@ -180,4 +185,6 @@ public:
 
 	//sprint only forward 
 	bool bMoveForward;
+
+	FVector Velocity;
 };
