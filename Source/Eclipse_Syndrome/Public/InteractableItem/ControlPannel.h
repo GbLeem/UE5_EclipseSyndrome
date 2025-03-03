@@ -9,7 +9,7 @@
 class UBoxComponent;
 class UStaticMeshComponent;
 class UMaterialInstanceDynamic;
-
+class ALevelTwoDoor;
 
 UCLASS()
 class ECLIPSE_SYNDROME_API AControlPannel : public AActor
@@ -45,6 +45,8 @@ protected:
 	UMaterialInstanceDynamic* GreenMID;
 
 	bool bIsActivated = false;
+
+	ALevelTwoDoor* LevelTwoDoor;
 
 	UFUNCTION()
 	void OnOverlapBegin(

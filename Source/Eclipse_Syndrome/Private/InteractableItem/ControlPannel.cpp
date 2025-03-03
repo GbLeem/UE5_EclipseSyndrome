@@ -1,6 +1,9 @@
 #include "InteractableItem/ControlPannel.h"
 #include "Components/BoxComponent.h"
 #include "InteractableItem/PowerPlug.h"
+#include "InteractableItem/LevelTwoDoor.h"
+#include "EngineUtils.h"
+#include "Kismet/GameplayStatics.h"
 #include "CableActor.h"
 
 AControlPannel::AControlPannel()
@@ -39,6 +42,9 @@ void AControlPannel::BeginPlay()
 {
 	Super::BeginPlay();
 
+
+	LevelTwoDoor = Cast<ALevelTwoDoor>(UGameplayStatics::GetActorOfClass(GetWorld(), ALevelTwoDoor::StaticClass()));
+
 	if (ControlPanelMesh)
 	{
 		RedMID = ControlPanelMesh->CreateDynamicMaterialInstance(5);
@@ -60,6 +66,8 @@ void AControlPannel::BeginPlay()
 			UE_LOG(LogTemp, Warning, TEXT("both light failed"));
 		}
 	}
+
+	
 }
 
 
@@ -109,6 +117,11 @@ void AControlPannel::ActivatePanel(bool IsActivated)
 	if (GreenMID)
 	{
 		GreenMID->SetScalarParameterValue(TEXT("EmissivePower"), IsActivated ? 10.0f : 0.0f);
+	}
+	LevelTwoDoor->OpenLevelTwoDoor();
+	if (LevelTwoDoor)
+	{
+		LevelTwoDoor->OpenLevelTwoDoor();
 	}
 }
 

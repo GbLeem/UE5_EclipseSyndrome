@@ -54,7 +54,7 @@ void APowerPlug::AttachToPanel(AControlPannel* ControlPannel)
 	FQuat TargetRotation = ControlPannel->GetPlugRotation();
 
 	FVector PlugSize = StaticMeshCompo->Bounds.BoxExtent;
-	SocketLocation.Z -= PlugSize.Z;
+	/*SocketLocation.Z -= PlugSize.Z;*/
 
 	//FVector Offset = TargetRotation.GetForwardVector() * -10.0f;
 	//SocketLocation += Offset;
