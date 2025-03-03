@@ -78,6 +78,7 @@ protected:
 	
 private:
 	FVector MoveInput;
+	bool bIsGrabbing;
 	
 public:
 	ADrone();
@@ -102,6 +103,8 @@ public:
 	const TSet<TObjectPtr<AEnemyBase>>& GetNearbyEnemies() { return NearbyEnemies; }
 
 	void Attack(AEnemyBase* Target);
+
+	void DetachGrabActor(bool OnPhysics = false);
 	
 protected:
 	UFUNCTION()
@@ -116,6 +119,8 @@ protected:
 	void Look(const FInputActionValue& Value);
 	UFUNCTION()
 	void PossessToCharacter(const FInputActionValue& Value);
+	UFUNCTION()
+	void Grab(const FInputActionValue& Value);
 	
 private:
 	void ComponentInit();
