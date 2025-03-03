@@ -56,7 +56,7 @@ EBTNodeResult::Type UBTTaskNode_GangsterAttackReady::ExecuteTask(UBehaviorTreeCo
 			}
 		}
 	}
-	FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
+	
 	return EBTNodeResult::Succeeded;
 }
 

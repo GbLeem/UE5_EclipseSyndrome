@@ -5,6 +5,7 @@
 #include "Enemy/GangsterAIController.h"
 #include "Character/PlayerCharacter.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "System/DefaultGameState.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -46,16 +47,6 @@ void AGangsterEnemy::BeginPlay()
 	}
 }
 
-void AGangsterEnemy::OnDeath()
-{
-	// Ragdoll Effect On
-	EnemyMesh->SetSimulatePhysics(true);
-	EnemyMesh->SetCollisionProfileName(TEXT("Ragdoll"));
-
-	FTimerHandle DestoryHandle;
-	GetWorldTimerManager().SetTimer(DestoryHandle, this, &AGangsterEnemy::DestroyEnemy, 5.0f);
-}
-
 void AGangsterEnemy::Attack(AActor* TargetActor)
 {
 	FVector MuzzleLocation = GunMesh->GetSocketLocation(TEXT("MuzzleSocket"));
@@ -68,6 +59,11 @@ void AGangsterEnemy::Attack(AActor* TargetActor)
 	}
 
 	FVector FireDirection = (TargetLocation - MuzzleLocation).GetSafeNormal();
+
+	// Bullet Spread
+	float SpreadAngle = FMath::DegreesToRadians(10.0f);
+	FireDirection = FMath::VRandCone(FireDirection, SpreadAngle);
+
 	FVector EndLocation = MuzzleLocation + FireDirection * ShootRange;
 
 	FHitResult HitResult;
@@ -90,6 +86,25 @@ void AGangsterEnemy::Attack(AActor* TargetActor)
 float AGangsterEnemy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
 	float ActualDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+
+	// Get GangsterAIController
+	AGangsterAIController* AIController = Cast<AGangsterAIController>(GetController());
+	if (!AIController) return ActualDamage;
+
+	// When attacked while Player Undetected
+	if (AIController->GetBlackboardComponent()->GetValueAsObject(TEXT("TargetActor")) == nullptr)
+	{
+		ADefaultGameState* DefaultGameState = Cast<ADefaultGameState>(GetWorld()->GetGameState());
+		if (DefaultGameState)
+		{
+			APlayerCharacter* Player = DefaultGameState->GetPlayerCharacter();
+			if (Player)
+			{
+				AIController->GetBlackboardComponent()->SetValueAsBool(TEXT("PlayerDetected"), true);
+				AIController->GetBlackboardComponent()->SetValueAsObject(TEXT("TargetActor"), Player);
+			}
+		}
+	}
 
 	// Hit Animation
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();

@@ -18,6 +18,8 @@ AEnemyBase::AEnemyBase()
 	AttackRange = 150.0f;
 	PatrolSpeed = 100.0f;
 	ChaseSeed = 200.0f;
+
+	EnemyMesh = GetMesh();
 }
 
 // Called when the game starts or when spawned
@@ -72,6 +74,13 @@ float AEnemyBase::GetDamage() const
 void AEnemyBase::OnDeath()
 {
 	StopEnemy();
+
+	// Ragdoll Effect On
+	EnemyMesh->SetSimulatePhysics(true);
+	EnemyMesh->SetCollisionProfileName(TEXT("Ragdoll"));
+
+	FTimerHandle DestoryHandle;
+	GetWorldTimerManager().SetTimer(DestoryHandle, this, &AEnemyBase::DestroyEnemy, 5.0f);
 }
 
 float AEnemyBase::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)

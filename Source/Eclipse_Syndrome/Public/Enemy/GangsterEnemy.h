@@ -28,8 +28,7 @@ public:
 	float ShootRange;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MoveSpeed")
 	float AimSpeed;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon")
-	USkeletalMeshComponent* EnemyMesh;
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Weapon")
 	USkeletalMeshComponent* GunMesh;
 
@@ -39,7 +38,6 @@ public:
 	virtual void BeginPlay() override;
 	
 	// Interface Function
-	void OnDeath() override;
 	void Attack(AActor* TargetActor) override;
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 	FVector CalculateDestination();

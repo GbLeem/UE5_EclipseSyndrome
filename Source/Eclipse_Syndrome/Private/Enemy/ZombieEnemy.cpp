@@ -41,13 +41,9 @@ UAnimMontage* AZombieEnemy::GetRandomAttackMontage()
 void AZombieEnemy::OnDeath()
 {
 	Super::OnDeath();
-	AZombieAIController* AIController = Cast<AZombieAIController>(GetController());
+	/*AZombieAIController* AIController = Cast<AZombieAIController>(GetController());
 	if (!AIController) return;
-	AIController->GetBlackboardComponent()->SetValueAsBool(TEXT("IsAlive"), false);
-
-	FTimerHandle DestoryHandle;
-	GetWorldTimerManager().SetTimer(DestoryHandle, this, &AZombieEnemy::DestroyEnemy, 5.0f);
-
+	AIController->GetBlackboardComponent()->SetValueAsBool(TEXT("IsAlive"), false);*/
 }
 
 float AZombieEnemy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
@@ -58,7 +54,7 @@ float AZombieEnemy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEve
 	AZombieAIController* AIController = Cast<AZombieAIController>(GetController());
 	if (!AIController) return ActualDamage;
 
-
+	// When attacked while undetected
 	if (AIController->GetBlackboardComponent()->GetValueAsObject(TEXT("TargetActor")) == nullptr)
 	{
 		ADefaultGameState* DefaultGameState = Cast<ADefaultGameState>(GetWorld()->GetGameState());
