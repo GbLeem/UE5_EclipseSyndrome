@@ -176,4 +176,6 @@ public:
 	void HandleSwingMovement(float DeltaTime);
 	void HandlePullMovement(float DeltaTime);
 	void EndSwing();
+
+	void StartDroneAttack();
 };
