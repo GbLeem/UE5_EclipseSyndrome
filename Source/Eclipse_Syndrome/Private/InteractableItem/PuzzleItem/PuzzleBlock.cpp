@@ -155,7 +155,7 @@ void APuzzleBlock::ActivateItem(AActor* Activator)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("PuzzleBlock is placed!"));
 
-		if (CurrentSlot)//ÇöÀç ½½·Ô
+		if (CurrentSlot)
 		{
 			SetActorLocation(CurrentSlot->GetActorLocation());
 

@@ -386,22 +386,6 @@ void APlayerCharacter::EquipWeaponBack(int32 WeaponIdx)
 		CurrentWeapon = PlayerWeaponInventory[WeaponIdx];
 	}
 
-	////no weapon Equipped
-	//if (!IsValid(CurrentWeapon) && !bIsWeaponEquippedBack)
-	//{
-	//	CurrentWeapon = PlayerWeaponInventory[WeaponIdx];		
-	//	PlayerWeaponInventory[WeaponIdx] = nullptr;
-	//	bIsWeaponEquippedBack = true;
-	//}
-	////weapon equipped
-	//else if(IsValid(CurrentWeapon) && bIsWeaponEquippedBack)
-	//{
-	//	int32 Idx = CurrentWeapon->GetWeaponNumber();
-	//	PlayerWeaponInventory[Idx] = CurrentWeapon;
-	//	PlayerWeaponInventory[Idx]->SetActorHiddenInGame(true);
-	//	CurrentWeapon = PlayerWeaponInventory[WeaponIdx];
-	//	CurrentWeapon->SetActorHiddenInGame(false);
-	//}
 
 	CurrentWeapon->SetActorEnableCollision(false);
 	FName WeaponSocket(TEXT("back_socket"));
@@ -431,7 +415,7 @@ void APlayerCharacter::UseKeyItem()
 {
 	UE_LOG(LogTemp, Warning, TEXT("UseKeyItem called"));
 
-	// GarageDoor 찾기 (가장 가까운 문 가져오기)
+	// GarageDoor
 	AGarageDoor* GarageDoor = Cast<AGarageDoor>(
 		UGameplayStatics::GetActorOfClass(GetWorld(), AGarageDoor::StaticClass()));
 
@@ -638,46 +622,49 @@ void APlayerCharacter::PickUp(const FInputActionValue& value)
 					ABaseItem* BaseItem = Cast<ABaseItem>(PeekingItem);
 					if (BaseItem)
 					{
-						int32 ItemIdx = BaseItem->GetItemNumber();
-						int32 ItemAmount = BaseItem->GetItemAmount();
 
 						if (Cast<AKeyItem>(BaseItem))
 						{
+							int32 ItemIdx = BaseItem->GetItemNumber();
+							int32 ItemAmount = BaseItem->GetItemAmount();
 							DefaultGameInstance->AddItem(ItemIdx, ItemAmount, EItemType::Key);
+							UE_LOG(LogTemp, Warning, TEXT("Picked Up Item: %d"), ItemIdx);
+							PeekingItem->Destroy();
 						}
 						else if (Cast<APuzzleBlock>(BaseItem))
 						{
-							DefaultGameInstance->AddItem(ItemIdx, ItemAmount, EItemType::PuzzleBlock);
+							if (DefaultGameInstance->InventoryItem[3] == 0)//if inventory[3] is free
+							{
+								int32 ItemIdx = BaseItem->GetItemNumber();
+								int32 ItemAmount = BaseItem->GetItemAmount();
+								
+								DefaultGameInstance->AddItem(ItemIdx, ItemAmount, EItemType::PuzzleBlock);
+								UE_LOG(LogTemp, Warning, TEXT("Picked Up Item: %d"), ItemIdx);
+								PeekingItem->Destroy();
+							}
+							else
+							{
+								UE_LOG(LogTemp, Warning, TEXT("inventory already full"));
+							}
+							
 						}
 						else
 						{
+							int32 ItemIdx = BaseItem->GetItemNumber();
+							int32 ItemAmount = BaseItem->GetItemAmount();
 							DefaultGameInstance->AddItem(ItemIdx, ItemAmount);
+							UE_LOG(LogTemp, Warning, TEXT("Picked Up Item: %d"), ItemIdx);
+							PeekingItem->Destroy();
 						}
-						UE_LOG(LogTemp, Warning, TEXT("Picked Up Item: %d"), ItemIdx);
+						
 					}
 					
 				}
 			}
-			PeekingItem->Destroy();
+			
 		}
 
-		//else if (PeekingItem->ActorHasTag("Item"))//original code 
-		//{
-		//	if (GetGameInstance())
-		//	{
-		//		UDefaultGameInstance* DefaultGameInstance = Cast<UDefaultGameInstance>(GetGameInstance());
-		//		if (DefaultGameInstance)
-		//		{
 
-		//			int32 ItemIdx = Cast<ABaseItem>(PeekingItem)->GetItemNumber();
-		//			int32 ItemAmount = Cast<ABaseItem>(PeekingItem)->GetItemAmount();
-		//			DefaultGameInstance->AddItem(ItemIdx, ItemAmount);
-		//			//[YJ Testing]
-		//			UE_LOG(LogTemp, Warning, TEXT("Picked Up Item: %d"), ItemIdx);
-		//		}
-		//	}
-		//	PeekingItem->Destroy();
-		//}
 	}
 }
 
