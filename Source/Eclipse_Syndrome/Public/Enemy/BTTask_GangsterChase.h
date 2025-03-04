@@ -20,8 +20,6 @@ class ECLIPSE_SYNDROME_API UBTTask_GangsterChase : public UBTTaskNode
 public:
 	UBTTask_GangsterChase();
 
-	UBehaviorTreeComponent* CachedOwnerComp; // BT Component
-
 protected:
 	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
 };

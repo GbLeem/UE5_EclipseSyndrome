@@ -46,17 +46,16 @@ EBTNodeResult::Type UBTTask_ZombieAttack::ExecuteTask(UBehaviorTreeComponent& Ow
 			{
 				if (EnemyCharacter->Health > 0)
 				{
-					AnimInstance->Montage_Play(AttackMontage);
+					if (!AnimInstance->Montage_IsPlaying(AttackMontage))
+					{
+						AnimInstance->Montage_Play(AttackMontage);
+						// Set Event called when montage end
+						FOnMontageBlendingOutStarted BlendingOutDelegate;
+						BlendingOutDelegate.BindUObject(this, &UBTTask_ZombieAttack::OnAttackMontageEnded, &OwnerComp);
+						AnimInstance->Montage_SetBlendingOutDelegate(BlendingOutDelegate, AttackMontage);
 
-					// Save OwnerComp (to use OnAttackMontageEnded)
-					CachedOwnerComp = &OwnerComp;
-
-					// binding Montage end event 
-					FOnMontageEnded MontageEndDelegate;
-					MontageEndDelegate.BindUObject(this, &UBTTask_ZombieAttack::OnAttackMontageEnded);
-					AnimInstance->Montage_SetEndDelegate(MontageEndDelegate, AttackMontage);
-
-					return EBTNodeResult::InProgress;
+						return EBTNodeResult::InProgress;
+					}
 				}
 			}
 		}
@@ -64,11 +63,10 @@ EBTNodeResult::Type UBTTask_ZombieAttack::ExecuteTask(UBehaviorTreeComponent& Ow
 	return EBTNodeResult::Succeeded;
 }
 
-void UBTTask_ZombieAttack::OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+void UBTTask_ZombieAttack::OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted, UBehaviorTreeComponent* OwnerComp)
 {
-	if (CachedOwnerComp)
+	if (OwnerComp)
 	{
-		FinishLatentTask(*CachedOwnerComp, EBTNodeResult::Succeeded);
-		CachedOwnerComp = nullptr; // 다음 실행을 위해 초기화
+		FinishLatentTask(*OwnerComp, EBTNodeResult::Succeeded);
 	}
 }

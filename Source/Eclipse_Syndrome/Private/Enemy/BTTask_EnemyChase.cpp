@@ -35,6 +35,7 @@ EBTNodeResult::Type UBTTask_EnemyChase::ExecuteTask(UBehaviorTreeComponent& Owne
 
 	// Change gangster speed
 	Gangster->ChangeSpeedChase();
+	Gangster->CallNearbyGangster();
 
 	return EBTNodeResult::InProgress;
 }
@@ -65,12 +66,6 @@ void UBTTask_EnemyChase::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* Node
 
 		// When Enemy at Goal
 		if (MoveResult == EPathFollowingRequestResult::AlreadyAtGoal)
-		{
-			FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
-		}
-
-		// When EneyState change
-		if (static_cast<uint8>(CurrentState) != GangsterAIController->GetBlackboardComponent()->GetValueAsEnum(TEXT("EnemyState")))
 		{
 			FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
 		}

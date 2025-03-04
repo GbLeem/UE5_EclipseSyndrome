@@ -34,6 +34,8 @@ public:
 	float PatrolSpeed;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MoveSpeed")
 	float ChaseSeed;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Mesh")
+	USkeletalMeshComponent* EnemyMesh;
 
 protected:
 	// Called when the game starts or when spawned
