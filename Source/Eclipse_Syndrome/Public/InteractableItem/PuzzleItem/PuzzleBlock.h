@@ -54,6 +54,7 @@ public:
 		UPrimitiveComponent* OtherComp,
 		int32 OtherBodyIndex);
 
-protected:
+	UFUNCTION()
 	virtual void ActivateItem(AActor* Activator) override;
+
 };

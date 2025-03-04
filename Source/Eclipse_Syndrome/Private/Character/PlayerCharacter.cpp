@@ -545,16 +545,25 @@ void APlayerCharacter::UsePuzzleBlockItem()
 		{
 			if (DefaultGameInstance->InventoryItem[3] > 0)
 			{
-				/*AKeyItem* KeyItem = Cast<AKeyItem>(UGameplayStatics::GetActorOfClass(GetWorld(), AKeyItem::StaticClass()));
-				if (KeyItem)
+				int32 BlockID = DefaultGameInstance->PuzzleBlockIDMap[3];
+
+				FVector SpawnLocation = GetActorLocation() + (GetActorForwardVector() * 200.0f); 
+				FRotator SpawnRotation = GetActorRotation();
+
+				FActorSpawnParameters SpawnParams;
+				APuzzleBlock* PuzzleBlock = GetWorld()->SpawnActor<APuzzleBlock>(APuzzleBlock::StaticClass(), SpawnLocation, SpawnRotation, SpawnParams);
+				if (PuzzleBlock)
 				{
-					KeyItem->ActivateItem(this);
-					DefaultGameInstance->InventoryItem[3] -= 1;
+					PuzzleBlock->SetBlockID(BlockID);
+					UE_LOG(LogTemp, Warning, TEXT("PuzzleBlock spawned in front of player"));
+					
+					DefaultGameInstance->InventoryItem[3] = 0;
+					PuzzleBlock->ActivateItem(this);
 				}
 				else
 				{
-					UE_LOG(LogTemp, Error, TEXT("No PuzzleItem found!"));
-				}*/
+					UE_LOG(LogTemp, Error, TEXT("Failed to spawn PuzzleBlock"));
+				}
 			}
 		}
 	}
@@ -735,9 +744,10 @@ void APlayerCharacter::PickUp(const FInputActionValue& value)
 							{
 								int32 ItemIdx = BaseItem->GetItemNumber();
 								int32 ItemAmount = BaseItem->GetItemAmount();
-								
-								DefaultGameInstance->AddItem(ItemIdx, ItemAmount, EItemType::PuzzleBlock);
-								UE_LOG(LogTemp, Warning, TEXT("Picked Up Item: %d"), ItemIdx);
+								int32 BlockID = Cast<APuzzleBlock>(BaseItem)->GetBlockID();
+
+								DefaultGameInstance->AddItem(ItemIdx, ItemAmount, EItemType::PuzzleBlock, BlockID);
+								UE_LOG(LogTemp, Warning, TEXT("Picked Up Item: %d / BlockID: %d"), ItemIdx, BlockID);
 								PeekingItem->Destroy();
 							}
 							else
