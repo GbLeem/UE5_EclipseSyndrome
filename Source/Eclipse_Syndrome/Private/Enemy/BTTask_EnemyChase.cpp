@@ -35,6 +35,7 @@ EBTNodeResult::Type UBTTask_EnemyChase::ExecuteTask(UBehaviorTreeComponent& Owne
 
 	// Change gangster speed
 	Gangster->ChangeSpeedChase();
+	Gangster->CallNearbyGangster();
 
 	return EBTNodeResult::InProgress;
 }

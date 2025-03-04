@@ -6,9 +6,8 @@
 #include "Enemy/EnemyBase.h"
 #include "GangsterEnemy.generated.h"
 
-/**
- * 
- */
+class USphereComponent;
+
 UCLASS()
 class ECLIPSE_SYNDROME_API AGangsterEnemy : public AEnemyBase
 {
@@ -23,17 +22,22 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Animation")
 	UAnimMontage* WalkAttackMontage;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy")
-	float AttackReadyRange;
+	float ChasingRange;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy")
-	float ShootRange;
+	float AdvancingRange;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy")
+	float ShootingRange;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MoveSpeed")
 	float AimSpeed;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Weapon")
 	USkeletalMeshComponent* GunMesh;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Component")
+	USphereComponent* SphereComp;
 
 	UFUNCTION(BlueprintCallable)
 	void ChangeSpeedAim();
+	void CallNearbyGangster();
 
 	virtual void BeginPlay() override;
 	

@@ -8,6 +8,7 @@
 #include "System/DefaultGameState.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Components/SphereComponent.h"
 
 AGangsterEnemy::AGangsterEnemy()
 {
@@ -15,9 +16,10 @@ AGangsterEnemy::AGangsterEnemy()
 	MaxHealth = 100.0f;
 	Health = MaxHealth;
 	Damage = 20.0f;
-	AttackRange = 700.0f;
-	AttackReadyRange = 450.0f;
-	ShootRange = 5000.0f;
+	AttackRange = 5000.0f;
+	ChasingRange = 1500.0f;
+	AdvancingRange = 1000.0f;
+	ShootingRange = 450.0f;
 	AimSpeed = 200.0f;
 	ChaseSeed = 600.0f;
 	PatrolSpeed = 150.0f;
@@ -29,6 +31,8 @@ AGangsterEnemy::AGangsterEnemy()
 	// Components
 	EnemyMesh = GetMesh();
 	GunMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("GunMesh"));
+	SphereComp = CreateDefaultSubobject<USphereComponent>(TEXT("Callable Area"));
+	SphereComp->SetupAttachment(RootComponent);
 }
 
 void AGangsterEnemy::ChangeSpeedAim()
@@ -37,6 +41,33 @@ void AGangsterEnemy::ChangeSpeedAim()
 	if (MovementComponent)
 	{
 		MovementComponent->MaxWalkSpeed = AimSpeed;
+	}
+}
+
+void AGangsterEnemy::CallNearbyGangster()
+{
+	if (!SphereComp) return;
+
+	TArray<AActor*> OverlappingActors;
+
+	SphereComp->GetOverlappingActors(OverlappingActors, AGangsterEnemy::StaticClass());
+	
+	ADefaultGameState* DefaultGameState = Cast<ADefaultGameState>(GetWorld()->GetGameState());
+	
+	for (AActor* Enemy : OverlappingActors)
+	{
+		if (AGangsterEnemy* Gangster = Cast<AGangsterEnemy>(Enemy))
+		{
+			if (AGangsterAIController* GangsterAIController = Cast<AGangsterAIController>(Gangster->GetController()))
+			{
+				GangsterAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("PlayerDetected"), true);
+				if (DefaultGameState)
+				{
+					APlayerCharacter* Player = DefaultGameState->GetPlayerCharacter();
+					GangsterAIController->GetBlackboardComponent()->SetValueAsObject(TEXT("TargetActor"), Player);
+				}
+			}
+		}
 	}
 }
 
@@ -66,7 +97,7 @@ void AGangsterEnemy::Attack(AActor* TargetActor)
 	float SpreadAngle = FMath::DegreesToRadians(10.0f);
 	FireDirection = FMath::VRandCone(FireDirection, SpreadAngle);
 
-	FVector EndLocation = MuzzleLocation + FireDirection * ShootRange;
+	FVector EndLocation = MuzzleLocation + FireDirection * AttackRange;
 
 	FHitResult HitResult;
 	FCollisionQueryParams Params;
