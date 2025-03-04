@@ -2,6 +2,7 @@
 #include "AIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Camera/CameraComponent.h"
+#include "Character/PlayerCharacter.h"
 #include "Drone/Drone.h"
 #include "Drone/DroneAIController.h"
 #include "Kismet/GameplayStatics.h"
@@ -64,7 +65,7 @@ void UBTTask_CircleAroundPlayer::TickTask(UBehaviorTreeComponent& OwnerComp, uin
 void UBTTask_CircleAroundPlayer::UpdateIdleMovement(const TObjectPtr<AActor>& PlayerPawn, AAIController* AIController, float DeltaTime)
 {
 	const FVector PlayerLocation = PlayerPawn->GetActorLocation() + FVector(0.0f, 0.0f, 100.0f);
-	const FVector CameraForward = PlayerPawn->GetComponentByClass<UCameraComponent>()->GetForwardVector();
+	const FVector CameraForward = Cast<APlayerCharacter>(PlayerPawn)->TPSCamera->GetForwardVector();
 
 	ADroneAIController* DroneAIController = Cast<ADroneAIController>(AIController);
 	
