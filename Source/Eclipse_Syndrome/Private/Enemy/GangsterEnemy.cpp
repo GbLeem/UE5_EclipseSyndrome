@@ -9,6 +9,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Components/SphereComponent.h"
+#include "NiagaraComponent.h"
 
 AGangsterEnemy::AGangsterEnemy()
 {
@@ -33,6 +34,8 @@ AGangsterEnemy::AGangsterEnemy()
 	GunMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("GunMesh"));
 	SphereComp = CreateDefaultSubobject<USphereComponent>(TEXT("Callable Area"));
 	SphereComp->SetupAttachment(RootComponent);
+	MuzzleFlashComp = CreateDefaultSubobject<UNiagaraComponent>(TEXT("Muzzle Splash Niagara"));
+	MuzzleFlashComp->SetupAttachment(GunMesh, "MuzzleSocket");
 }
 
 void AGangsterEnemy::ChangeSpeedAim()
@@ -78,10 +81,15 @@ void AGangsterEnemy::BeginPlay()
 	{
 		GunMesh->AttachToComponent(EnemyMesh, FAttachmentTransformRules::SnapToTargetIncludingScale, TEXT("WeaponSocket"));
 	}
+	if (MuzzleFlashComp)
+	{
+		MuzzleFlashComp->Deactivate();
+	}
 }
 
 void AGangsterEnemy::Attack(AActor* TargetActor)
 {
+	MuzzleFlashComp->Activate(false);
 	FVector MuzzleLocation = GunMesh->GetSocketLocation(TEXT("MuzzleSocket"));
 	FVector TargetLocation = CalculateDestination();
 

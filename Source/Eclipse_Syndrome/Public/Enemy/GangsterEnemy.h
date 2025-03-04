@@ -7,6 +7,7 @@
 #include "GangsterEnemy.generated.h"
 
 class USphereComponent;
+class UNiagaraComponent;
 
 UCLASS()
 class ECLIPSE_SYNDROME_API AGangsterEnemy : public AEnemyBase
@@ -32,6 +33,8 @@ public:
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Weapon")
 	USkeletalMeshComponent* GunMesh;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon")
+	UNiagaraComponent* MuzzleFlashComp;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Component")
 	USphereComponent* SphereComp;
 
