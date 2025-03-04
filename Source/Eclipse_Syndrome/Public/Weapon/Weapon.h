@@ -74,7 +74,7 @@ protected:
 	TObjectPtr<UWidgetComponent> ItemHoverUI;
 	
 	//Decal
-	UMaterialInterface* BulletDecal;
+	TObjectPtr<UMaterialInterface> BulletDecal;
 
 	//[FOR GUN's feature]
     UPROPERTY(EditAnywhere, Category = "Gun Settings")
@@ -103,9 +103,9 @@ public:
 	float MaxYawRecoil;
 
 	//for zoom in
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Component")
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Component")
 	TObjectPtr<USpringArmComponent> WeaponSpringArmComp;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Component")
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Component")
 	TObjectPtr<UChildActorComponent> WeaponCameraComp;
 };

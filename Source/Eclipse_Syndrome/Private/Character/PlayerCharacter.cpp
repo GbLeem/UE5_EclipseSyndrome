@@ -53,14 +53,6 @@ APlayerCharacter::APlayerCharacter()
 	CableComp->NumSegments = 2;
 	CableComp->SetVisibility(false);
 
-	/*FPSSpringArmComp = CreateDefaultSubobject<USpringArmComponent>(TEXT("FPS Spring Arm"));
-	FPSSpringArmComp->SetupAttachment(RootComponent);
-	FPSCamera = CreateDefaultSubobject<UChildActorComponent>(TEXT("FPS Camera actor"));
-	FPSCamera->SetupAttachment(FPSSpringArmComp);
-	FPSCamera->SetChildActorClass(APlayerCamera::StaticClass());
-	FPSSpringArmComp->TargetArmLength = 0.f;
-	FPSSpringArmComp->bUsePawnControlRotation = true;*/
-
 	TPSSpringArmComp = CreateDefaultSubobject<USpringArmComponent>(TEXT("TPS Spring Arm"));
 	TPSSpringArmComp->SetupAttachment(RootComponent);
 	TPSCamera = CreateDefaultSubobject<UChildActorComponent>(TEXT("TPS Camera actor"));
@@ -228,7 +220,7 @@ void APlayerCharacter::Tick(float DeltaTime)
 	}
 	Velocity = GetCharacterMovement()->Velocity;
 
-	GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, FString::Printf(TEXT("vel : %f %f %f"), Velocity.X, Velocity.Y, Velocity.Z));
+	//GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, FString::Printf(TEXT("vel : %f %f %f"), Velocity.X, Velocity.Y, Velocity.Z));
 }
 
 void APlayerCharacter::BeginPlay()
@@ -242,7 +234,7 @@ void APlayerCharacter::BeginPlay()
 	{
 		PlayerCharacterController->SetViewTargetWithBlend(TPSCamera->GetChildActor());
 	}
-
+	bIsTPSMode = true;
 }
 
 void APlayerCharacter::Shoot()
@@ -774,21 +766,19 @@ void APlayerCharacter::ZoomInOut(const FInputActionValue& value)
 				{
 					if (CurrentWeapon)
 					{
-						CurrentWeapon->WeaponSpringArmComp->bUsePawnControlRotation = true;
+						//CurrentWeapon->WeaponSpringArmComp->bUsePawnControlRotation = true;
 						PlayerCharacterController->SetViewTargetWithBlend(CurrentWeapon->WeaponCameraComp->GetChildActor(), 0.2f);
 					}					
 					bIsTPSMode = false;
 				}
 				else
 				{
-					//GetMesh()->SetVisibility(true);
-
 					PlayerCharacterController->SetViewTargetWithBlend(TPSCamera->GetChildActor(), 0.2f);
 
 					bIsTPSMode = true;
 				}
 			}
-		}
+		} 
 	}
 }
 

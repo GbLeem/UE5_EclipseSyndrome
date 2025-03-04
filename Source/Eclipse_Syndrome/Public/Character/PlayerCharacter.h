@@ -101,22 +101,12 @@ protected:
 //variables
 public:
 	//components
-	/*UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Component")
-	TObjectPtr<USpringArmComponent> SpringArmComp;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Component")
-	TObjectPtr<UCameraComponent> CameraComp;*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Component")
 	TObjectPtr<UCableComponent> CableComp;
 	
-
-
 	//change view component
-	/*UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Component")
-	TObjectPtr<USpringArmComponent> FPSSpringArmComp;*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Component")
 	TObjectPtr<USpringArmComponent> TPSSpringArmComp;
-	/*UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Component")
-	TObjectPtr<UChildActorComponent> FPSCamera;*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Component")
 	TObjectPtr<UChildActorComponent> TPSCamera;
 
@@ -175,11 +165,11 @@ private:
 	float MaxYawRecoil;
 
 public:
-	//camera change value
+	//for FPS animation
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
 	bool bIsTPSMode;
 
-	//Crouch System
+	//for Crouch System and animation
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
 	bool bIsCrouch;
 

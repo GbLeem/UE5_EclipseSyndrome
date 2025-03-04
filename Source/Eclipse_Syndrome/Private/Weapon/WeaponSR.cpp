@@ -1,4 +1,5 @@
 #include "Weapon/WeaponSR.h"
+#include "GameFramework/SpringArmComponent.h"
 
 AWeaponSR::AWeaponSR()
 {
@@ -21,4 +22,5 @@ AWeaponSR::AWeaponSR()
     {
         GunMesh->SetStaticMesh(StaticMeshAsset.Object);
     }   
+    WeaponSpringArmComp->SetRelativeLocation(FVector((0.f, 0.f, 13.f)));
 }

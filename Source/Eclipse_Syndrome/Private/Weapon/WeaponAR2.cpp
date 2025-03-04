@@ -1,4 +1,5 @@
 #include "Weapon/WeaponAR2.h"
+#include "GameFramework/SpringArmComponent.h"
 
 AWeaponAR2::AWeaponAR2()
 {
@@ -21,4 +22,7 @@ AWeaponAR2::AWeaponAR2()
     {
         GunMesh->SetStaticMesh(StaticMeshAsset.Object);
     }
+
+    WeaponSpringArmComp->SetRelativeLocation(FVector((0.f, 9.5f, 10.3f)));
+    WeaponSpringArmComp->bUsePawnControlRotation = true;
 }

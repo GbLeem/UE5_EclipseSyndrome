@@ -43,12 +43,14 @@ AWeapon::AWeapon()
     WeaponSpringArmComp = CreateDefaultSubobject<USpringArmComponent>(TEXT("Spring Arm"));
     WeaponSpringArmComp->SetupAttachment(RootComponent);
     WeaponSpringArmComp->TargetArmLength = 0.f;
+    //WeaponSpringArmComp->SetRelativeLocation(FVector(0.f, 0.f, 0.f));
     WeaponSpringArmComp->SetRelativeRotation(FRotator(0.f, 90.f, 0.f));
-    //WeaponSpringArmComp->bUsePawnControlRotation = true;
+    WeaponSpringArmComp->bUsePawnControlRotation = true;
 
     WeaponCameraComp = CreateDefaultSubobject<UChildActorComponent>(TEXT("Weapon Camera"));
     WeaponCameraComp->SetupAttachment(WeaponSpringArmComp);
     WeaponCameraComp->SetChildActorClass(APlayerCamera::StaticClass());
+    WeaponCameraComp->SetRelativeRotation(FRotator(0.f, 0.f, 0.f));
 
     static ConstructorHelpers::FClassFinder<UUserWidget>ItemUIClass(TEXT("/Game/HJ/UI/WBP_Item.WBP_Item_C"));
     if (ItemUIClass.Succeeded())
@@ -56,7 +58,7 @@ AWeapon::AWeapon()
         ItemHoverUI->SetWidgetClass(ItemUIClass.Class);
     }    
     
-    static ConstructorHelpers::FObjectFinder< UMaterialInterface>DecalAsset(TEXT("/Game/HJ/Material/M_Bullet.M_Bullet"));
+    static ConstructorHelpers::FObjectFinder<UMaterialInterface>DecalAsset(TEXT("/Game/HJ/Material/M_Bullet.M_Bullet"));
     if (DecalAsset.Succeeded())
     {
         BulletDecal = DecalAsset.Object;
@@ -81,7 +83,6 @@ void AWeapon::Fire()
 {
     if (CurrentAmmo <= 0)
     {
-        GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Black, FString::Printf(TEXT("no current ammo")));
         return;
     }
 
