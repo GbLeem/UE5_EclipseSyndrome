@@ -12,4 +12,7 @@ class ECLIPSE_SYNDROME_API AWeaponAR2 : public AWeapon
 	
 public:
 	AWeaponAR2();
+
+	virtual void BeginPlay() override;
+
 };

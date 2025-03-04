@@ -214,6 +214,4 @@ public:
 
 	//sprint only forward 
 	bool bMoveForward;
-
-	FVector Velocity;
 };

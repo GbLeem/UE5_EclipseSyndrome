@@ -79,6 +79,15 @@ void AWeapon::Tick(float DeltaTime)
     bIsPeeking = false;
 }
 
+void AWeapon::BeginPlay()
+{
+    Super::BeginPlay();
+    WeaponSpringArmComp->SetRelativeLocation(FVector(0.f, 90.f, 0.f));
+    WeaponSpringArmComp->SetRelativeRotation(FRotator(0.f, 90.f, 0.f));
+    WeaponCameraComp->SetRelativeLocation(FVector(0.f, 90.f, 0.f));
+    WeaponCameraComp->SetRelativeRotation(FRotator(0.f, 0.f, 0.f));
+}
+
 void AWeapon::Fire()
 {
     if (CurrentAmmo <= 0)

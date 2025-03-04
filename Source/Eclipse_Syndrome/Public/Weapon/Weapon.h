@@ -17,6 +17,7 @@ class ECLIPSE_SYNDROME_API AWeapon : public AActor
 public:	
 	AWeapon();
 	virtual void Tick(float DeltaTime) override;
+	virtual void BeginPlay() override;
 
 public:
 	UFUNCTION(BlueprintCallable)
