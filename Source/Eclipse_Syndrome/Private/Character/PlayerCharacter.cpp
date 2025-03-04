@@ -430,30 +430,44 @@ void APlayerCharacter::UseHealthItem()
 void APlayerCharacter::UseKeyItem()
 {
 	UE_LOG(LogTemp, Warning, TEXT("UseKeyItem called"));
-	if (UGameInstance* GameInstance = GetGameInstance())
+
+	// GarageDoor 찾기 (가장 가까운 문 가져오기)
+	AGarageDoor* GarageDoor = Cast<AGarageDoor>(
+		UGameplayStatics::GetActorOfClass(GetWorld(), AGarageDoor::StaticClass()));
+
+	if (GarageDoor)
 	{
-		UDefaultGameInstance* DefaultGameInstance = Cast<UDefaultGameInstance>(GameInstance);
-		if (DefaultGameInstance)
+		if (GarageDoor->UnlockDoor())
 		{
-			if (DefaultGameInstance->InventoryItem[3] > 0)
+			UDefaultGameInstance* DefaultGameInstance = Cast<UDefaultGameInstance>(GetGameInstance());
+			if (DefaultGameInstance)
 			{
-				AKeyItem* KeyItem = Cast<AKeyItem>(UGameplayStatics::GetActorOfClass(GetWorld(), AKeyItem::StaticClass()));
-				if (KeyItem)
+				if (DefaultGameInstance->SpecialSlotItemID != -1)
 				{
-					KeyItem->ActivateItem(this);
+					UE_LOG(LogTemp, Warning, TEXT("UseKeyItem - deleting key from inventory"));
+					DefaultGameInstance->RemoveSpecialItem();
 					DefaultGameInstance->InventoryItem[3] -= 1;
-				}
-				else
-				{
-					UE_LOG(LogTemp, Error, TEXT("No KeyItem found!"));
+					if (ADefaultGameState* GameState = GetWorld()->GetGameState<ADefaultGameState>())
+					{
+						GameState->UpdateHUD();
+					}
 				}
 			}
 		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("UseKeyItem - too far from the door"));
+		}
 	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("No GarageDoor found!"));
+	}
+	
 }
 
 
-//[YJ fixing]Connecting with Character
+//[YJ fixing]Connecting with Character(already in inventory slot + trying to insert into puzzleslot)
 void APlayerCharacter::UsePuzzleBlockItem()
 {
 	UE_LOG(LogTemp, Warning, TEXT("UsePuzzleBlockItem called"));
@@ -613,7 +627,7 @@ void APlayerCharacter::PickUp(const FInputActionValue& value)
 			}
 			PeekingItem->Destroy();
 		}
-
+		//[YJ fixing]
 		else if(PeekingItem->ActorHasTag("Item"))
 		{
 			if (GetGameInstance())
@@ -621,15 +635,49 @@ void APlayerCharacter::PickUp(const FInputActionValue& value)
 				UDefaultGameInstance* DefaultGameInstance = Cast<UDefaultGameInstance>(GetGameInstance());
 				if (DefaultGameInstance)
 				{
-					int32 ItemIdx = Cast<ABaseItem>(PeekingItem)->GetItemNumber();
-					int32 ItemAmount = Cast<ABaseItem>(PeekingItem)->GetItemAmount();
-					DefaultGameInstance->AddItem(ItemIdx, ItemAmount);
-					//[YJ Testing]
-					UE_LOG(LogTemp, Warning, TEXT("Picked Up Item: %d"), ItemIdx);
+					ABaseItem* BaseItem = Cast<ABaseItem>(PeekingItem);
+					if (BaseItem)
+					{
+						int32 ItemIdx = BaseItem->GetItemNumber();
+						int32 ItemAmount = BaseItem->GetItemAmount();
+
+						if (Cast<AKeyItem>(BaseItem))
+						{
+							DefaultGameInstance->AddItem(ItemIdx, ItemAmount, EItemType::Key);
+						}
+						else if (Cast<APuzzleBlock>(BaseItem))
+						{
+							DefaultGameInstance->AddItem(ItemIdx, ItemAmount, EItemType::PuzzleBlock);
+						}
+						else
+						{
+							DefaultGameInstance->AddItem(ItemIdx, ItemAmount);
+						}
+						UE_LOG(LogTemp, Warning, TEXT("Picked Up Item: %d"), ItemIdx);
+					}
+					
 				}
 			}
 			PeekingItem->Destroy();
 		}
+
+		//else if (PeekingItem->ActorHasTag("Item"))//original code 
+		//{
+		//	if (GetGameInstance())
+		//	{
+		//		UDefaultGameInstance* DefaultGameInstance = Cast<UDefaultGameInstance>(GetGameInstance());
+		//		if (DefaultGameInstance)
+		//		{
+
+		//			int32 ItemIdx = Cast<ABaseItem>(PeekingItem)->GetItemNumber();
+		//			int32 ItemAmount = Cast<ABaseItem>(PeekingItem)->GetItemAmount();
+		//			DefaultGameInstance->AddItem(ItemIdx, ItemAmount);
+		//			//[YJ Testing]
+		//			UE_LOG(LogTemp, Warning, TEXT("Picked Up Item: %d"), ItemIdx);
+		//		}
+		//	}
+		//	PeekingItem->Destroy();
+		//}
 	}
 }
 

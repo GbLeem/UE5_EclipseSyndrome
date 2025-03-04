@@ -88,39 +88,6 @@ void AKeyItem::OnPlayerOverlapEnd(
 	}
 }
 
-//void AKeyItem::TestActivateItem()
-//{
-//	UE_LOG(LogTemp, Error, TEXT("(TEST) TestActivateItem called"));
-//
-//	AActor* PlayerActor = GetWorld()->GetFirstPlayerController()->GetPawn();
-//
-//	if (!PlayerActor)
-//	{
-//		UE_LOG(LogTemp, Error, TEXT("(TEST) no player found"));
-//		return;
-//	}
-//
-//
-//
-//	AGarageDoor* FoundDoor = nullptr;
-//	
-//	for (TActorIterator<AGarageDoor> It(GetWorld()); It; ++It)
-//	{
-//		FoundDoor = *It;
-//		break;
-//	}
-//
-//	if (FoundDoor)
-//	{
-//		UE_LOG(LogTemp, Error, TEXT("(TEST) door found"));
-//		ActivateItem(PlayerActor);
-//	}
-//	else
-//	{
-//		UE_LOG(LogTemp, Error, TEXT("(TEST) door found"));
-//	}
-//}
-
 
 void AKeyItem::ActivateItem(AActor* Activator)
 {
@@ -144,7 +111,6 @@ void AKeyItem::ActivateItem(AActor* Activator)
 		if (Distance <= MaxDistance)
 		{
 			FoundDoor->OpenGarageDoor();
-			DestroyItem();
 		}
 		else 
 		{
@@ -157,4 +123,38 @@ void AKeyItem::ActivateItem(AActor* Activator)
 	{
 		UE_LOG(LogTemp, Error, TEXT("No GarageDoor found in the Level!"));
 	}
+}
+
+bool AKeyItem::CanUseKeyItem(AActor* Activator)
+{
+	if (!Activator) return false;
+
+	const float MaxDistance = 500.0f;
+	AGarageDoor* FoundDoor = nullptr;
+
+	for (TActorIterator<AGarageDoor> It(GetWorld()); It; ++It)
+	{
+		FoundDoor = *It;
+		break;
+	}
+
+	if (FoundDoor)
+	{
+		float Distance = FVector::Dist(Activator->GetActorLocation(), FoundDoor->GetActorLocation());
+
+		if (Distance <= MaxDistance)
+		{
+			return true;  // Can Open Door
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Too far from the garage door"));
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("No GarageDoor found in the Level!"));
+	}
+
+	return false;  // Cannot Open Door
 }
