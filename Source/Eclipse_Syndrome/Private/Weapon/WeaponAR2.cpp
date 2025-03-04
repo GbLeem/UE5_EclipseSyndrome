@@ -26,3 +26,11 @@ AWeaponAR2::AWeaponAR2()
     WeaponSpringArmComp->SetRelativeLocation(FVector((0.f, 9.5f, 10.3f)));
     WeaponSpringArmComp->bUsePawnControlRotation = true;
 }
+
+void AWeaponAR2::BeginPlay()
+{
+    Super::BeginPlay();
+
+    WeaponSpringArmComp->SetRelativeLocation(FVector((0.f, 9.5f, 10.3f)));
+    WeaponSpringArmComp->bUsePawnControlRotation = true;
+}

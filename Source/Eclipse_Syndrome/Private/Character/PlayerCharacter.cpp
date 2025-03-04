@@ -233,9 +233,6 @@ void APlayerCharacter::Tick(float DeltaTime)
 	{
 		HandlePullMovement(DeltaTime);
 	}
-	Velocity = GetCharacterMovement()->Velocity;
-
-	//GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, FString::Printf(TEXT("vel : %f %f %f"), Velocity.X, Velocity.Y, Velocity.Z));
 }
 
 void APlayerCharacter::BeginPlay()
