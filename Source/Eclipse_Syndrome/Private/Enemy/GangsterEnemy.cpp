@@ -19,6 +19,8 @@ AGangsterEnemy::AGangsterEnemy()
 	AttackReadyRange = 450.0f;
 	ShootRange = 5000.0f;
 	AimSpeed = 200.0f;
+	ChaseSeed = 600.0f;
+	PatrolSpeed = 150.0f;
 
 	// AI
 	AIControllerClass = AGangsterAIController::StaticClass();
