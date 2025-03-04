@@ -10,7 +10,6 @@
 #include "Character/PlayerCharacterController.h"
 #include "Components/SphereComponent.h"
 #include "Enemy/EnemyBase.h"
-#include "Item/ItemInterface.h"
 #include "Kismet/GameplayStatics.h"
 #include "System/DefaultGameState.h"
 
@@ -240,7 +239,10 @@ void ADrone::Grab(const FInputActionValue& Value)
 
 void ADrone::DetachGrabActor(bool OnPhysics)
 {
-	PhysicsHandleComp->GetGrabbedComponent()->SetSimulatePhysics(OnPhysics);
+	if (UPrimitiveComponent* TargetComponent = PhysicsHandleComp->GetGrabbedComponent())
+	{
+		TargetComponent->SetSimulatePhysics(OnPhysics);
+	}
 	PhysicsHandleComp->ReleaseComponent();
 	bIsGrabbing = false;
 }
