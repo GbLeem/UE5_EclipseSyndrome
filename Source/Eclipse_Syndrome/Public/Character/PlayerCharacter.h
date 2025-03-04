@@ -203,6 +203,13 @@ public:
 
 	void StartDroneAttack();
 
+	// SlowTime
+	void StartSlowMotion();
+	void UpdateTimeDilation();
+	void ResetTimeDilation();
+	void UpdateTimeDilationToNormal();
+	FTimerHandle SlowDownTimerHandle;
+
 public:
 	//for FPS animation
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")

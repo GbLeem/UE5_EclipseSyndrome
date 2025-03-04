@@ -886,6 +886,62 @@ void APlayerCharacter::StartDroneAttack()
 	}
 }
 
+void APlayerCharacter::StartSlowMotion()
+{
+	GetWorldTimerManager().SetTimer(SlowDownTimerHandle, this, &APlayerCharacter::UpdateTimeDilation, 0.01f, true);
+}
+
+void APlayerCharacter::UpdateTimeDilation()
+{
+	static float ElapsedTime = 0.0f;
+	float Duration = 0.5f;
+	
+	ElapsedTime += 0.01f;
+	
+	float Alpha = FMath::Clamp(ElapsedTime / Duration, 0.0f, 1.0f);
+	float SineAlpha = 0.5f * (1.0f - FMath::Cos(Alpha * PI));
+	
+	float StartDilation = 1.0f;
+	float TargetDilation = 0.2f;
+	
+	float NewDilation = FMath::Lerp(StartDilation, TargetDilation, SineAlpha);
+	UGameplayStatics::SetGlobalTimeDilation(GetWorld(), NewDilation);
+	
+	if (Alpha >= 1.0f)
+	{
+		GetWorldTimerManager().ClearTimer(SlowDownTimerHandle);
+		ElapsedTime = 0.0f;
+	}
+}
+
+void APlayerCharacter::ResetTimeDilation()
+{
+	GetWorldTimerManager().SetTimer(SlowDownTimerHandle, this, &APlayerCharacter::UpdateTimeDilationToNormal, 0.01f, true);
+}
+
+void APlayerCharacter::UpdateTimeDilationToNormal()
+{
+	static float ElapsedTime = 0.0f;
+	float Duration = 0.5f;
+
+	ElapsedTime += 0.01f;
+
+	float Alpha = FMath::Clamp(ElapsedTime / Duration, 0.0f, 1.0f);
+	float SineAlpha = 0.5f * (1.0f - FMath::Cos(Alpha * PI));
+
+	float StartDilation = 0.2f;
+	float TargetDilation = 1.0f;
+
+	float NewDilation = FMath::Lerp(StartDilation, TargetDilation, SineAlpha);
+	UGameplayStatics::SetGlobalTimeDilation(GetWorld(), NewDilation);
+
+	if (Alpha >= 1.0f)
+	{
+		GetWorldTimerManager().ClearTimer(SlowDownTimerHandle);
+		ElapsedTime = 0.0f;
+	}
+}
+
 void APlayerCharacter::ShowInventory(const FInputActionValue& value)
 {	
 	//if pressed UI
@@ -893,14 +949,16 @@ void APlayerCharacter::ShowInventory(const FInputActionValue& value)
 	{			
 		if (!Cast<APlayerCharacterController>(GetController())->bIsInventoryUIOpen)
 		{
+			StartSlowMotion();
 			Cast<APlayerCharacterController>(GetController())->ShowInventoryUI();		
 		}
 		else
 		{
+			UGameplayStatics::SetGlobalTimeDilation(GetWorld(), 1.0f);
+			GetWorldTimerManager().ClearTimer(SlowDownTimerHandle);
 			Cast<APlayerCharacterController>(GetController())->StopShowInventoryUI();
 		}
 	}	
-
 }
 
 void APlayerCharacter::PossessToDrone(const FInputActionValue& value)

@@ -4,6 +4,7 @@
 #include "GameFramework/Pawn.h"
 #include "Drone.generated.h"
 
+class ADefaultBullet;
 class UNiagaraComponent;
 class AEnemyBase;
 class USphereComponent;
@@ -75,6 +76,9 @@ protected:
 	float AttackCooldown;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Drone|Property")
 	float SpreadAngle;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Drone|Property")
+	TSubclassOf<ADefaultBullet> BulletClass;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Drone|Property")
 	TSet<TObjectPtr<AEnemyBase>> NearbyEnemies;
