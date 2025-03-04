@@ -1,4 +1,5 @@
 #include "Weapon/WeaponAR2.h"
+#include "GameFramework/SpringArmComponent.h"
 
 AWeaponAR2::AWeaponAR2()
 {
@@ -21,4 +22,6 @@ AWeaponAR2::AWeaponAR2()
     {
         GunMesh->SetStaticMesh(StaticMeshAsset.Object);
     }
+
+    WeaponSpringArmComp->SocketOffset = FVector(10.f, 0.f, 15.f);    
 }

@@ -2,6 +2,7 @@
 
 
 #include "Weapon/WeaponAR1.h"
+#include "GameFramework/SpringArmComponent.h"
 
 AWeaponAR1::AWeaponAR1()
 {
@@ -14,7 +15,7 @@ AWeaponAR1::AWeaponAR1()
     bIsPeeking = false;
     WeaponNumber = 1;
 
-    MinPitchRecoil = -0.1f;
+    MinPitchRecoil = -0.1f; 
     MaxPitchRecoil = 0.3f;
     MinYawRecoil = -0.1f;
     MaxYawRecoil = 0.2f;
@@ -24,4 +25,6 @@ AWeaponAR1::AWeaponAR1()
     {
         GunMesh->SetStaticMesh(StaticMeshAsset.Object);
     }
+
+    WeaponSpringArmComp->SocketOffset = FVector(-8.f, 0.f, 20.f);
 }

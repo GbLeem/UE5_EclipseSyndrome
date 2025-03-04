@@ -5,8 +5,11 @@
 #include "Enemy/GangsterAIController.h"
 #include "Character/PlayerCharacter.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "System/DefaultGameState.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Components/SphereComponent.h"
+#include "NiagaraComponent.h"
 
 AGangsterEnemy::AGangsterEnemy()
 {
@@ -14,10 +17,13 @@ AGangsterEnemy::AGangsterEnemy()
 	MaxHealth = 100.0f;
 	Health = MaxHealth;
 	Damage = 20.0f;
-	AttackRange = 700.0f;
-	AttackReadyRange = 450.0f;
-	ShootRange = 5000.0f;
+	AttackRange = 5000.0f;
+	ChasingRange = 1500.0f;
+	AdvancingRange = 1000.0f;
+	ShootingRange = 450.0f;
 	AimSpeed = 200.0f;
+	ChaseSeed = 600.0f;
+	PatrolSpeed = 150.0f;
 
 	// AI
 	AIControllerClass = AGangsterAIController::StaticClass();
@@ -26,6 +32,10 @@ AGangsterEnemy::AGangsterEnemy()
 	// Components
 	EnemyMesh = GetMesh();
 	GunMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("GunMesh"));
+	SphereComp = CreateDefaultSubobject<USphereComponent>(TEXT("Callable Area"));
+	SphereComp->SetupAttachment(RootComponent);
+	MuzzleFlashComp = CreateDefaultSubobject<UNiagaraComponent>(TEXT("Muzzle Splash Niagara"));
+	MuzzleFlashComp->SetupAttachment(GunMesh, "MuzzleSocket");
 }
 
 void AGangsterEnemy::ChangeSpeedAim()
@@ -37,6 +47,33 @@ void AGangsterEnemy::ChangeSpeedAim()
 	}
 }
 
+void AGangsterEnemy::CallNearbyGangster()
+{
+	if (!SphereComp) return;
+
+	TArray<AActor*> OverlappingActors;
+
+	SphereComp->GetOverlappingActors(OverlappingActors, AGangsterEnemy::StaticClass());
+	
+	ADefaultGameState* DefaultGameState = Cast<ADefaultGameState>(GetWorld()->GetGameState());
+	
+	for (AActor* Enemy : OverlappingActors)
+	{
+		if (AGangsterEnemy* Gangster = Cast<AGangsterEnemy>(Enemy))
+		{
+			if (AGangsterAIController* GangsterAIController = Cast<AGangsterAIController>(Gangster->GetController()))
+			{
+				GangsterAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("PlayerDetected"), true);
+				if (DefaultGameState)
+				{
+					APlayerCharacter* Player = DefaultGameState->GetPlayerCharacter();
+					GangsterAIController->GetBlackboardComponent()->SetValueAsObject(TEXT("TargetActor"), Player);
+				}
+			}
+		}
+	}
+}
+
 void AGangsterEnemy::BeginPlay()
 {
 	Super::BeginPlay();
@@ -44,26 +81,31 @@ void AGangsterEnemy::BeginPlay()
 	{
 		GunMesh->AttachToComponent(EnemyMesh, FAttachmentTransformRules::SnapToTargetIncludingScale, TEXT("WeaponSocket"));
 	}
-}
-
-void AGangsterEnemy::OnDeath()
-{
-
+	if (MuzzleFlashComp)
+	{
+		MuzzleFlashComp->Deactivate();
+	}
 }
 
 void AGangsterEnemy::Attack(AActor* TargetActor)
 {
+	MuzzleFlashComp->Activate(false);
 	FVector MuzzleLocation = GunMesh->GetSocketLocation(TEXT("MuzzleSocket"));
 	FVector TargetLocation = CalculateDestination();
 
-	if (TargetLocation.IsZero()) // 장애물에 가려져 있으면 발사하지 않음
+	if (TargetLocation.IsZero()) // Does not fire if obscured by obstacles
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Yellow, TEXT("Target is behind cover!"));
 		return;
 	}
 
 	FVector FireDirection = (TargetLocation - MuzzleLocation).GetSafeNormal();
-	FVector EndLocation = MuzzleLocation + FireDirection * ShootRange;
+
+	// Bullet Spread
+	float SpreadAngle = FMath::DegreesToRadians(10.0f);
+	FireDirection = FMath::VRandCone(FireDirection, SpreadAngle);
+
+	FVector EndLocation = MuzzleLocation + FireDirection * AttackRange;
 
 	FHitResult HitResult;
 	FCollisionQueryParams Params;
@@ -85,6 +127,25 @@ void AGangsterEnemy::Attack(AActor* TargetActor)
 float AGangsterEnemy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
 	float ActualDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+
+	// Get GangsterAIController
+	AGangsterAIController* AIController = Cast<AGangsterAIController>(GetController());
+	if (!AIController) return ActualDamage;
+
+	// When attacked while Player Undetected
+	if (AIController->GetBlackboardComponent()->GetValueAsObject(TEXT("TargetActor")) == nullptr)
+	{
+		ADefaultGameState* DefaultGameState = Cast<ADefaultGameState>(GetWorld()->GetGameState());
+		if (DefaultGameState)
+		{
+			APlayerCharacter* Player = DefaultGameState->GetPlayerCharacter();
+			if (Player)
+			{
+				AIController->GetBlackboardComponent()->SetValueAsBool(TEXT("PlayerDetected"), true);
+				AIController->GetBlackboardComponent()->SetValueAsObject(TEXT("TargetActor"), Player);
+			}
+		}
+	}
 
 	// Hit Animation
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
@@ -121,10 +182,10 @@ FVector AGangsterEnemy::CalculateDestination()
 	bool bHit = GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility, Params);
 	if (bHit && HitResult.GetActor() == Target)
 	{
-		return HitResult.ImpactPoint;  // 조준 성공 시 목표 지점 반환
+		return HitResult.ImpactPoint;  // Returns to target point when aiming is successful
 	}
 
-	return FVector::ZeroVector; // 장애물에 막혀 있으면 사격 취소
+	return FVector::ZeroVector; // Cancel shooting if blocked by an obstacle
 }
 
 

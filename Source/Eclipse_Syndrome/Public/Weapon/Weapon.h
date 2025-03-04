@@ -7,6 +7,8 @@
 class USphereComponent;
 class UWidgetComponent;
 class UMaterialInterface;
+class USpringArmComponent;
+class UNiagaraSystem;
 
 UCLASS()
 class ECLIPSE_SYNDROME_API AWeapon : public AActor
@@ -16,6 +18,7 @@ class ECLIPSE_SYNDROME_API AWeapon : public AActor
 public:	
 	AWeapon();
 	virtual void Tick(float DeltaTime) override;
+	virtual void BeginPlay() override;
 
 public:
 	UFUNCTION(BlueprintCallable)
@@ -36,7 +39,9 @@ public:
 	int32 GetMaxAmmo() { return MaxAmmo; }
 	float GetFireRate() { return FireRate; }
 	int32 GetWeaponNumber() { return WeaponNumber; }
-	
+
+	//setter
+	//void SetCurrentAmmo(int32 Amount) { CurrentAmmo = Amount; }
 
 	UFUNCTION()
 	virtual void OnItemOverlap
@@ -74,7 +79,7 @@ protected:
 	TObjectPtr<UWidgetComponent> ItemHoverUI;
 	
 	//Decal
-	UMaterialInterface* BulletDecal;
+	TObjectPtr<UMaterialInterface> BulletDecal;
 
 	//[FOR GUN's feature]
     UPROPERTY(EditAnywhere, Category = "Gun Settings")
@@ -92,6 +97,7 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Gun Settings")
 	int32 WeaponNumber;	
 
+
 public:
 	bool bIsPeeking;
 	FVector RecoilValue;
@@ -100,4 +106,18 @@ public:
 	float MaxPitchRecoil;
 	float MinYawRecoil;
 	float MaxYawRecoil;
+
+	//for zoom in
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Component")
+	TObjectPtr<USpringArmComponent> WeaponSpringArmComp;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Component")
+	TObjectPtr<UChildActorComponent> WeaponCameraComp;
+
+	//for effect
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player|Components")
+	TObjectPtr<UNiagaraSystem> BloodNiagara;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player|Components")
+	TObjectPtr<UNiagaraSystem> MuzzleNiagara;
 };

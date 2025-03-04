@@ -22,6 +22,9 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	virtual void BeginPlay() override;
 
+	//crouch animation -> fail
+	//virtual void Landed(const FHitResult& Hit) override;
+
 	UFUNCTION()
 	void Shoot();
 	void ResetShoot() { bCanFire = true; }
@@ -94,16 +97,25 @@ protected:
 	void PossessToDrone(const FInputActionValue& value);
 	UFUNCTION()
 	void DroneMoveCommand(const FInputActionValue& value);	
+	UFUNCTION()
+	void ChangeView(const FInputActionValue& value);
+	UFUNCTION()
+	void ZoomInOut(const FInputActionValue& value);
+	UFUNCTION()
+	void CrouchCharacter(const FInputActionValue& value);
+
 
 //variables
 public:
 	//components
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Component")
-	TObjectPtr<USpringArmComponent> SpringArmComp;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Component")
-	TObjectPtr<UCameraComponent> CameraComp;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Component")
 	TObjectPtr<UCableComponent> CableComp;
+	
+	//change view component
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Component")
+	TObjectPtr<USpringArmComponent> TPSSpringArmComp;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Component")
+	TObjectPtr<UChildActorComponent> TPSCamera;
 
 	//for character speed
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
@@ -126,6 +138,8 @@ public:
 	TObjectPtr<UAnimMontage> ReloadAnimMontage;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
 	TObjectPtr<UAnimMontage> DamageAnimMontage;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
+	TObjectPtr<UAnimMontage> RollingAnimMontage;
 
 	//for equip weapon
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon")
@@ -135,6 +149,9 @@ public:
 
 	//for reloading notify
 	bool bIsReloading;
+
+	//for rolling notify
+	bool bIsRolling;
 
 private:
 	bool bCanFire;  //character flag
@@ -148,7 +165,7 @@ private:
 	FHitResult GrappleHitPoint; //grapple target actor point
 	float GrappleEndTime;
 
-	//temp recoil value
+	//recoil value
 	float MinPitchRecoil;
 	float MaxPitchRecoil;
 	float MinYawRecoil;
@@ -185,4 +202,23 @@ public:
 	void EndSwing();
 
 	void StartDroneAttack();
+
+	// SlowTime
+	void StartSlowMotion();
+	void UpdateTimeDilation();
+	void ResetTimeDilation();
+	void UpdateTimeDilationToNormal();
+	FTimerHandle SlowDownTimerHandle;
+
+public:
+	//for FPS animation
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
+	bool bIsTPSMode;
+
+	//for Crouch System and animation
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
+	bool bIsCrouch;
+
+	//sprint only forward 
+	bool bMoveForward;
 };

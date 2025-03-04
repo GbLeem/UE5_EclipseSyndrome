@@ -5,13 +5,14 @@
 #include "PhysicsEngine/PhysicsHandleComponent.h"
 #include "EnhancedInputComponent.h"
 #include "InputActionValue.h"
+#include "NiagaraComponent.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Character/PlayerCharacterController.h"
 #include "Components/SphereComponent.h"
 #include "Enemy/EnemyBase.h"
-#include "Item/ItemInterface.h"
 #include "Kismet/GameplayStatics.h"
 #include "System/DefaultGameState.h"
+#include "Weapon/DefaultBullet.h"
 
 ADrone::ADrone()
 	: MoveForce(300000.f)
@@ -35,6 +36,9 @@ void ADrone::BeginPlay()
 	Super::BeginPlay();
 
 	Cast<ADefaultGameState>(GetWorld()->GetGameState())->SetDrone(this);
+
+	RightMuzzleFlashComp->Deactivate();
+	LeftMuzzleFlashComp->Deactivate();
 }
 
 void ADrone::Tick(float DeltaTime)
@@ -86,6 +90,12 @@ void ADrone::ComponentInit()
 	DetectionSphere = CreateDefaultSubobject<USphereComponent>(TEXT("DetectionSphere"));
 	DetectionSphere->SetupAttachment(CapsuleComp);
 	DetectionSphere->InitSphereRadius(DetectionRange);
+
+	RightMuzzleFlashComp = CreateDefaultSubobject<UNiagaraComponent>("RightMuzzleFlash");
+	RightMuzzleFlashComp->SetupAttachment(SkeletalMeshComp, "barrel-gun_R_1__end");
+
+	LeftMuzzleFlashComp = CreateDefaultSubobject<UNiagaraComponent>("LeftMuzzleFlash");
+	LeftMuzzleFlashComp->SetupAttachment(SkeletalMeshComp, "barrel-gun_L_1__end");
 
 	BindingFunction();
 }
@@ -230,7 +240,10 @@ void ADrone::Grab(const FInputActionValue& Value)
 
 void ADrone::DetachGrabActor(bool OnPhysics)
 {
-	PhysicsHandleComp->GetGrabbedComponent()->SetSimulatePhysics(OnPhysics);
+	if (UPrimitiveComponent* TargetComponent = PhysicsHandleComp->GetGrabbedComponent())
+	{
+		TargetComponent->SetSimulatePhysics(OnPhysics);
+	}
 	PhysicsHandleComp->ReleaseComponent();
 	bIsGrabbing = false;
 }
@@ -277,7 +290,9 @@ void ADrone::SetEnhancedInput()
 void ADrone::Attack(AEnemyBase* Target)
 {
 	AttackSingleArm(Target, TEXT("barrel-gun_R_1__end"));
+	RightMuzzleFlashComp->Activate(false);
 	AttackSingleArm(Target, TEXT("barrel-gun_L_1__end"));
+	LeftMuzzleFlashComp->Activate(false);
 	
 }
 
@@ -305,7 +320,12 @@ void ADrone::AttackSingleArm(AEnemyBase* Target, const FName BoneName)
 	{
 		UGameplayStatics::ApplyDamage(Target, AttackDamage, nullptr, this, UDamageType::StaticClass());
 	}
-	DrawDebugLine(GetWorld(), MuzzleLocation, EndLocation, bHit ? FColor::Red : FColor::Blue, false, 1.0f, 0, 2.0f);
+	//DrawDebugLine(GetWorld(), MuzzleLocation, EndLocation, bHit ? FColor::Red : FColor::Blue, false, 1.0f, 0, 2.0f);
+
+	FVector ShootDirection = EndLocation - MuzzleLocation;
+	FRotator ShootRotation = ShootDirection.Rotation();
+	ADefaultBullet* Bullet = GetWorld()->SpawnActor<ADefaultBullet>(BulletClass, MuzzleLocation, ShootRotation);
+	Bullet->FireInDirection(ShootDirection.GetSafeNormal());
 }
 
 FVector ADrone::GetBulletDirection()

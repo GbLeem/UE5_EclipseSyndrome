@@ -22,10 +22,12 @@ class ECLIPSE_SYNDROME_API AGangsterAIController : public AAIController
 public:
 	AGangsterAIController();
 
-	UPROPERTY(EditDefaultsOnly, Category="AI")
-	float AttackRange;
 	UPROPERTY(EditDefaultsOnly, Category = "AI")
-	float AttackReadyRange;
+	float ChasingRange;
+	UPROPERTY(EditDefaultsOnly, Category="AI")
+	float AdvancingRange;
+	UPROPERTY(EditDefaultsOnly, Category = "AI")
+	float ShootingRange;
 	EEnemyStateEnum CurrentState;
 
 	void UpdateAttackRange();

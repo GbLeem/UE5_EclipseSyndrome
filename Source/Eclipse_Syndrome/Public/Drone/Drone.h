@@ -4,6 +4,8 @@
 #include "GameFramework/Pawn.h"
 #include "Drone.generated.h"
 
+class ADefaultBullet;
+class UNiagaraComponent;
 class AEnemyBase;
 class USphereComponent;
 class AAOctreeVolume;
@@ -44,6 +46,10 @@ protected:
 	TObjectPtr<USphereComponent> DetectionSphere;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Drone|Component")
 	TObjectPtr<UPhysicsHandleComponent> PhysicsHandleComp;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Drone|Component")
+	TObjectPtr<UNiagaraComponent> RightMuzzleFlashComp;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Drone|Component")
+	TObjectPtr<UNiagaraComponent> LeftMuzzleFlashComp;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="PathFinding")
 	TObjectPtr<AAOctreeVolume> OctreeVolume;
@@ -70,6 +76,9 @@ protected:
 	float AttackCooldown;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Drone|Property")
 	float SpreadAngle;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Drone|Property")
+	TSubclassOf<ADefaultBullet> BulletClass;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Drone|Property")
 	TSet<TObjectPtr<AEnemyBase>> NearbyEnemies;

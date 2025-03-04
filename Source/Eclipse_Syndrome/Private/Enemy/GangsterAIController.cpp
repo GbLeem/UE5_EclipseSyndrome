@@ -11,11 +11,7 @@
 
 AGangsterAIController::AGangsterAIController()
 {
-	AGangsterEnemy* ControlledEnemy = Cast<AGangsterEnemy>(GetPawn());
-	if (!ControlledEnemy) return;
-	AttackReadyRange = ControlledEnemy->AttackReadyRange;
-	//UE_LOG(LogTemp, Warning, TEXT("AttackReadyRange : %f!!!!!!!!!!!!!!!!!!!!!!!!"), AttackReadyRange);
-	AttackRange = ControlledEnemy->AttackRange;
+	
 }
 
 void AGangsterAIController::UpdateAttackRange()
@@ -29,21 +25,30 @@ void AGangsterAIController::UpdateAttackRange()
 	float Distance = FVector::Dist(ControlledPawn->GetActorLocation(), Player->GetActorLocation());
 
 	// Update Current EnemyState
-	if (Distance <= 450)
+	if (Distance <= ShootingRange)
 	{
 		CurrentState = EEnemyStateEnum::Shooting; // Stop and shoot
 	}
-	else if (Distance > 450 && Distance <= 2000)
+	else if (CurrentState==EEnemyStateEnum::Shooting && Distance > AdvancingRange && Distance <= ChasingRange) // Shooting -> Advancing
 	{	
 		CurrentState = EEnemyStateEnum::Advancing; // Walk and Shoot
 	}
-	else if (Distance > 2000)
+	else if (CurrentState != EEnemyStateEnum::Shooting && Distance > ShootingRange && Distance <= ChasingRange) // Chasing -> Advancing
+	{
+		CurrentState = EEnemyStateEnum::Advancing; // Walk and Shoot
+	}
+	else if (Distance > ChasingRange)
 	{
 		CurrentState = EEnemyStateEnum::Chasing; // Chasing
 	}
+
+	// Update EnemyState(Blackboard) when CurrentState changed
 	if (CurrentState != static_cast<EEnemyStateEnum>(GetBlackboardComponent()->GetValueAsEnum(TEXT("EnemyState"))))
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Magenta, TEXT("change state"));
+		FString StateStr = UEnum::GetValueAsString(CurrentState);
+		FString DebugMessage = FString::Printf(TEXT("change state : %s"), *StateStr);
+		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Magenta, DebugMessage);
+
 		GetBlackboardComponent()->SetValueAsEnum(TEXT("EnemyState"), static_cast<uint8>(CurrentState));
 	}
 }
@@ -51,16 +56,17 @@ void AGangsterAIController::UpdateAttackRange()
 void AGangsterAIController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
+	AGangsterEnemy* ControlledEnemy = Cast<AGangsterEnemy>(GetPawn());
+	if (!ControlledEnemy) return;
+
+	ChasingRange = ControlledEnemy->ChasingRange;
+	AdvancingRange = ControlledEnemy->AdvancingRange;
+	ShootingRange = ControlledEnemy->ShootingRange;
 }
 
 void AGangsterAIController::BeginPlay()
 {
 	Super::BeginPlay();
-
-	AGangsterEnemy* ControlledGansterEnemy = Cast<AGangsterEnemy>(GetPawn());
-	if (!ControlledGansterEnemy) return;
-
-	AttackRange = ControlledGansterEnemy->AttackRange;
 }
 
 void AGangsterAIController::Tick(float DeltaTime)

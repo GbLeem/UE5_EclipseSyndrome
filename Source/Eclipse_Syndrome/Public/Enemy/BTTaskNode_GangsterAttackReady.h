@@ -16,9 +16,7 @@ class ECLIPSE_SYNDROME_API UBTTaskNode_GangsterAttackReady : public UBTTaskNode
 	
 public:
 
-	APlayerCharacter* PlayerCharacter = nullptr;
-	AGangsterAIController* GangsterAIController = nullptr;
-
 protected:
 	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
+	void OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted, UBehaviorTreeComponent* OwnerComp);
 };

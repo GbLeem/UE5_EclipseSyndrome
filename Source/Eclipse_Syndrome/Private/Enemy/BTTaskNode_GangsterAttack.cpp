@@ -7,11 +7,6 @@
 #include "Character/PlayerCharacter.h"
 #include "BehaviorTree/BlackboardComponent.h"
 
-UBTTaskNode_GangsterAttack::UBTTaskNode_GangsterAttack()
-{
-	bNotifyTick = true;
-}
-
 EBTNodeResult::Type UBTTaskNode_GangsterAttack::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
 	// Get AI controller
@@ -44,34 +39,34 @@ EBTNodeResult::Type UBTTaskNode_GangsterAttack::ExecuteTask(UBehaviorTreeCompone
 		UAnimInstance* AnimInstance = EnemyCharacter->GetMesh()->GetAnimInstance();
 		if (AnimInstance)
 		{
-			UAnimMontage* AttackMontage = EnemyCharacter->AttackMontage;
+			UAnimMontage* AttackMontage = EnemyCharacter->WalkAttackMontage;
 			if (AttackMontage)
 			{
 				if (EnemyCharacter->Health > 0)
 				{
-					AnimInstance->Montage_Play(AttackMontage);
+					if (!AnimInstance->Montage_IsPlaying(AttackMontage))
+					{
+						AnimInstance->Montage_Play(AttackMontage);
 
-					// Save OwnerComp (to use OnAttackMontageEnded)
-					CachedOwnerComp = &OwnerComp;
+						// binding Montage end event 
+						FOnMontageBlendingOutStarted BlendingOutDelegate;
+						BlendingOutDelegate.BindUObject(this, &UBTTaskNode_GangsterAttack::OnAttackMontageEnded, &OwnerComp);
+						AnimInstance->Montage_SetEndDelegate(BlendingOutDelegate, AttackMontage);
 
-					// binding Montage end event 
-					FOnMontageEnded MontageEndDelegate;
-					MontageEndDelegate.BindUObject(this, &UBTTaskNode_GangsterAttack::OnAttackMontageEnded);
-					AnimInstance->Montage_SetEndDelegate(MontageEndDelegate, AttackMontage);
-
-					return EBTNodeResult::InProgress;
+						return EBTNodeResult::InProgress;
+					}
 				}
 			}
 		}
 	}
+	
 	return EBTNodeResult::Succeeded;
 }
 
-void UBTTaskNode_GangsterAttack::OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+void UBTTaskNode_GangsterAttack::OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted, UBehaviorTreeComponent* OwnerComp)
 {
-	if (CachedOwnerComp)
+	if (OwnerComp)
 	{
-		FinishLatentTask(*CachedOwnerComp, EBTNodeResult::Succeeded);
-		CachedOwnerComp = nullptr; // 다음 실행을 위해 초기화
+		FinishLatentTask(*OwnerComp, EBTNodeResult::Succeeded);
 	}
 }
