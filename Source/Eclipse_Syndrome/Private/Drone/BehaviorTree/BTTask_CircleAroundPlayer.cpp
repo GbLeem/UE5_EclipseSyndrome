@@ -65,7 +65,16 @@ void UBTTask_CircleAroundPlayer::TickTask(UBehaviorTreeComponent& OwnerComp, uin
 void UBTTask_CircleAroundPlayer::UpdateIdleMovement(const TObjectPtr<AActor>& PlayerPawn, AAIController* AIController, float DeltaTime)
 {
 	const FVector PlayerLocation = PlayerPawn->GetActorLocation() + FVector(0.0f, 0.0f, 100.0f);
-	const FVector CameraForward = Cast<APlayerCharacter>(PlayerPawn)->TPSCamera->GetForwardVector();
+	FVector CameraForward = FVector::ForwardVector;
+	if (Cast<APlayerCharacter>(PlayerPawn)->TPSCamera)
+	{
+		CameraForward = Cast<APlayerCharacter>(PlayerPawn)->TPSCamera->GetForwardVector();
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("TPS Camera null"));
+	}
+	
 
 	ADroneAIController* DroneAIController = Cast<ADroneAIController>(AIController);
 	
