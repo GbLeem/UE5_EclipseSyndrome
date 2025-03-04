@@ -10,7 +10,6 @@ AWeaponAR1::AWeaponAR1()
     FireRange = 5000.f;
     Damage = 10.f;
     MaxAmmo = 30;
-    CurrentAmmo = 30;
     bAutoFire = true;
     bIsPeeking = false;
     WeaponNumber = 1;

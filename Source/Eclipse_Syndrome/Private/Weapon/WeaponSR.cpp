@@ -7,7 +7,6 @@ AWeaponSR::AWeaponSR()
     FireRange = 6000.f;
     Damage = 35.f;
     MaxAmmo = 15;
-    CurrentAmmo = 15;
     bAutoFire = false;
     bIsPeeking = false;
     WeaponNumber = 3;
