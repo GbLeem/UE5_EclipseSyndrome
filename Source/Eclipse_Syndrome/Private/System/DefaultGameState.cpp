@@ -10,6 +10,7 @@
 #include "Components/TextBlock.h"
 #include "Components/Image.h"
 #include "Kismet/GameplayStatics.h"
+#include "Components/Button.h"
 
 ADefaultGameState::ADefaultGameState()
 	:CurrentLevelIndex(0)
@@ -120,6 +121,7 @@ void ADefaultGameState::UpdateHUD()
 					}
 				}
 
+
 				//Item UI
 				if (UTextBlock* CurrentInventoryHealthText = Cast<UTextBlock>(InventoryWidget->GetWidgetFromName(TEXT("Item1Text"))))
 				{
@@ -154,6 +156,36 @@ void ADefaultGameState::UpdateHUD()
 					}
 				}
 
+
+
+				if (UImage* KeyImageWidget = Cast<UImage>(InventoryWidget->GetWidgetFromName(TEXT("KeyImage"))))
+				{
+					if (UImage* GearImageWidget = Cast<UImage>(InventoryWidget->GetWidgetFromName(TEXT("GearImage"))))
+					{
+						if (UGameInstance* GameInstance = GetGameInstance())
+						{
+							if (UDefaultGameInstance* DefaultGameInstance = Cast<UDefaultGameInstance>(GameInstance))
+							{
+								int ItemID = DefaultGameInstance->SpecialSlotItemID;
+								UE_LOG(LogTemp, Warning, TEXT("itemid : %d"), ItemID);
+								//default state
+								KeyImageWidget->SetVisibility(ESlateVisibility::Hidden);
+								GearImageWidget->SetVisibility(ESlateVisibility::Hidden);
+
+								if (ItemID == 100) // if KeyItem, show KeyImage
+								{
+									KeyImageWidget->SetVisibility(ESlateVisibility::Visible);
+								}
+								else if (ItemID >= 1 && ItemID <= 5) // if GearItem, show GearImage
+								{
+									GearImageWidget->SetVisibility(ESlateVisibility::Visible);
+								}
+							}
+						}
+					}
+				}
+			
+				
 			}
 		}
 	}
