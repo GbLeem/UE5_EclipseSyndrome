@@ -20,20 +20,17 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Key")
 	FName DoorTag;
 
-
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UBoxComponent* InteractionBox;
 
 	AGarageDoor* TargetGarageDoor;
 
 	bool bPlayerInRange = false;
 
-
+	
 	virtual void ActivateItem(AActor* Activator) override;
 
 	virtual void BeginPlay() override;
-
-	void TestActivateItem();
-
 
 	UFUNCTION()
 	virtual void OnPlayerOverlapBegin(
@@ -52,4 +49,6 @@ public:
 		UPrimitiveComponent* OtherComp,
 		int32 OtherBodyIndex);
 
+
+	bool CanUseKeyItem(AActor* Activator);
 };

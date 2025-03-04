@@ -499,30 +499,44 @@ void APlayerCharacter::UseHealthItem()
 void APlayerCharacter::UseKeyItem()
 {
 	UE_LOG(LogTemp, Warning, TEXT("UseKeyItem called"));
-	if (UGameInstance* GameInstance = GetGameInstance())
+
+	// GarageDoor
+	AGarageDoor* GarageDoor = Cast<AGarageDoor>(
+		UGameplayStatics::GetActorOfClass(GetWorld(), AGarageDoor::StaticClass()));
+
+	if (GarageDoor)
 	{
-		UDefaultGameInstance* DefaultGameInstance = Cast<UDefaultGameInstance>(GameInstance);
-		if (DefaultGameInstance)
+		if (GarageDoor->UnlockDoor())
 		{
-			if (DefaultGameInstance->InventoryItem[3] > 0)
+			UDefaultGameInstance* DefaultGameInstance = Cast<UDefaultGameInstance>(GetGameInstance());
+			if (DefaultGameInstance)
 			{
-				AKeyItem* KeyItem = Cast<AKeyItem>(UGameplayStatics::GetActorOfClass(GetWorld(), AKeyItem::StaticClass()));
-				if (KeyItem)
+				if (DefaultGameInstance->SpecialSlotItemID != -1)
 				{
-					KeyItem->ActivateItem(this);
+					UE_LOG(LogTemp, Warning, TEXT("UseKeyItem - deleting key from inventory"));
+					DefaultGameInstance->RemoveSpecialItem();
 					DefaultGameInstance->InventoryItem[3] -= 1;
-				}
-				else
-				{
-					UE_LOG(LogTemp, Error, TEXT("No KeyItem found!"));
+					if (ADefaultGameState* GameState = GetWorld()->GetGameState<ADefaultGameState>())
+					{
+						GameState->UpdateHUD();
+					}
 				}
 			}
 		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("UseKeyItem - too far from the door"));
+		}
 	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("No GarageDoor found!"));
+	}
+	
 }
 
 
-//[YJ fixing]Connecting with Character
+//[YJ fixing]Connecting with Character(already in inventory slot + trying to insert into puzzleslot)
 void APlayerCharacter::UsePuzzleBlockItem()
 {
 	UE_LOG(LogTemp, Warning, TEXT("UsePuzzleBlockItem called"));
@@ -697,7 +711,7 @@ void APlayerCharacter::PickUp(const FInputActionValue& value)
 			}
 			PeekingItem->Destroy();
 		}
-
+		//[YJ fixing]
 		else if(PeekingItem->ActorHasTag("Item"))
 		{
 			if (GetGameInstance())
@@ -705,15 +719,52 @@ void APlayerCharacter::PickUp(const FInputActionValue& value)
 				UDefaultGameInstance* DefaultGameInstance = Cast<UDefaultGameInstance>(GetGameInstance());
 				if (DefaultGameInstance)
 				{
-					int32 ItemIdx = Cast<ABaseItem>(PeekingItem)->GetItemNumber();
-					int32 ItemAmount = Cast<ABaseItem>(PeekingItem)->GetItemAmount();
-					DefaultGameInstance->AddItem(ItemIdx, ItemAmount);
-					//[YJ Testing]
-					UE_LOG(LogTemp, Warning, TEXT("Picked Up Item: %d"), ItemIdx);
+					ABaseItem* BaseItem = Cast<ABaseItem>(PeekingItem);
+					if (BaseItem)
+					{
+
+						if (Cast<AKeyItem>(BaseItem))
+						{
+							int32 ItemIdx = BaseItem->GetItemNumber();
+							int32 ItemAmount = BaseItem->GetItemAmount();
+							DefaultGameInstance->AddItem(ItemIdx, ItemAmount, EItemType::Key);
+							UE_LOG(LogTemp, Warning, TEXT("Picked Up Item: %d"), ItemIdx);
+							PeekingItem->Destroy();
+						}
+						else if (Cast<APuzzleBlock>(BaseItem))
+						{
+							if (DefaultGameInstance->InventoryItem[3] == 0)//if inventory[3] is free
+							{
+								int32 ItemIdx = BaseItem->GetItemNumber();
+								int32 ItemAmount = BaseItem->GetItemAmount();
+								
+								DefaultGameInstance->AddItem(ItemIdx, ItemAmount, EItemType::PuzzleBlock);
+								UE_LOG(LogTemp, Warning, TEXT("Picked Up Item: %d"), ItemIdx);
+								PeekingItem->Destroy();
+							}
+							else
+							{
+								UE_LOG(LogTemp, Warning, TEXT("inventory already full"));
+							}
+							
+						}
+						else
+						{
+							int32 ItemIdx = BaseItem->GetItemNumber();
+							int32 ItemAmount = BaseItem->GetItemAmount();
+							DefaultGameInstance->AddItem(ItemIdx, ItemAmount);
+							UE_LOG(LogTemp, Warning, TEXT("Picked Up Item: %d"), ItemIdx);
+							PeekingItem->Destroy();
+						}
+						
+					}
+					
 				}
 			}
-			PeekingItem->Destroy();
+			
 		}
+
+
 	}
 }
 
@@ -888,6 +939,62 @@ void APlayerCharacter::StartDroneAttack()
 	}
 }
 
+void APlayerCharacter::StartSlowMotion()
+{
+	GetWorldTimerManager().SetTimer(SlowDownTimerHandle, this, &APlayerCharacter::UpdateTimeDilation, 0.01f, true);
+}
+
+void APlayerCharacter::UpdateTimeDilation()
+{
+	static float ElapsedTime = 0.0f;
+	float Duration = 0.5f;
+	
+	ElapsedTime += 0.01f;
+	
+	float Alpha = FMath::Clamp(ElapsedTime / Duration, 0.0f, 1.0f);
+	float SineAlpha = 0.5f * (1.0f - FMath::Cos(Alpha * PI));
+	
+	float StartDilation = 1.0f;
+	float TargetDilation = 0.2f;
+	
+	float NewDilation = FMath::Lerp(StartDilation, TargetDilation, SineAlpha);
+	UGameplayStatics::SetGlobalTimeDilation(GetWorld(), NewDilation);
+	
+	if (Alpha >= 1.0f)
+	{
+		GetWorldTimerManager().ClearTimer(SlowDownTimerHandle);
+		ElapsedTime = 0.0f;
+	}
+}
+
+void APlayerCharacter::ResetTimeDilation()
+{
+	GetWorldTimerManager().SetTimer(SlowDownTimerHandle, this, &APlayerCharacter::UpdateTimeDilationToNormal, 0.01f, true);
+}
+
+void APlayerCharacter::UpdateTimeDilationToNormal()
+{
+	static float ElapsedTime = 0.0f;
+	float Duration = 0.5f;
+
+	ElapsedTime += 0.01f;
+
+	float Alpha = FMath::Clamp(ElapsedTime / Duration, 0.0f, 1.0f);
+	float SineAlpha = 0.5f * (1.0f - FMath::Cos(Alpha * PI));
+
+	float StartDilation = 0.2f;
+	float TargetDilation = 1.0f;
+
+	float NewDilation = FMath::Lerp(StartDilation, TargetDilation, SineAlpha);
+	UGameplayStatics::SetGlobalTimeDilation(GetWorld(), NewDilation);
+
+	if (Alpha >= 1.0f)
+	{
+		GetWorldTimerManager().ClearTimer(SlowDownTimerHandle);
+		ElapsedTime = 0.0f;
+	}
+}
+
 void APlayerCharacter::ShowInventory(const FInputActionValue& value)
 {	
 	//if pressed UI
@@ -895,14 +1002,16 @@ void APlayerCharacter::ShowInventory(const FInputActionValue& value)
 	{			
 		if (!Cast<APlayerCharacterController>(GetController())->bIsInventoryUIOpen)
 		{
+			StartSlowMotion();
 			Cast<APlayerCharacterController>(GetController())->ShowInventoryUI();		
 		}
 		else
 		{
+			UGameplayStatics::SetGlobalTimeDilation(GetWorld(), 1.0f);
+			GetWorldTimerManager().ClearTimer(SlowDownTimerHandle);
 			Cast<APlayerCharacterController>(GetController())->StopShowInventoryUI();
 		}
 	}	
-
 }
 
 void APlayerCharacter::PossessToDrone(const FInputActionValue& value)

@@ -23,6 +23,15 @@ public:
 	virtual FName GetItemType() const override;
 	void ShowUI();
 	void StopUI();
+
+	virtual void CollectItem(AActor* Collector) override;
+
+	virtual void ActivateItem(AActor* Activator) override;
+
+
+	virtual void DestroyItem();
+
+
 	int32 GetItemNumber() { return ItemNumber; }
 	int32 GetItemAmount() { return ItemAmount; }
 
@@ -44,12 +53,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
 	TObjectPtr<UWidgetComponent> ItemHoverUI;
 	
-	virtual void CollectItem(AActor* Collector) override;
-
-	virtual void ActivateItem(AActor* Activator) override;
 	
-	
-	virtual void DestroyItem();
 
 public:
 	bool bIsPeeking;

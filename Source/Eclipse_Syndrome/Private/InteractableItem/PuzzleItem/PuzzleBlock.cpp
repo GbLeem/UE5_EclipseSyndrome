@@ -10,7 +10,6 @@ APuzzleBlock::APuzzleBlock()
 	ItemType = "PuzzleBlock";
 	ItemNumber = 3;
 	ItemAmount = 1;
-	
 	//SlotCollision = for collision with puzzle slot
 	//InteractionCollision = for collision with player
 	
@@ -148,7 +147,10 @@ void APuzzleBlock::SetBlockID(int32 NewID)
 void APuzzleBlock::ActivateItem(AActor* Activator)
 {
 	APlayerCharacter* Player = Cast<APlayerCharacter>(Activator);
+	//if (!Player) return;
 	//need to be fixed 
+
+
 	if (Player)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("PuzzleBlock is placed!"));
@@ -168,4 +170,3 @@ void APuzzleBlock::ActivateItem(AActor* Activator)
 		}
 	}
 }
-

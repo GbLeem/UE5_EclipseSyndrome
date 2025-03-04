@@ -7,6 +7,8 @@ UDefaultGameInstance::UDefaultGameInstance()
 	,PlayerMaxHealth(100)
 	,PlayerCurrentHealth(100)
 	,CurrentLevel(0)
+	//[YJ fixing]
+	,SpecialSlotItemID(-1)
 {
 	InventoryItem.Add(1, 0);
 	InventoryItem.Add(2, InventoryAmmo);
@@ -25,16 +27,53 @@ void UDefaultGameInstance::UseAmmo(int32 Amount)
 	InventoryItem[2] = InventoryAmmo;
 }
 
-void UDefaultGameInstance::AddItem(int32 ItemIdx, int32 ItemAmount)
+//original code(delete if below code works)
+//void UDefaultGameInstance::AddItem(int32 ItemIdx, int32 ItemAmount)
+//{
+//	if (InventoryItem.Contains(ItemIdx))
+//	{
+//		InventoryItem[ItemIdx] += ItemAmount;
+//		if (ItemIdx == 2)
+//			AddAmmo(ItemAmount);
+//	}
+//	else
+//	{
+//		InventoryItem.Add(ItemIdx, ItemAmount);
+//	}
+//}
+//[YJfixing]
+void UDefaultGameInstance::AddItem(int32 ItemIdx, int32 ItemAmount, EItemType ItemType)
 {
-	if (InventoryItem.Contains(ItemIdx))
+	
+	if(ItemType == EItemType::Key || ItemType == EItemType::PuzzleBlock)
 	{
-		InventoryItem[ItemIdx] += ItemAmount;
-		if (ItemIdx == 2)
-			AddAmmo(ItemAmount);
+		if (SpecialSlotItemID == -1)
+		{
+			InventoryItem.Add(ItemIdx, ItemAmount);
+			SpecialSlotItemID = (ItemType == EItemType::Key) ? 100 : ItemIdx;//need to be fixed(ItemIdx -> gear 1~5)
+			UE_LOG(LogTemp, Warning, TEXT("Special Item Added: %d (Type: %d)"), ItemIdx, static_cast<int32>(ItemType));
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Special Slot is already occupied! Current Item: %d"), SpecialSlotItemID);
+		}
 	}
 	else
-		InventoryItem.Add(ItemIdx, ItemAmount);
+	{
+		// default item add
+		if (InventoryItem.Contains(ItemIdx))
+		{
+			InventoryItem[ItemIdx] += ItemAmount;
+			if (ItemIdx == 2)
+				AddAmmo(ItemAmount);
+		}
+		else
+		{
+			InventoryItem.Add(ItemIdx, ItemAmount);
+		}
+		UE_LOG(LogTemp, Warning, TEXT("Added Normal Item: %d (Amount: %d)"), ItemIdx, ItemAmount);
+
+	}
 }
 
 void UDefaultGameInstance::AddWeapon(int32 WeaponIdx)
@@ -48,6 +87,31 @@ bool UDefaultGameInstance::FindWeaponByIdx(int32 WeaponIdx)
 		return true;
 	return false;
 }
+
+//[YJfixing]
+bool UDefaultGameInstance::AddSpecialItem(int32 ItemID)
+{
+	if (SpecialSlotItemID != -1)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Item %d already in slot 3"), SpecialSlotItemID);
+		return false;
+	}
+	SpecialSlotItemID = ItemID;
+	UE_LOG(LogTemp, Warning, TEXT("Item %d added to slot 3"), ItemID);
+	return true;
+}
+
+
+//[YJfixing] Called when slot needs to be empty
+void UDefaultGameInstance::RemoveSpecialItem()
+{
+	if (SpecialSlotItemID != -1)//if exists
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Item %d removed from slot 3"), SpecialSlotItemID);
+		SpecialSlotItemID = -1;
+	}
+}
+
 
 void UDefaultGameInstance::PlusHealth(int32 Amount)
 {
