@@ -22,5 +22,6 @@ AWeaponSR::AWeaponSR()
     {
         GunMesh->SetStaticMesh(StaticMeshAsset.Object);
     }   
-    WeaponSpringArmComp->SetRelativeLocation(FVector((0.f, 0.f, 13.f)));
+
+    WeaponSpringArmComp->SocketOffset = FVector(10.f, 0.f, 15.f);
 }

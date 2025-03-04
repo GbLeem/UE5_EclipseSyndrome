@@ -29,11 +29,15 @@ public:
 	void PlusHealth(int32 Amount);
 	UFUNCTION()
 	void MinusHealth(int32 Amount);
+	UFUNCTION()
+	void SetCurrentWeapon(AWeapon* CurrentWeapon);
+	UFUNCTION()
+	void SetCurrentWeaponAmmo(int32 Amount);
 
 public:
 	//for HUD ammo text ui
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "PlayerData")
-	int32 InventoryAmmo;
+	int32 InventoryAmmo;	
 
 	//for Inventory UI
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "PlayerData")
@@ -47,6 +51,15 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "PlayerData")
 	float PlayerCurrentHealth;
 
+	//for level
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Level");
+	int32 CurrentLevel;	
+
+	//for current weapon
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "PlayerData")
+	TObjectPtr<AWeapon> CurrentWeaponInstance;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "PlayerData")
+	int32 CurrentWeaponAmmo;
 
 private:
 

@@ -26,12 +26,26 @@ public:
 	void SetPlayerCharacter(const TObjectPtr<APlayerCharacter>& TargetCharacter) { PlayerPawn = TargetCharacter;}
 	const TObjectPtr<APlayerCharacter>& GetPlayerCharacter() const { return PlayerPawn; }
 	
+	//level
+	void LevelChange();
+	void GameClear();
+	void GameOver();
+
+
 //variables
 public:
 	UPROPERTY(VisibleAnywhere, Category = "Possess")
 	TObjectPtr<ADrone> Drone;
 	UPROPERTY(VisibleAnywhere, Category = "Possess")
 	TObjectPtr<APlayerCharacter> PlayerPawn;
+
+	//for level
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Level");
+	int32 CurrentLevelIndex;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Level");
+	int32 MaxLevelIndex;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Level");
+	TArray<FName> LevelMapNames;
 
 private:
 	FTimerHandle HUDUpdateTimerHandle;

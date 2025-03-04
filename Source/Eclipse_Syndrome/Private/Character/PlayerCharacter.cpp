@@ -22,6 +22,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Materials/MaterialInterface.h"
 
 APlayerCharacter::APlayerCharacter()
 	:SprintSpeed(800.f)
@@ -89,6 +90,12 @@ APlayerCharacter::APlayerCharacter()
 	if (RollingAsset.Succeeded())
 	{
 		RollingAnimMontage = RollingAsset.Object;
+	}
+
+	static ConstructorHelpers::FObjectFinder<UMaterialInterface>CableMat(TEXT("/Game/SH/MT_Rope.MT_Rope"));
+	if (CableMat.Succeeded())
+	{
+		CableComp->SetMaterial(0, CableMat.Object);
 	}
 	/*static ConstructorHelpers::FClassFinder<UAnimInstance> AnimClass(TEXT("/Game/HJ/Animation/ABP_PlayerCharacter.ABP_PlayerCharacter_C"));
 	if (AnimClass.Succeeded())
@@ -232,6 +239,23 @@ void APlayerCharacter::Tick(float DeltaTime)
 	else if (bIsPullingToAnchor)
 	{
 		HandlePullMovement(DeltaTime);
+	}	
+
+	if (CurrentWeapon)
+	{
+		if (!bIsTPSMode)
+		{
+			if (GetController())
+			{
+				APlayerCharacterController* PlayerCharacterController = Cast<APlayerCharacterController>(GetController());
+				if (PlayerCharacterController)
+				{
+					FRotator CameraRotation = CurrentWeapon->WeaponSpringArmComp->GetComponentRotation();
+					CameraRotation.Pitch = PlayerCharacterController->GetControlRotation().Pitch;
+					CurrentWeapon->WeaponCameraComp->SetWorldRotation(CameraRotation);					
+				}	
+			}
+		}
 	}
 }
 
@@ -281,10 +305,12 @@ void APlayerCharacter::Reloading()
 	if (CurrentWeapon)
 	{
 		int PlusAmmo = CurrentWeapon->GetMaxAmmo() - CurrentWeapon->GetCurrentAmmo();
+		
 		if (CurrentInventoryAmmos <= 0)
 		{
 			return;
 		}
+
 		if (PlusAmmo > 0 && bIsWeaponEquipped)
 		{
 			PlusAmmo = FMath::Min(PlusAmmo, CurrentInventoryAmmos);
@@ -441,7 +467,9 @@ void APlayerCharacter::EquipWeaponBack(int32 WeaponIdx)
 	{
 		CurrentWeapon = PlayerWeaponInventory[WeaponIdx];
 	}
-
+	
+	//[ADD]
+	CurrentWeapon->SetOwner(this);
 	CurrentWeapon->SetActorEnableCollision(false);
 	FName WeaponSocket(TEXT("back_socket"));
 	CurrentWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponSocket);
@@ -567,6 +595,17 @@ void APlayerCharacter::Look(const FInputActionValue& value)
 	
 	AddControllerYawInput(LookInput.X);
 	AddControllerPitchInput(LookInput.Y);
+
+	/*if (GetController())
+	{
+		APlayerCharacterController* PlayerCharacterController = Cast<APlayerCharacterController>(GetController());
+		if (PlayerCharacterController)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("%f")				
+					, PlayerCharacterController->GetControlRotation().Pitch));
+		}
+	}*/
+	//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("%f, %f"), LookInput.X, LookInput.Y));
 }
 
 void APlayerCharacter::StartJump(const FInputActionValue& value)
@@ -702,7 +741,7 @@ void APlayerCharacter::EquipWeapon1(const FInputActionValue& value)
 		bCanFire = true; // for attack
 		bIsWeaponEquipped = true;
 
-		FName WeaponSocket(TEXT("handFPSSocket"));
+		FName WeaponSocket(TEXT("hand_socket"));
 		CurrentWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponSocket);
 	}
 }
@@ -964,8 +1003,9 @@ void APlayerCharacter::ZoomInOut(const FInputActionValue& value)
 				{
 					if (CurrentWeapon)
 					{
-						//CurrentWeapon->WeaponSpringArmComp->bUsePawnControlRotation = true;
-						PlayerCharacterController->SetViewTargetWithBlend(CurrentWeapon->WeaponCameraComp->GetChildActor(), 0.2f);
+						PlayerCharacterController->SetViewTargetWithBlend(CurrentWeapon->WeaponCameraComp->GetChildActor(), 0.2f);		
+						//Cast<UCameraComponent>(CurrentWeapon->WeaponCameraComp->GetChildActor())->FieldOfView = 120.f;
+						//FRotator CameraRot = CurrentWeapon->WeaponCameraComp->GetComponentRotation();						
 					}					
 					bIsTPSMode = false;
 				}
@@ -1018,6 +1058,7 @@ float APlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Damag
 				//Damage Animation
 				UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 				AnimInstance->Montage_Play(DamageAnimMontage);
+				bIsReloading = false;
 			}
 		}
 		return ActualDamage;	
