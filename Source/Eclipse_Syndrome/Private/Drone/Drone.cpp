@@ -5,6 +5,7 @@
 #include "PhysicsEngine/PhysicsHandleComponent.h"
 #include "EnhancedInputComponent.h"
 #include "InputActionValue.h"
+#include "NiagaraComponent.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Character/PlayerCharacterController.h"
 #include "Components/SphereComponent.h"
@@ -35,6 +36,9 @@ void ADrone::BeginPlay()
 	Super::BeginPlay();
 
 	Cast<ADefaultGameState>(GetWorld()->GetGameState())->SetDrone(this);
+
+	RightMuzzleFlashComp->Deactivate();
+	LeftMuzzleFlashComp->Deactivate();
 }
 
 void ADrone::Tick(float DeltaTime)
@@ -86,6 +90,12 @@ void ADrone::ComponentInit()
 	DetectionSphere = CreateDefaultSubobject<USphereComponent>(TEXT("DetectionSphere"));
 	DetectionSphere->SetupAttachment(CapsuleComp);
 	DetectionSphere->InitSphereRadius(DetectionRange);
+
+	RightMuzzleFlashComp = CreateDefaultSubobject<UNiagaraComponent>("RightMuzzleFlash");
+	RightMuzzleFlashComp->SetupAttachment(SkeletalMeshComp, "barrel-gun_R_1__end");
+
+	LeftMuzzleFlashComp = CreateDefaultSubobject<UNiagaraComponent>("LeftMuzzleFlash");
+	LeftMuzzleFlashComp->SetupAttachment(SkeletalMeshComp, "barrel-gun_L_1__end");
 
 	BindingFunction();
 }
@@ -277,7 +287,9 @@ void ADrone::SetEnhancedInput()
 void ADrone::Attack(AEnemyBase* Target)
 {
 	AttackSingleArm(Target, TEXT("barrel-gun_R_1__end"));
+	RightMuzzleFlashComp->Activate(false);
 	AttackSingleArm(Target, TEXT("barrel-gun_L_1__end"));
+	LeftMuzzleFlashComp->Activate(false);
 	
 }
 
