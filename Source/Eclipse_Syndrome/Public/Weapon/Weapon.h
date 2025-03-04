@@ -22,7 +22,7 @@ public:
 
 public:
 	UFUNCTION(BlueprintCallable)
-	void Fire();
+	virtual void Fire();
 	UFUNCTION(BlueprintCallable)
 	void Reload(int32 Amount);
 
@@ -120,4 +120,7 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player|Components")
 	TObjectPtr<UNiagaraSystem> MuzzleNiagara;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player|Components")
+	TObjectPtr<UNiagaraSystem> BulletNiagara;
 };

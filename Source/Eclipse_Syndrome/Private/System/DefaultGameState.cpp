@@ -119,7 +119,17 @@ void ADefaultGameState::UpdateHUD()
 						}
 					}
 				}
-
+				if (UImage* WeaponUI3Image = Cast<UImage>(InventoryWidget->GetWidgetFromName(TEXT("Weapon4Image"))))
+				{
+					if (UGameInstance* GameInstance = GetGameInstance())
+					{
+						if (UDefaultGameInstance* DefaultGameInstance = Cast<UDefaultGameInstance>(GameInstance))
+						{
+							if (DefaultGameInstance->FindWeaponByIdx(4))
+								WeaponUI3Image->SetOpacity(1.f);
+						}
+					}
+				}
 				//Item UI
 				if (UTextBlock* CurrentInventoryHealthText = Cast<UTextBlock>(InventoryWidget->GetWidgetFromName(TEXT("Item1Text"))))
 				{
