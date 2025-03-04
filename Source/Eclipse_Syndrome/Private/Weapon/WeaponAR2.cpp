@@ -23,14 +23,5 @@ AWeaponAR2::AWeaponAR2()
         GunMesh->SetStaticMesh(StaticMeshAsset.Object);
     }
 
-    WeaponSpringArmComp->SetRelativeLocation(FVector((0.f, 9.5f, 10.3f)));
-    WeaponSpringArmComp->bUsePawnControlRotation = true;
-}
-
-void AWeaponAR2::BeginPlay()
-{
-    Super::BeginPlay();
-
-    WeaponSpringArmComp->SetRelativeLocation(FVector((0.f, 9.5f, 10.3f)));
-    WeaponSpringArmComp->bUsePawnControlRotation = true;
+    WeaponSpringArmComp->SocketOffset = FVector(10.f, 0.f, 15.f);    
 }

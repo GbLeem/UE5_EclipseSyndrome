@@ -6,6 +6,7 @@ UDefaultGameInstance::UDefaultGameInstance()
 	:InventoryAmmo(100)
 	,PlayerMaxHealth(100)
 	,PlayerCurrentHealth(100)
+	,CurrentLevel(0)
 {
 	InventoryItem.Add(1, 0);
 	InventoryItem.Add(2, InventoryAmmo);
@@ -62,4 +63,18 @@ void UDefaultGameInstance::MinusHealth(int32 Amount)
 		PlayerCurrentHealth = 0;
 	else
 		PlayerCurrentHealth -= Amount;
+}
+
+void UDefaultGameInstance::SetCurrentWeapon(AWeapon* CurrentWeapon)
+{
+	if (CurrentWeapon)
+	{
+		CurrentWeaponInstance = CurrentWeapon;
+		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Black, CurrentWeaponInstance.GetName());
+	}
+}
+
+void UDefaultGameInstance::SetCurrentWeaponAmmo(int32 Amount)
+{
+
 }

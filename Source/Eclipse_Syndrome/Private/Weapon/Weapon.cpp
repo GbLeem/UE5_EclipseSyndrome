@@ -18,6 +18,8 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "Particles/ParticleSystem.h"
 
+#include "NiagaraFunctionLibrary.h"
+#include "NiagaraComponent.h"
 
 AWeapon::AWeapon()
     :WeaponNumber(0)
@@ -43,13 +45,14 @@ AWeapon::AWeapon()
     WeaponSpringArmComp = CreateDefaultSubobject<USpringArmComponent>(TEXT("Spring Arm"));
     WeaponSpringArmComp->SetupAttachment(RootComponent);
     WeaponSpringArmComp->TargetArmLength = 0.f;
-    //WeaponSpringArmComp->SetRelativeLocation(FVector(0.f, 0.f, 0.f));
+    WeaponSpringArmComp->SetRelativeLocation(FVector(0.f, 0.f, 0.f));
     WeaponSpringArmComp->SetRelativeRotation(FRotator(0.f, 90.f, 0.f));
     WeaponSpringArmComp->bUsePawnControlRotation = true;
 
     WeaponCameraComp = CreateDefaultSubobject<UChildActorComponent>(TEXT("Weapon Camera"));
     WeaponCameraComp->SetupAttachment(WeaponSpringArmComp);
     WeaponCameraComp->SetChildActorClass(APlayerCamera::StaticClass());
+    WeaponCameraComp->SetRelativeLocation(FVector(0.f, 0.f, 0.f));
     WeaponCameraComp->SetRelativeRotation(FRotator(0.f, 0.f, 0.f));
 
     static ConstructorHelpers::FClassFinder<UUserWidget>ItemUIClass(TEXT("/Game/HJ/UI/WBP_Item.WBP_Item_C"));
@@ -63,6 +66,13 @@ AWeapon::AWeapon()
     {
         BulletDecal = DecalAsset.Object;
     }
+
+    //Niagara Assets
+    static ConstructorHelpers::FObjectFinder<UNiagaraSystem>BloodAsset(TEXT("/Game/SH/NS_Splash.NS_Splash")); 
+    BloodNiagara = BloodAsset.Object;
+
+    static ConstructorHelpers::FObjectFinder<UNiagaraSystem>MuzzleAsset(TEXT("/Game/SH/NS_MuzzleFlash.NS_MuzzleFlash"));
+    MuzzleNiagara = MuzzleAsset.Object;
 
     Tags.Add("Weapon");
 }
@@ -82,10 +92,6 @@ void AWeapon::Tick(float DeltaTime)
 void AWeapon::BeginPlay()
 {
     Super::BeginPlay();
-    WeaponSpringArmComp->SetRelativeLocation(FVector(0.f, 90.f, 0.f));
-    WeaponSpringArmComp->SetRelativeRotation(FRotator(0.f, 90.f, 0.f));
-    WeaponCameraComp->SetRelativeLocation(FVector(0.f, 90.f, 0.f));
-    WeaponCameraComp->SetRelativeRotation(FRotator(0.f, 0.f, 0.f));
 }
 
 void AWeapon::Fire()
@@ -98,6 +104,8 @@ void AWeapon::Fire()
     CurrentAmmo--;
 
     FVector MuzzleLocation = GunMesh->GetSocketLocation(TEXT("MuzzleSocket"));
+
+    UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), MuzzleNiagara, MuzzleLocation, GetActorRotation());
     FVector FireDirection = CalculateDestination()- MuzzleLocation;
     FVector EndLocation = MuzzleLocation + FireDirection * FireRange;       
 
@@ -121,11 +129,17 @@ void AWeapon::Fire()
     bool bHit = GetWorld()->LineTraceSingleByChannel(HitResult, MuzzleLocation, EndLocation, ECC_Visibility, Params);
 
     if (bHit)
-    {           
-        //[TODO] -> add damgage available flag
+    {                   
         if (HitResult.GetActor() && !HitResult.GetActor()->ActorHasTag("Player"))
-        {                      
+        {                    
+            if (HitResult.GetActor()->ActorHasTag("Enemy"))
+            {
+                GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("blood")));
+            }
             UGameplayStatics::ApplyDamage(HitResult.GetActor(), Damage, nullptr, this, UDamageType::StaticClass());                   
+
+            //blood effect -> only enemy
+            UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), BloodNiagara, HitResult.Location, UKismetMathLibrary::MakeRotFromX(HitResult.ImpactNormal), FVector(0.5f, 0.5f, 0.5f));
         }                    
 
         UGameplayStatics::SpawnDecalAtLocation(GetWorld(), BulletDecal, FVector(5.f, 5.f, 5.f),

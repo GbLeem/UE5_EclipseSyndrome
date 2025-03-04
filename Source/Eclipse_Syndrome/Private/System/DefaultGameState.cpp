@@ -4,13 +4,23 @@
 #include "Character/PlayerCharacterController.h"
 #include "System/DefaultGameInstance.h"
 
+
 #include "Blueprint/UserWidget.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
 #include "Components/Image.h"
+#include "Kismet/GameplayStatics.h"
 
 ADefaultGameState::ADefaultGameState()
+	:CurrentLevelIndex(0)
+	, MaxLevelIndex(3)
 {
+	/*LevelMapNames.Push(FName("Lv1"));
+	LevelMapNames.Push(FName("Lv2"));
+	LevelMapNames.Push(FName("Lv3"));*/
+
+	LevelMapNames.Push(FName("MainLevelTest"));
+	LevelMapNames.Push(FName("MainLevel_2"));
 }
 
 void ADefaultGameState::BeginPlay()
@@ -145,6 +155,55 @@ void ADefaultGameState::UpdateHUD()
 				}
 
 			}
+		}
+	}
+}
+
+void ADefaultGameState::LevelChange()
+{
+	GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, FString::Printf(TEXT("%d"), CurrentLevelIndex));
+
+	if (GetGameInstance())
+	{
+		UDefaultGameInstance* DefaultGameInstance = Cast<UDefaultGameInstance>(GetGameInstance());
+		if (DefaultGameInstance)
+		{
+			DefaultGameInstance->CurrentLevel++;
+			CurrentLevelIndex = DefaultGameInstance->CurrentLevel;
+		}
+	}
+
+	if (CurrentLevelIndex >= MaxLevelIndex)
+	{
+		GameClear();
+		return;
+	}
+
+	if (LevelMapNames.IsValidIndex(CurrentLevelIndex))
+	{
+		UGameplayStatics::OpenLevel(GetWorld(), LevelMapNames[CurrentLevelIndex]);
+	}
+	else
+	{
+		GameClear();
+	}
+
+}
+
+void ADefaultGameState::GameClear()
+{
+	GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Blue, FString::Printf(TEXT("Game Clear")));
+}
+
+//[TODO] when player dead, go to Main Menu
+void ADefaultGameState::GameOver()
+{
+	if (APlayerController* PlayerController = GetWorld()->GetFirstPlayerController())
+	{
+		if (APlayerCharacterController* PlayerCharacterController = Cast<APlayerCharacterController>(PlayerController))
+		{
+			//PlayerCharacterController->ShowMainMenu(true);
+			PlayerCharacterController->SetPause(true);
 		}
 	}
 }
