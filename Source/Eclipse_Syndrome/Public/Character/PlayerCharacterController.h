@@ -71,6 +71,12 @@ public:
 	TObjectPtr<UInputAction> ShowInventoryAction;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputAction> DroneMoveCommandAction;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> ViewChangeAction;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> ZoomAction;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> CrouchAction;
 
 	//drone input
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DroneInput|Property")

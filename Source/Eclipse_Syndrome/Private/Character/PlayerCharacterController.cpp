@@ -74,13 +74,28 @@ APlayerCharacterController::APlayerCharacterController()
 	{
 		ShowInventoryAction = IA_ShowInventory.Object;
 	}
+	static ConstructorHelpers::FObjectFinder<UInputAction> IA_ChangeView(TEXT("/Game/HJ/Input/IA_ViewChange.IA_ViewChange"));
+	if (IA_ChangeView.Succeeded())
+	{
+		ViewChangeAction = IA_ChangeView.Object;
+	}
+	static ConstructorHelpers::FObjectFinder<UInputAction> IA_Zoom(TEXT("/Game/HJ/Input/IA_Zoom.IA_Zoom"));
+	if (IA_Zoom.Succeeded())
+	{
+		ZoomAction = IA_Zoom.Object;
+	}
+	static ConstructorHelpers::FObjectFinder<UInputAction> IA_Crouch(TEXT("/Game/HJ/Input/IA_Crouch.IA_Crouch"));
+	if (IA_Crouch.Succeeded())
+	{
+		CrouchAction = IA_Crouch.Object;
+	}
+
+	//for drone possess
 	static ConstructorHelpers::FObjectFinder<UInputAction> IA_DroneMoveCommand(TEXT("/Game/HJ/Input/IA_DroneMoveCommand.IA_DroneMoveCommand"));
 	if (IA_DroneMoveCommand.Succeeded())
 	{
 		DroneMoveCommandAction = IA_DroneMoveCommand.Object;
 	}
-
-	//for drone possess
 	static ConstructorHelpers::FObjectFinder<UInputMappingContext> IMC_Drone(TEXT("/Game/SH/Input/IMC_Drone.IMC_Drone"));
 	if (IMC_Drone.Succeeded())
 	{

@@ -1,5 +1,6 @@
 #include "Character/PlayerCharacter.h"
 
+#include "Character/PlayerCamera.h"
 #include "Character/PlayerCharacterController.h"
 #include "Item/BaseItem.h"
 #include "System/DefaultGameState.h"
@@ -34,16 +35,15 @@ APlayerCharacter::APlayerCharacter()
 	, GrappleEndTime(0.5f) //fix
 	, bIsWeaponEquippedBack(false)
 	, bIsReloading(false)
+	, bIsTPSMode(true)
+	, bIsCrouch(false)
+	, bMoveForward(true)
+	, bIsRolling(false)
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	SpringArmComp = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
-	SpringArmComp->SetupAttachment(RootComponent);
-	SpringArmComp->bUsePawnControlRotation = true;
-
-	CameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
-	CameraComp->SetupAttachment(SpringArmComp);
-	CameraComp->bUsePawnControlRotation = false;
+	GetMesh()->SetRelativeLocation(FVector(0.f, 0.f, -88.f));
+	GetMesh()->SetRelativeRotation(FRotator(0.f, -90.f, 0.f));
 
 	CableComp = CreateDefaultSubobject<UCableComponent>(TEXT("Hook"));
 	CableComp->SetupAttachment(GetMesh());	
@@ -52,6 +52,21 @@ APlayerCharacter::APlayerCharacter()
 	CableComp->CableWidth = 5.f;
 	CableComp->NumSegments = 2;
 	CableComp->SetVisibility(false);
+
+	TPSSpringArmComp = CreateDefaultSubobject<USpringArmComponent>(TEXT("TPS Spring Arm"));
+	TPSSpringArmComp->SetupAttachment(RootComponent);
+	TPSCamera = CreateDefaultSubobject<UChildActorComponent>(TEXT("TPS Camera actor"));
+	TPSCamera->SetupAttachment(TPSSpringArmComp);
+	TPSCamera->SetChildActorClass(APlayerCamera::StaticClass());
+	TPSSpringArmComp->TargetArmLength = 200.f;
+	TPSSpringArmComp->TargetOffset = FVector(0.f, 0.f, 100.f);
+	TPSSpringArmComp->bUsePawnControlRotation = true;
+
+	/*static ConstructorHelpers::FObjectFinder<USkeletalMesh>SkeletalMesh(TEXT("/Game/HJ/Assets/QuantumCharacter/Mesh/SKM_QuantumCharacter.SKM_QuantumCharacter"));
+	if (SkeletalMesh.Succeeded())
+	{
+		GetMesh()->SetSkeletalMesh(SkeletalMesh.Object);
+	}*/
 
 	static ConstructorHelpers::FObjectFinder<UAnimMontage>ReloadAsset(TEXT("/Game/HJ/Animation/AM_ReloadAR1.AM_ReloadAR1"));
 	if (ReloadAsset.Succeeded())
@@ -64,6 +79,28 @@ APlayerCharacter::APlayerCharacter()
 	{
 		DamageAnimMontage = DamageAsset.Object;
 	}
+
+	static ConstructorHelpers::FObjectFinder<UAnimMontage>RollingAsset(TEXT("/Game/HJ/Animation/Rolling/AM_Rolling.AM_Rolling"));
+	if (RollingAsset.Succeeded())
+	{
+		RollingAnimMontage = RollingAsset.Object;
+	}
+	/*static ConstructorHelpers::FClassFinder<UAnimInstance> AnimClass(TEXT("/Game/HJ/Animation/ABP_PlayerCharacter.ABP_PlayerCharacter_C"));
+	if (AnimClass.Succeeded())
+	{
+		GetMesh()->SetAnimInstanceClass(AnimClass.Class);
+	}*/
+
+	//crouch setting
+	if (GetMovementComponent())
+	{
+		GetMovementComponent()->GetNavAgentPropertiesRef().bCanCrouch = true;				
+	}
+	if (GetCharacterMovement())
+	{
+		GetCharacterMovement()->bCanWalkOffLedgesWhenCrouching = true;
+	}
+
 
 	PlayerWeaponInventory.Add(1, nullptr);
 	PlayerWeaponInventory.Add(2, nullptr);
@@ -139,9 +176,21 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 			{
 				EnhancedInputComponent->BindAction(PlayerController->ShowInventoryAction,
 					ETriggerEvent::Started, this, &APlayerCharacter::ShowInventory);
-
-				//EnhancedInputComponent->BindAction(PlayerController->ShowInventoryAction,
-				//	ETriggerEvent::Completed, this, &APlayerCharacter::StopShowInventory);
+			}
+			if (PlayerController->ViewChangeAction)
+			{
+				EnhancedInputComponent->BindAction(PlayerController->ViewChangeAction,
+					ETriggerEvent::Started, this, &APlayerCharacter::ChangeView);
+			}
+			if (PlayerController->ZoomAction)
+			{
+				EnhancedInputComponent->BindAction(PlayerController->ZoomAction,
+					ETriggerEvent::Started, this, &APlayerCharacter::ZoomInOut);
+			}
+			if (PlayerController->CrouchAction)
+			{
+				EnhancedInputComponent->BindAction(PlayerController->CrouchAction,
+					ETriggerEvent::Started, this, &APlayerCharacter::CrouchCharacter);
 			}
 			if (PlayerController->DroneMoveCommandAction)
 			{
@@ -169,6 +218,9 @@ void APlayerCharacter::Tick(float DeltaTime)
 		if (PeekingItem->ActorHasTag("Item"))
 			Cast<ABaseItem>(PeekingItem)->bIsPeeking = true;
 	}
+	Velocity = GetCharacterMovement()->Velocity;
+
+	//GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, FString::Printf(TEXT("vel : %f %f %f"), Velocity.X, Velocity.Y, Velocity.Z));
 }
 
 void APlayerCharacter::BeginPlay()
@@ -176,6 +228,13 @@ void APlayerCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	Cast<ADefaultGameState>(GetWorld()->GetGameState())->SetPlayerCharacter(this);
+
+	APlayerCharacterController* PlayerCharacterController = Cast<APlayerCharacterController>(GetController());
+	if (PlayerCharacterController)
+	{
+		PlayerCharacterController->SetViewTargetWithBlend(TPSCamera->GetChildActor());
+	}
+	bIsTPSMode = true;
 }
 
 void APlayerCharacter::Shoot()
@@ -389,23 +448,6 @@ void APlayerCharacter::EquipWeaponBack(int32 WeaponIdx)
 		CurrentWeapon = PlayerWeaponInventory[WeaponIdx];
 	}
 
-	////no weapon Equipped
-	//if (!IsValid(CurrentWeapon) && !bIsWeaponEquippedBack)
-	//{
-	//	CurrentWeapon = PlayerWeaponInventory[WeaponIdx];		
-	//	PlayerWeaponInventory[WeaponIdx] = nullptr;
-	//	bIsWeaponEquippedBack = true;
-	//}
-	////weapon equipped
-	//else if(IsValid(CurrentWeapon) && bIsWeaponEquippedBack)
-	//{
-	//	int32 Idx = CurrentWeapon->GetWeaponNumber();
-	//	PlayerWeaponInventory[Idx] = CurrentWeapon;
-	//	PlayerWeaponInventory[Idx]->SetActorHiddenInGame(true);
-	//	CurrentWeapon = PlayerWeaponInventory[WeaponIdx];
-	//	CurrentWeapon->SetActorHiddenInGame(false);
-	//}
-
 	CurrentWeapon->SetActorEnableCollision(false);
 	FName WeaponSocket(TEXT("back_socket"));
 	CurrentWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponSocket);
@@ -444,7 +486,7 @@ void APlayerCharacter::Move(const FInputActionValue& value)
 	{
 		return;
 	}
-
+	
 	const FVector2D MoveInput = value.Get<FVector2D>();
 	if (!FMath::IsNearlyZero(MoveInput.X))
 	{
@@ -454,6 +496,10 @@ void APlayerCharacter::Move(const FInputActionValue& value)
 	{
 		AddMovementInput(GetActorRightVector(), MoveInput.Y);
 	}
+	if (MoveInput.X > 0)
+		bMoveForward = true;
+	else
+		bMoveForward = false;
 }
 
 void APlayerCharacter::Look(const FInputActionValue& value)
@@ -482,7 +528,7 @@ void APlayerCharacter::StopJump(const FInputActionValue& value)
 
 void APlayerCharacter::StartSprint(const FInputActionValue& value)
 {
-	if (GetCharacterMovement())
+	if (GetCharacterMovement() && bMoveForward)
 	{
 		GetCharacterMovement()->MaxWalkSpeed = SprintSpeed;
 	}
@@ -503,7 +549,7 @@ void APlayerCharacter::Reload(const FInputActionValue& value)
 
 void APlayerCharacter::StartShoot(const FInputActionValue& value)
 {
-	if (bCanFire && bIsWeaponEquipped)
+	if (bCanFire && bIsWeaponEquipped && !bIsRolling)
 	{
 		Shoot();	
 	}
@@ -579,7 +625,7 @@ void APlayerCharacter::EquipWeapon1(const FInputActionValue& value)
 		bCanFire = true; // for attack
 		bIsWeaponEquipped = true;
 
-		FName WeaponSocket(TEXT("hand_socket"));
+		FName WeaponSocket(TEXT("handFPSSocket"));
 		CurrentWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponSocket);
 	}
 }
@@ -691,6 +737,66 @@ void APlayerCharacter::DroneMoveCommand(const FInputActionValue& value)
 	}
 }
 
+//[TODO] Change Name / this function is for rolling 
+void APlayerCharacter::ChangeView(const FInputActionValue& value)
+{
+	if (bMoveForward && !bIsReloading && !bIsRolling)
+	{
+		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+		if (AnimInstance)
+		{
+			bIsRolling = true;
+			AnimInstance->Montage_Play(RollingAnimMontage);
+			//GetCharacterMovement()->MaxWalkSpeed = 1000.f;
+		}
+	}
+}
+
+void APlayerCharacter::ZoomInOut(const FInputActionValue& value)
+{	
+	if (bIsWeaponEquipped && !bIsRolling)
+	{
+		if (GetController())
+		{
+			APlayerCharacterController* PlayerCharacterController = Cast<APlayerCharacterController>(GetController());
+
+			if (PlayerCharacterController)
+			{
+				if (bIsTPSMode)
+				{
+					if (CurrentWeapon)
+					{
+						//CurrentWeapon->WeaponSpringArmComp->bUsePawnControlRotation = true;
+						PlayerCharacterController->SetViewTargetWithBlend(CurrentWeapon->WeaponCameraComp->GetChildActor(), 0.2f);
+					}					
+					bIsTPSMode = false;
+				}
+				else
+				{
+					PlayerCharacterController->SetViewTargetWithBlend(TPSCamera->GetChildActor(), 0.2f);
+
+					bIsTPSMode = true;
+				}
+			}
+		} 
+	}
+}
+
+void APlayerCharacter::CrouchCharacter(const FInputActionValue& value)
+{
+	if (!bIsCrouch)
+	{		
+		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, FString::Printf(TEXT("crouch")));
+		Crouch();
+		bIsCrouch = true;
+	}
+	else
+	{
+		UnCrouch();
+		bIsCrouch = false;
+	}
+}
+
 void APlayerCharacter::SetEnhancedInput()
 {
 	InputComponent->ClearActionBindings();
@@ -699,19 +805,24 @@ void APlayerCharacter::SetEnhancedInput()
 
 float APlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
-	float ActualDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
-
-	if (UGameInstance* GameInstance = GetGameInstance())
+	//[TEST] no damage when character rolls
+	if (!bIsRolling)
 	{
-		UDefaultGameInstance* DefaultGameInstance = Cast<UDefaultGameInstance>(GameInstance);
-		if (DefaultGameInstance)
-		{
-			DefaultGameInstance->MinusHealth(ActualDamage);
+		float ActualDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 
-			//Damage Animation
-			UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-			AnimInstance->Montage_Play(DamageAnimMontage);
+		if (UGameInstance* GameInstance = GetGameInstance())
+		{
+			UDefaultGameInstance* DefaultGameInstance = Cast<UDefaultGameInstance>(GameInstance);
+			if (DefaultGameInstance)
+			{
+				DefaultGameInstance->MinusHealth(ActualDamage);
+
+				//Damage Animation
+				UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+				AnimInstance->Montage_Play(DamageAnimMontage);
+			}
 		}
+		return ActualDamage;	
 	}
-	return ActualDamage;
+	return DamageAmount;
 }
