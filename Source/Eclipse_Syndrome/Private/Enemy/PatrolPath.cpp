@@ -2,7 +2,6 @@
 
 
 #include "Enemy/PatrolPath.h"
-#include "Components/SphereComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Enemy/EnemyBase.h"
 

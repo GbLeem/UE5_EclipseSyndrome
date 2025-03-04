@@ -26,7 +26,7 @@ AEnemyBase::AEnemyBase()
 void AEnemyBase::BeginPlay()
 {
 	Super::BeginPlay();
-	
+	this->Tags.Add(FName("Enemy"));
 }
 
 void AEnemyBase::ChangeSpeedPatrol()
