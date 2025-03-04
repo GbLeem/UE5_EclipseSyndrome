@@ -251,14 +251,20 @@ bool AAOctreeVolume::FindPath(const FVector& start, const FVector& destination, 
 	FVector StartLocation = start;
 	if (!IsValidDestLocation(start, object_types, actor_class_filter))
 	{
-		StartLocation = ConvertCoordinatesToLocation(FindNearestValidNode(StartLocation, object_types, actor_class_filter)->Coordinates);
+		NavNode* NewNode = FindNearestValidNode(StartLocation, object_types, actor_class_filter);
+		if (NewNode == nullptr)
+			return false;
+		StartLocation = ConvertCoordinatesToLocation(NewNode->Coordinates);
 		DrawDebugSphere(GetWorld(), StartLocation, 20, 20, FColor::Purple, false , 100.f);
 	}
 	
 	FVector TargetLocation = destination;
 	if (!IsValidDestLocation(TargetLocation, object_types, actor_class_filter))
 	{
-		TargetLocation = ConvertCoordinatesToLocation(FindNearestValidNode(TargetLocation, object_types, actor_class_filter)->Coordinates);
+		NavNode* NewNode = FindNearestValidNode(TargetLocation, object_types, actor_class_filter);
+		if (NewNode == nullptr)
+			return false;
+		TargetLocation = ConvertCoordinatesToLocation(NewNode->Coordinates);
 		DrawDebugSphere(GetWorld(), TargetLocation, 20, 20, FColor::Purple, false , 100.f);
 	}
 	
@@ -355,7 +361,7 @@ FVector AAOctreeVolume::ConvertCoordinatesToLocation(const FIntVector& coordinat
 	ClampCoordinates(clampedCoordinates);
 
 	// Convert the coordinates into a grid space location
-	FVector gridSpaceLocation = FVector::ZeroVector;
+	FVector gridSpaceLocation;
 	gridSpaceLocation.X = (clampedCoordinates.X * DivisionSize) + (DivisionSize * 0.5f);
 	gridSpaceLocation.Y = (clampedCoordinates.Y * DivisionSize) + (DivisionSize * 0.5f);
 	gridSpaceLocation.Z = (clampedCoordinates.Z * DivisionSize) + (DivisionSize * 0.5f);
@@ -459,7 +465,10 @@ NavNode* AAOctreeVolume::FindNearestValidNode(const FVector& location, const TAr
 		}
 	}
 
-	DrawDebugSphere(GetWorld(), ConvertCoordinatesToLocation(nearestNode->Coordinates), 30, 30, FColor::Orange, false , 100.f);
+	if (nearestNode)
+	{
+		DrawDebugSphere(GetWorld(), ConvertCoordinatesToLocation(nearestNode->Coordinates), 30, 30, FColor::Orange, false , 100.f);
+	}
 	
 	return nearestNode;
 }

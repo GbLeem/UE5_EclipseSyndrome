@@ -9,11 +9,14 @@
 #include "Weapon/WeaponAR1.h"
 #include "Weapon/WeaponAR2.h"
 #include "Weapon/WeaponSR.h"
+#include "InteractableItem/PuzzleItem/KeyItem.h"
+#include "InteractableItem/PuzzleItem/PuzzleBlock.h"
 
 #include "CableComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Components/MeshComponent.h"
 #include "EnhancedInputComponent.h"
+#include "BehaviorTree/BlackboardComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -49,8 +52,10 @@ APlayerCharacter::APlayerCharacter()
 	CableComp->SetupAttachment(GetMesh());	
 	FName HandSocket(TEXT("hand_l_socket"));
 	CableComp->SetupAttachment(GetMesh(), HandSocket);	
-	CableComp->CableWidth = 5.f;
-	CableComp->NumSegments = 2;
+	CableComp->CableWidth = 3.f;
+	CableComp->NumSides = 5.f;
+	CableComp->NumSegments = 60;
+	CableComp->TileMaterial = 60;
 	CableComp->SetVisibility(false);
 
 	TPSSpringArmComp = CreateDefaultSubobject<USpringArmComponent>(TEXT("TPS Spring Arm"));
@@ -217,6 +222,16 @@ void APlayerCharacter::Tick(float DeltaTime)
 			Cast<AWeapon>(PeekingItem)->bIsPeeking = true;
 		if (PeekingItem->ActorHasTag("Item"))
 			Cast<ABaseItem>(PeekingItem)->bIsPeeking = true;
+
+	}
+	
+	if (bIsSwinging)
+	{
+		HandleSwingMovement(DeltaTime);
+	}
+	else if (bIsPullingToAnchor)
+	{
+		HandlePullMovement(DeltaTime);
 	}
 	Velocity = GetCharacterMovement()->Velocity;
 
@@ -386,24 +401,6 @@ void APlayerCharacter::StopPeek()
 }
 
 //character move
-void APlayerCharacter::GrappleStart()
-{
-	if (bCanGrapple && !bIsWeaponEquipped)
-	{
-		FLatentActionInfo LatentInfo;
-		LatentInfo.CallbackTarget = this;
-		FRotator ResultRotator = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), GrappleHitPoint.ImpactPoint);
-		UKismetSystemLibrary::MoveComponentTo(RootComponent, GrappleHitPoint.ImpactPoint, FRotator::ZeroRotator,/*ResultRotator,*/ false, false, 0.5f, false, EMoveComponentAction::Type::Move, LatentInfo);
-		
-		CableComp->SetAttachEndToComponent(RootComponent);
-		CableComp->SetVisibility(false);
-	}
-}
-
-void APlayerCharacter::GrappleEnd()
-{
-	bCanGrapple = false;	
-}
 
 void APlayerCharacter::EquipWeaponBack(int32 WeaponIdx)
 {
@@ -471,6 +468,60 @@ void APlayerCharacter::UseHealthItem()
 	}
 }
 
+//[YJ fixing]Connecting with Character
+void APlayerCharacter::UseKeyItem()
+{
+	UE_LOG(LogTemp, Warning, TEXT("UseKeyItem called"));
+	if (UGameInstance* GameInstance = GetGameInstance())
+	{
+		UDefaultGameInstance* DefaultGameInstance = Cast<UDefaultGameInstance>(GameInstance);
+		if (DefaultGameInstance)
+		{
+			if (DefaultGameInstance->InventoryItem[3] > 0)
+			{
+				AKeyItem* KeyItem = Cast<AKeyItem>(UGameplayStatics::GetActorOfClass(GetWorld(), AKeyItem::StaticClass()));
+				if (KeyItem)
+				{
+					KeyItem->ActivateItem(this);
+					DefaultGameInstance->InventoryItem[3] -= 1;
+				}
+				else
+				{
+					UE_LOG(LogTemp, Error, TEXT("No KeyItem found!"));
+				}
+			}
+		}
+	}
+}
+
+
+//[YJ fixing]Connecting with Character
+void APlayerCharacter::UsePuzzleBlockItem()
+{
+	UE_LOG(LogTemp, Warning, TEXT("UsePuzzleBlockItem called"));
+	if (UGameInstance* GameInstance = GetGameInstance())
+	{
+		UDefaultGameInstance* DefaultGameInstance = Cast<UDefaultGameInstance>(GameInstance);
+		if (DefaultGameInstance)
+		{
+			if (DefaultGameInstance->InventoryItem[3] > 0)
+			{
+				/*AKeyItem* KeyItem = Cast<AKeyItem>(UGameplayStatics::GetActorOfClass(GetWorld(), AKeyItem::StaticClass()));
+				if (KeyItem)
+				{
+					KeyItem->ActivateItem(this);
+					DefaultGameInstance->InventoryItem[3] -= 1;
+				}
+				else
+				{
+					UE_LOG(LogTemp, Error, TEXT("No PuzzleItem found!"));
+				}*/
+			}
+		}
+	}
+}
+
+
 int32 APlayerCharacter::GetCurrentWeaponAmmo()
 {
 	if (CurrentWeapon)
@@ -488,13 +539,24 @@ void APlayerCharacter::Move(const FInputActionValue& value)
 	}
 	
 	const FVector2D MoveInput = value.Get<FVector2D>();
-	if (!FMath::IsNearlyZero(MoveInput.X))
+	// for swing
+	if (bIsSwinging && !AnchorLocation.IsZero() && !GetCharacterMovement()->IsMovingOnGround())
 	{
-		AddMovementInput(GetActorForwardVector(), MoveInput.X);
+		FVector Direction = GetActorForwardVector() * MoveInput.X + GetActorRightVector() * MoveInput.Y;
+		FVector SwingBoost = Direction * SwingBoostStrength;
+		GetCharacterMovement()->AddForce(SwingBoost);
 	}
-	if (!FMath::IsNearlyZero(MoveInput.Y))
+	else
 	{
-		AddMovementInput(GetActorRightVector(), MoveInput.Y);
+		// 일반 이동
+		if (!FMath::IsNearlyZero(MoveInput.X))
+		{
+			AddMovementInput(GetActorForwardVector(), MoveInput.X);
+		}
+		if (!FMath::IsNearlyZero(MoveInput.Y))
+		{
+			AddMovementInput(GetActorRightVector(), MoveInput.Y);
+		}
 	}
 	if (MoveInput.X > 0)
 		bMoveForward = true;
@@ -514,7 +576,19 @@ void APlayerCharacter::StartJump(const FInputActionValue& value)
 {
 	if (value.Get<bool>())
 	{
-		Jump();
+		if (bIsSwinging)
+		{
+			if (!GetCharacterMovement()->IsMovingOnGround())
+			{
+				FVector LaunchVelocity = GetCharacterMovement()->Velocity + (FVector::UpVector * 500.0f);
+				GetCharacterMovement()->Velocity = LaunchVelocity;
+			}
+			EndSwing();
+		}
+		else
+		{
+ 			Jump();
+		}
 	}
 }
 
@@ -551,9 +625,13 @@ void APlayerCharacter::StartShoot(const FInputActionValue& value)
 {
 	if (bCanFire && bIsWeaponEquipped && !bIsRolling)
 	{
+		StartDroneAttack();
 		Shoot();	
 	}
-	GrappleStart();
+	if (bIsSwinging)
+	{
+		GrappleStart();
+	}
 }
 
 void APlayerCharacter::StopShoot(const FInputActionValue& value)
@@ -592,6 +670,8 @@ void APlayerCharacter::PickUp(const FInputActionValue& value)
 					int32 ItemIdx = Cast<ABaseItem>(PeekingItem)->GetItemNumber();
 					int32 ItemAmount = Cast<ABaseItem>(PeekingItem)->GetItemAmount();
 					DefaultGameInstance->AddItem(ItemIdx, ItemAmount);
+					//[YJ Testing]
+					UE_LOG(LogTemp, Warning, TEXT("Picked Up Item: %d"), ItemIdx);
 				}
 			}
 			PeekingItem->Destroy();
@@ -631,21 +711,141 @@ void APlayerCharacter::EquipWeapon1(const FInputActionValue& value)
 }
 
 void APlayerCharacter::Grapple(const FInputActionValue& value)
-{	
+{
 	if (!bIsWeaponEquipped)
 	{
-		FVector Start = UGameplayStatics::GetPlayerCameraManager(GetWorld(), 0)->GetCameraLocation();	
+		FVector Start = UGameplayStatics::GetPlayerCameraManager(GetWorld(), 0)->GetCameraLocation();
 		FVector End = Start + UKismetMathLibrary::GetForwardVector(UGameplayStatics::GetPlayerCameraManager(GetWorld(), 0)->GetCameraRotation()) * 1500.f;
 		TArray<AActor*> ActorsToIgnore;
 		auto Channel = UEngineTypes::ConvertToTraceType(ECollisionChannel::ECC_GameTraceChannel1);
+		
 		bool bHit = UKismetSystemLibrary::SphereTraceSingle(GetWorld(), Start, End, 25.f, Channel, false,
 			ActorsToIgnore, EDrawDebugTrace::Type::ForDuration, GrappleHitPoint, true);
 
 		if (bHit)
 		{
 			CableComp->SetVisibility(true);
-			bCanGrapple = true;
 			CableComp->SetAttachEndToComponent(GrappleHitPoint.GetComponent());
+			CableComp->EndLocation = FVector::ZeroVector;
+			AnchorLocation = GrappleHitPoint.GetActor()->GetActorLocation();
+			float Distance = FVector::Dist(GetActorLocation(), AnchorLocation);
+			CableComp->CableLength = FVector::Dist(GetMesh()->GetSocketLocation(TEXT("hand_l_socket")), AnchorLocation); // CableComp->NumSegments;
+			MaxWebLength = Distance;
+			
+			bIsSwinging = true;
+		}
+	}
+}
+
+void APlayerCharacter::HandleSwingMovement(float DeltaTime)
+{
+	if (!bIsSwinging || AnchorLocation.IsZero()) return;
+
+	FVector PlayerLocation = GetActorLocation();
+	float Distance = FVector::Distance(PlayerLocation, AnchorLocation);
+
+	if (GetCharacterMovement()->IsMovingOnGround())
+	{
+		MaxWebLength = Distance;
+	}
+	else
+	{
+		const FVector Velocity = GetCharacterMovement()->Velocity;
+		const FVector AnchorDirection = (AnchorLocation - PlayerLocation).GetSafeNormal();
+		const FVector GravityForce = FVector(0.0f, 0.0f, GetCharacterMovement()->GetGravityZ());
+
+		if (Distance > MaxWebLength)
+		{
+			const FVector Correction = AnchorDirection * (Distance - MaxWebLength);
+			SetActorLocation(PlayerLocation + Correction);
+
+			const FVector RestoreForce = AnchorDirection * (Distance - MaxWebLength) * 500.0f;
+			GetCharacterMovement()->AddForce(RestoreForce);
+
+			const FVector TangentialVelocity = Velocity - AnchorDirection * FVector::DotProduct(Velocity, AnchorDirection);
+			GetCharacterMovement()->Velocity = TangentialVelocity;
+		
+			GetCharacterMovement()->Velocity = GetCharacterMovement()->Velocity.GetClampedToMaxSize(MaxSwingSpeed);
+		}
+		
+		// GEngine->AddOnScreenDebugMessage(1, 3.0f, FColor::Orange,FString::Printf(TEXT("RopeLen : %.2f"), MaxWebLength));
+		// GEngine->AddOnScreenDebugMessage(2, 3.0f, FColor::Red,FString::Printf(TEXT("Distance : %.2f"), Distance));
+		
+		GetCharacterMovement()->AddForce(GravityForce);
+	}
+}
+
+void APlayerCharacter::GrappleStart()
+{
+	if (bIsSwinging)
+	{
+		bIsSwinging = false;
+		bIsPullingToAnchor = true;
+
+		UPrimitiveComponent* AnchorComp = Cast<UPrimitiveComponent>(CableComp->GetAttachedActor()->GetRootComponent());
+		if (AnchorComp)
+		{
+			const FVector PlayerLocation = GetActorLocation();
+			const FVector AnchorDirection = (AnchorLocation - PlayerLocation).GetSafeNormal();
+			const FVector AnchorExtent = AnchorComp->Bounds.BoxExtent;
+			const float AnchorRadius = AnchorExtent.Size()+ 50.f;
+				
+			AnchorLocation -= AnchorDirection * AnchorRadius;
+			// DrawDebugSphere(GetWorld(), AnchorLocation, 30, 30, FColor::Red, false, 10.0f);
+		}
+		
+		if (GetCharacterMovement()->IsMovingOnGround())
+		{
+			Jump();
+		}
+	}
+}
+
+void APlayerCharacter::HandlePullMovement(float DeltaTime)
+{
+	if (!bIsPullingToAnchor) return;
+
+	const FVector PlayerLocation = GetActorLocation();
+	const FVector AnchorDirection = (AnchorLocation - PlayerLocation).GetSafeNormal();
+	const float Distance = FVector::Distance(PlayerLocation, AnchorLocation);
+	
+	const float SpeedFactor = FMath::Clamp(Distance / 1000.0f/*MaxWebLength*/, 0.1f, 1.0f);
+	const float PullSpeed = FMath::Lerp(PullMovementMinSpeed, PullMovementMaxSpeed, SpeedFactor);
+
+	const FVector NewVelocity = AnchorDirection * PullSpeed;
+	GetCharacterMovement()->Velocity = NewVelocity;
+	
+	if (Distance <= MinDistance)
+	{
+		const FVector SwingStartVelocity = AnchorDirection * 300.0f; 
+		GetCharacterMovement()->Velocity = SwingStartVelocity;
+		EndSwing();
+	}
+}
+
+void APlayerCharacter::EndSwing()
+{
+	bIsSwinging = false;
+	bIsPullingToAnchor = false;
+	CableComp->SetAttachEndToComponent(RootComponent);
+	CableComp->SetVisibility(false);
+}
+
+void APlayerCharacter::GrappleEnd()
+{
+	bCanGrapple = false;	
+}
+
+void APlayerCharacter::StartDroneAttack()
+{
+	if (ADefaultGameState* DefaultGameState = Cast<ADefaultGameState>(GetWorld()->GetGameState()))
+	{
+		if (ADrone* Drone = DefaultGameState->GetDrone())
+		{
+			if (AAIController* AIController = Cast<AAIController>(Drone->GetController()))
+			{
+				Cast<ADroneAIController>(AIController)->DroneAttack();
+			}
 		}
 	}
 }
@@ -673,6 +873,7 @@ void APlayerCharacter::PossessToDrone(const FInputActionValue& value)
 	{
 		Cast<APlayerCharacterController>(GetController())->SetPlayerPawn(this);
 		Cast<APlayerCharacterController>(GetController())->ChangeMappingContext(1);
+		Cast<ADefaultGameState>(GetWorld()->GetGameState())->GetDrone()->GetCameraSceneComponent()->SetRelativeRotation(FRotator(0, 0, 0));
 		Cast<APlayerCharacterController>(GetController())->ChangePossess(Cast<ADefaultGameState>(GetWorld()->GetGameState())->GetDrone());
 	}
 }
@@ -714,7 +915,7 @@ void APlayerCharacter::DroneMoveCommand(const FInputActionValue& value)
 
 				if (bHit)
 				{						
-					TargetLocation = HitResult.Location;// + HitResult.ImpactNormal * 100.0f;
+					TargetLocation = HitResult.Location + HitResult.ImpactNormal * 10.0f;
 				}
 			}
 		}

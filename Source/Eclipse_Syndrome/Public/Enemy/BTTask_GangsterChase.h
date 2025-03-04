@@ -20,12 +20,8 @@ class ECLIPSE_SYNDROME_API UBTTask_GangsterChase : public UBTTaskNode
 public:
 	UBTTask_GangsterChase();
 
-	APlayerCharacter* PlayerCharacter = nullptr;
-	AGangsterAIController* GangsterAIController = nullptr;
-	EEnemyStateEnum CurrentState;
+	UBehaviorTreeComponent* CachedOwnerComp; // BT Component
 
 protected:
 	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
-	virtual void TickTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds) override;
-
 };

@@ -98,10 +98,9 @@ public:
 
 	//Setters
 	void SetDesiredDistance(float NewDesiredDistance) { DesiredDistance = NewDesiredDistance; }
-	
-	void UpdateHappyMovement(float DeltaTime);
 
 	void DroneMoveCommand(const FVector& NewCommandLocation);
+	void DroneAttack();
 
 	void EndExecuteCommand() { bExecuteCommand = false; }
 
