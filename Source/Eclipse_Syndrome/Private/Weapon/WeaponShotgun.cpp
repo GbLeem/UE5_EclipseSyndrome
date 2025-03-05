@@ -28,6 +28,23 @@ AWeaponShotgun::AWeaponShotgun()
     {
         GunMesh->SetStaticMesh(StaticMeshAsset.Object);
     }
+    //sound asset
+    static ConstructorHelpers::FObjectFinder<USoundBase>ShootAsset1(TEXT("/Game/HJ/Assets/Sound/ShotGun_Shot_Far_4.ShotGun_Shot_Far_4"));
+    if (ShootAsset1.Succeeded())
+    {
+        ShootSound.Add(ShootAsset1.Object);
+    }
+    static ConstructorHelpers::FObjectFinder<USoundBase>ShootAsset2(TEXT("/Game/HJ/Assets/Sound/ShotGun_Shot_Punchy_2.ShotGun_Shot_Punchy_2"));
+    if (ShootAsset2.Succeeded())
+    {
+        ShootSound.Add(ShootAsset2.Object);
+    }
+
+    static ConstructorHelpers::FObjectFinder<USoundBase>ReloadAsset(TEXT("/Game/HJ/Assets/Sound/ShotGun_Handling_Plastic_1.ShotGun_Handling_Plastic_1"));
+    if (ReloadAsset.Succeeded())
+    {
+        ReloadSound.Add(ReloadAsset.Object);
+    }    
 }
 
 void AWeaponShotgun::Fire()
@@ -41,6 +58,13 @@ void AWeaponShotgun::Fire()
 
     FVector MuzzleLocation = GunMesh->GetSocketLocation(TEXT("MuzzleSocket"));
     FRotator MuzzleRotation = GunMesh->GetSocketRotation(TEXT("MuzzleSocket"));
+
+    //shoot sound
+    if (ShootSound.Num() > 0)
+    {
+        int RandIdx = FMath::RandRange(0, ShootSound.Num() - 1);
+        UGameplayStatics::PlaySoundAtLocation(GetWorld(), ShootSound[RandIdx], MuzzleLocation);
+    }
 
     UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), MuzzleNiagara, MuzzleLocation, GetActorRotation());
     //UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), BulletNiagara, MuzzleLocation, MuzzleRotation);
@@ -68,8 +92,10 @@ void AWeaponShotgun::Fire()
     for (int i = 0; i < 10; ++i)
     {        
         FVector Offset = FVector::ZeroVector;
-        Offset.X = FMath::RandRange(0., 10000.);
-        Offset.Y = FMath::RandRange(0., 10000.);
+        Offset.X = FMath::RandRange(-4000., 4000.);
+        Offset.Y = FMath::RandRange(-4000., 4000.);
+        Offset.Z = FMath::RandRange(-4000., 4000.);
+
         EndLocation += Offset;
 
         bool bHit = GetWorld()->LineTraceSingleByChannel(HitResult, MuzzleLocation, EndLocation, ECC_Visibility, Params);
@@ -93,6 +119,18 @@ void AWeaponShotgun::Fire()
         }
         FColor DrawColor = bHit ? FColor::Green : FColor::Red;
         DrawDebugLine(GetWorld(), MuzzleLocation, EndLocation, DrawColor, false, 1.0f, 0, 2.0f);
-        GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Blue, FString::Printf(TEXT("%f %f %f"), EndLocation.X, EndLocation.Y, EndLocation.Z));
+        //GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Blue, FString::Printf(TEXT("%f %f %f"), EndLocation.X, EndLocation.Y, EndLocation.Z));
+    }
+}
+
+void AWeaponShotgun::Reload(int32 Amount)
+{
+    CurrentAmmo += Amount;
+
+    if (ReloadSound.Num() > 0)
+    {
+        int RandIdx = FMath::RandRange(0, ReloadSound.Num() - 1);
+        for (int i = 0; i < 4; ++i)
+            UGameplayStatics::PlaySoundAtLocation(GetWorld(), ReloadSound[RandIdx], GetActorLocation());
     }
 }
