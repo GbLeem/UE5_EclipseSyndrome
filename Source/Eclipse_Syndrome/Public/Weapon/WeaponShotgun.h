@@ -18,5 +18,6 @@ public:
 	AWeaponShotgun();
 
 	virtual void Fire() override;
+	virtual void Reload(int32 Amount) override;
 
 };
