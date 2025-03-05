@@ -33,11 +33,15 @@ public:
 	UFUNCTION()
 	void StopShowInventoryUI();
 
+	//for damage animation
+	//void PlayDamageAnimation();
+
 	//for possess
 	void SetPlayerPawn(const TObjectPtr<APawn>& PlayerCharacterPawn) { PlayerPawn = PlayerCharacterPawn; }
 	APawn* GetPlayerPawn() const { return PlayerPawn; }
 	void ChangePossess(const TObjectPtr<APawn>& NewPawn);
 	void ChangeMappingContext(int Type);
+
 
 protected:
 	virtual void BeginPlay() override;
@@ -101,6 +105,10 @@ public:
 	TSubclassOf<UUserWidget> InventoryUIClass;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "HUD")
 	TObjectPtr<UUserWidget> InventoryUIInstance;
+	/*UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "HUD")
+	TSubclassOf<UUserWidget> DamageUIClass;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "HUD")
+	TObjectPtr<UUserWidget> DamageUIInstance;*/
 
 	//for UI
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Inventory UI")

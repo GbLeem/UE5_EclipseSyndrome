@@ -133,6 +133,11 @@ APlayerCharacterController::APlayerCharacterController()
 	{
 		InventoryUIClass = InventoryWidgetBP.Class;
 	}
+	/*static ConstructorHelpers::FClassFinder<UUserWidget>DamageWidgetBP(TEXT("/Game/HJ/UI/WBP_Damage.WBP_Damage_C"));
+	if (DamageWidgetBP.Succeeded())
+	{
+		DamageUIClass = DamageWidgetBP.Class;
+	}*/
 }
 
 void APlayerCharacterController::ShowHUD()
@@ -200,6 +205,11 @@ void APlayerCharacterController::StopShowInventoryUI()
 		//}
 	//}	
 }
+
+//void APlayerCharacterController::PlayDamageAnimation()
+//{
+//	UFunction* DamageAnim = 
+//}
 
 void APlayerCharacterController::BeginPlay()
 {

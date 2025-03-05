@@ -269,7 +269,7 @@ void APlayerCharacter::Tick(float DeltaTime)
 		HandlePullMovement(DeltaTime);
 	}	
 
-	if (CurrentWeapon)
+	/*if (CurrentWeapon)
 	{
 		if (!bIsTPSMode)
 		{
@@ -284,7 +284,7 @@ void APlayerCharacter::Tick(float DeltaTime)
 				}	
 			}
 		}
-	}
+	}*/
 }
 
 void APlayerCharacter::BeginPlay()
@@ -305,10 +305,10 @@ void APlayerCharacter::Shoot()
 {	
 	if (CurrentWeapon && !bIsReloading)
 	{
-		if (CurrentWeapon->GetCurrentAmmo() <= 0)
+		/*if (CurrentWeapon->GetCurrentAmmo() <= 0)
 		{
 			return;
-		}
+		}*/
 
 		if (bCanFire)
 		{
@@ -338,7 +338,8 @@ void APlayerCharacter::Reloading()
 		{
 			return;
 		}
-
+		if (bIsRolling)
+			return;
 		if (PlusAmmo > 0 && bIsWeaponEquipped)
 		{
 			PlusAmmo = FMath::Min(PlusAmmo, CurrentInventoryAmmos);
@@ -1182,9 +1183,7 @@ void APlayerCharacter::ZoomInOut(const FInputActionValue& value)
 				{
 					if (CurrentWeapon)
 					{
-						PlayerCharacterController->SetViewTargetWithBlend(CurrentWeapon->WeaponCameraComp->GetChildActor(), 0.2f);		
-						//Cast<UCameraComponent>(CurrentWeapon->WeaponCameraComp->GetChildActor())->FieldOfView = 120.f;
-						//FRotator CameraRot = CurrentWeapon->WeaponCameraComp->GetComponentRotation();						
+						PlayerCharacterController->SetViewTargetWithBlend(CurrentWeapon->WeaponCameraComp->GetChildActor(), 0.2f);									
 					}					
 					bIsTPSMode = false;
 				}
