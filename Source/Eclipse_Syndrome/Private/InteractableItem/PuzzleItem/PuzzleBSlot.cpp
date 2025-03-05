@@ -13,7 +13,7 @@ APuzzleBSlot::APuzzleBSlot()
 	RootComponent = CollisionBox;
 	CollisionBox->OnComponentBeginOverlap.AddDynamic(this, &APuzzleBSlot::OnBlockOverlap);
 	CollisionBox->SetGenerateOverlapEvents(true);
-
+	
 }
 
 void APuzzleBSlot::BeginPlay()
@@ -58,8 +58,8 @@ void APuzzleBSlot::Tick(float DeltaTime)
 		if (Alpha >= 1.0f && CurrentBlock)
 		{
 
-			
 			CurrentBlock->SlotCollision->SetSimulatePhysics(false);
+			UE_LOG(LogTemp, Warning, TEXT("slot - SetSimulatePhysics false"));
 		}
 	}
 }

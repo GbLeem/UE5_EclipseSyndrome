@@ -547,7 +547,7 @@ void APlayerCharacter::UsePuzzleBlockItem()
 			{
 				int32 BlockID = DefaultGameInstance->PuzzleBlockIDMap[3];
 
-				FVector SpawnLocation = GetActorLocation() + (GetActorForwardVector() * 200.0f); 
+				FVector SpawnLocation = GetActorLocation() + (GetActorForwardVector() * 100.0f); 
 				FRotator SpawnRotation = GetActorRotation();
 
 				FActorSpawnParameters SpawnParams;
