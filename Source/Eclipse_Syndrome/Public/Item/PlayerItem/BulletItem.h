@@ -18,6 +18,8 @@ public:
 	float NumOfBullet;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
 	UNiagaraComponent* GlowEffect;
+	//UPROPERTY(EditAnywhere, Category = "Effects")
+	//UNiagaraSystem* NiagaraEffect;
 
 
 	UFUNCTION()
