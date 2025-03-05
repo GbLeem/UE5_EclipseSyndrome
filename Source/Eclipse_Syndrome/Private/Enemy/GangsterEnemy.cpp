@@ -10,6 +10,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Components/SphereComponent.h"
 #include "NiagaraComponent.h"
+#include "Weapon/DefaultBullet.h"
 
 AGangsterEnemy::AGangsterEnemy()
 {
@@ -68,6 +69,7 @@ void AGangsterEnemy::CallNearbyGangster()
 				{
 					APlayerCharacter* Player = DefaultGameState->GetPlayerCharacter();
 					GangsterAIController->GetBlackboardComponent()->SetValueAsObject(TEXT("TargetActor"), Player);
+					GangsterAIController->GetBlackboardComponent()->SetValueAsObject(TEXT("PatrolPath"), nullptr);
 				}
 			}
 		}
@@ -85,22 +87,43 @@ void AGangsterEnemy::BeginPlay()
 	{
 		MuzzleFlashComp->Deactivate();
 	}
+	GetCharacterMovement()->bUseRVOAvoidance = true;
+	GetCharacterMovement()->AvoidanceConsiderationRadius = 300.0f;
+
 }
 
 void AGangsterEnemy::Attack(AActor* TargetActor)
 {
+	if (!TargetActor) return;
+
+	// Rotate towards Player
+	if (AGangsterAIController* GangsterAIController = Cast<AGangsterAIController>(this->GetController()))
+	{
+		EPathFollowingRequestResult::Type MoveResult = GangsterAIController->MoveToActor(TargetActor, 5.0f, true, true, false, nullptr, true);
+	}
+
+	// Splash Niagara Effect
 	MuzzleFlashComp->Activate(false);
 	FVector MuzzleLocation = GunMesh->GetSocketLocation(TEXT("MuzzleSocket"));
 	FVector TargetLocation = CalculateDestination();
 
+	// Bullet Niagara Effect
+	FVector ShootDirection = TargetLocation - MuzzleLocation;
+	FRotator ShootRotation = ShootDirection.Rotation();
+	ADefaultBullet* Bullet = GetWorld()->SpawnActor<ADefaultBullet>(BulletClass, MuzzleLocation, ShootRotation);
+	Bullet->FireInDirection(ShootDirection.GetSafeNormal());
+
 	if (TargetLocation.IsZero()) // Does not fire if obscured by obstacles
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Yellow, TEXT("Target is behind cover!"));
-		return;
+		TargetLocation = TargetActor->GetActorLocation() + FVector(0, 0, 50);
 	}
 
 	FVector FireDirection = (TargetLocation - MuzzleLocation).GetSafeNormal();
-
+	if (FireDirection.IsNearlyZero())
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, TEXT("Invalid Fire Direction!"));
+		return;
+	}
 	// Bullet Spread
 	float SpreadAngle = FMath::DegreesToRadians(10.0f);
 	FireDirection = FMath::VRandCone(FireDirection, SpreadAngle);
@@ -110,6 +133,7 @@ void AGangsterEnemy::Attack(AActor* TargetActor)
 	FHitResult HitResult;
 	FCollisionQueryParams Params;
 	Params.AddIgnoredActor(this);
+	Params.AddIgnoredActor(Bullet);
 
 	bool bHit = GetWorld()->LineTraceSingleByChannel(HitResult, MuzzleLocation, EndLocation, ECC_Visibility, Params);
 	FColor DrawColor = bHit ? FColor::Blue : FColor::Purple;
@@ -120,7 +144,7 @@ void AGangsterEnemy::Attack(AActor* TargetActor)
 		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, HitResult.GetActor()->GetName());
 	}
 
-	DrawDebugLine(GetWorld(), MuzzleLocation, EndLocation, DrawColor, false, 1.0f, 0, 2.0f); // 피격 여부에 따라 색상 변경
+	//DrawDebugLine(GetWorld(), MuzzleLocation, EndLocation, DrawColor, false, 1.0f, 0, 2.0f); // 피격 여부에 따라 색상 변경
 }
 
 
@@ -128,32 +152,36 @@ float AGangsterEnemy::TakeDamage(float DamageAmount, FDamageEvent const& DamageE
 {
 	float ActualDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 
-	// Get GangsterAIController
-	AGangsterAIController* AIController = Cast<AGangsterAIController>(GetController());
-	if (!AIController) return ActualDamage;
-
-	// When attacked while Player Undetected
-	if (AIController->GetBlackboardComponent()->GetValueAsObject(TEXT("TargetActor")) == nullptr)
+	if (!DamageCauser->ActorHasTag(FName("Enemy")))
 	{
-		ADefaultGameState* DefaultGameState = Cast<ADefaultGameState>(GetWorld()->GetGameState());
-		if (DefaultGameState)
+		// Get GangsterAIController
+		AGangsterAIController* AIController = Cast<AGangsterAIController>(GetController());
+		if (!AIController) return ActualDamage;
+
+		// When attacked while Player Undetected
+		if (AIController->GetBlackboardComponent()->GetValueAsObject(TEXT("TargetActor")) == nullptr)
 		{
-			APlayerCharacter* Player = DefaultGameState->GetPlayerCharacter();
-			if (Player)
+			ADefaultGameState* DefaultGameState = Cast<ADefaultGameState>(GetWorld()->GetGameState());
+			if (DefaultGameState)
 			{
-				AIController->GetBlackboardComponent()->SetValueAsBool(TEXT("PlayerDetected"), true);
-				AIController->GetBlackboardComponent()->SetValueAsObject(TEXT("TargetActor"), Player);
+				APlayerCharacter* Player = DefaultGameState->GetPlayerCharacter();
+				if (Player)
+				{
+					AIController->GetBlackboardComponent()->SetValueAsBool(TEXT("PlayerDetected"), true);
+					AIController->GetBlackboardComponent()->SetValueAsObject(TEXT("TargetActor"), Player);
+					AIController->GetBlackboardComponent()->SetValueAsObject(TEXT("PatrolPath"), nullptr);
+				}
 			}
 		}
-	}
 
-	// Hit Animation
-	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if (AnimInstance)
-	{
-		if (HitMontage)
+		// Hit Animation
+		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+		if (AnimInstance)
 		{
-			AnimInstance->Montage_Play(HitMontage);
+			if (HitMontage)
+			{
+				AnimInstance->Montage_Play(HitMontage);
+			}
 		}
 	}
 
@@ -173,7 +201,7 @@ FVector AGangsterEnemy::CalculateDestination()
 	FVector Start = GunMesh->GetSocketLocation(TEXT("MuzzleSocket"));
 	FVector End = Target->GetActorLocation() + FVector(0, 0, 50);
 
-	DrawDebugLine(GetWorld(), Start, End, FColor::Green, false, 2.0f, 0, 2.0f);
+	//DrawDebugLine(GetWorld(), Start, End, FColor::Green, false, 2.0f, 0, 2.0f);
 
 	FHitResult HitResult;
 	FCollisionQueryParams Params;
@@ -185,7 +213,7 @@ FVector AGangsterEnemy::CalculateDestination()
 		return HitResult.ImpactPoint;  // Returns to target point when aiming is successful
 	}
 
-	return FVector::ZeroVector; // Cancel shooting if blocked by an obstacle
+	return Target->GetActorLocation() + FVector(0, 0, 50); // Cancel shooting if blocked by an obstacle
 }
 
 
