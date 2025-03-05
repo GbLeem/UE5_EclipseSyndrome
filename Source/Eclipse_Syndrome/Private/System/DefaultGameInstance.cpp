@@ -42,16 +42,27 @@ void UDefaultGameInstance::UseAmmo(int32 Amount)
 //	}
 //}
 //[YJfixing]
-void UDefaultGameInstance::AddItem(int32 ItemIdx, int32 ItemAmount, EItemType ItemType)
+void UDefaultGameInstance::AddItem(int32 ItemIdx, int32 ItemAmount, EItemType ItemType, int32 BlockID)
 {
 	
 	if(ItemType == EItemType::Key || ItemType == EItemType::PuzzleBlock)
 	{
 		if (SpecialSlotItemID == -1)
+			//if inventory slot is empty,
 		{
-			InventoryItem.Add(ItemIdx, ItemAmount);
-			SpecialSlotItemID = (ItemType == EItemType::Key) ? 100 : ItemIdx;//need to be fixed(ItemIdx -> gear 1~5)
-			UE_LOG(LogTemp, Warning, TEXT("Special Item Added: %d (Type: %d)"), ItemIdx, static_cast<int32>(ItemType));
+			if (ItemType == EItemType::PuzzleBlock)
+			{//if puzzleblock,
+				InventoryItem.Add(ItemIdx, ItemAmount);
+
+				PuzzleBlockIDMap.Add(ItemIdx, BlockID);
+				UE_LOG(LogTemp, Warning, TEXT("PuzzleBlock Added: %d with BlockID: %d"), ItemIdx, BlockID);
+			}
+			else
+			{//if key,
+				InventoryItem.Add(ItemIdx, ItemAmount);
+				SpecialSlotItemID = 100;
+				UE_LOG(LogTemp, Warning, TEXT("Special Item Added: %d (Type: %d)"), ItemIdx, static_cast<int32>(ItemType));
+			}
 		}
 		else
 		{
