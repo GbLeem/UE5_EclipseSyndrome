@@ -4,6 +4,7 @@
 #include "GameFramework/Pawn.h"
 #include "Drone.generated.h"
 
+class UNiagaraSystem;
 class ADefaultBullet;
 class UNiagaraComponent;
 class AEnemyBase;
@@ -84,6 +85,9 @@ protected:
 	TSet<TObjectPtr<AEnemyBase>> NearbyEnemies;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Drone|Property")
 	TObjectPtr<AEnemyBase> CurrentTarget;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effect|Property")
+	TObjectPtr<UNiagaraSystem> BloodNiagara;
 	
 private:
 	FVector MoveInput;
