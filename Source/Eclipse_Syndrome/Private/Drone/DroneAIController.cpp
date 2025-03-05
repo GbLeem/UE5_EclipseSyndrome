@@ -13,14 +13,15 @@
 
 ADroneAIController::ADroneAIController()
 	: BaseDroneOffset(FVector(25, 80, 100))
-	, Kp(140000.0f)
-	, Ki(2000.0f)
-	, Kd(8000.0f)
-	, MaxSpeed(150000.f)
+	, Kp(60000.0f)
+	, Ki(500.0f)
+	, Kd(31000.0f)
+	, MaxSpeed(300000.f)
 	, DesiredDistance(15.0f)
 	, bShowDebug(true)
 	, PathFindModeAcceleration(20.0f)
 {
+	DefaultMaxSpeed = MaxSpeed;
 }
 void ADroneAIController::BeginPlay()
 {

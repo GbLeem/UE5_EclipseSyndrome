@@ -10,7 +10,7 @@ UBTTask_MoveToCommand::UBTTask_MoveToCommand()
 	, bCanFindPath(true)
 	, bEndFollowPath(true)
 	, CurIndex(0)
-	, NextNodeIgnoreRadius(80.0f)
+	, NextNodeIgnoreRadius(60.0f)
 {
 	bNotifyTick = true;
 	NodeName = "MoveToCommand";
@@ -19,6 +19,7 @@ UBTTask_MoveToCommand::UBTTask_MoveToCommand()
 EBTNodeResult::Type UBTTask_MoveToCommand::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
 	Super::ExecuteTask(OwnerComp, NodeMemory);
+	Cast<ADroneAIController>(OwnerComp.GetAIOwner())->SetPIDDefaultSpeed();
 
 	return EBTNodeResult::InProgress;
 }
@@ -67,7 +68,7 @@ void UBTTask_MoveToCommand::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* N
 				else
 				{
 					OwnerComp.GetBlackboardComponent()->SetValueAsEnum("CurrentState", 3);
-					DroneAIController->EndExecuteCommand();
+					//DroneAIController->EndExecuteCommand();
 					FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
 					return;
 				}
