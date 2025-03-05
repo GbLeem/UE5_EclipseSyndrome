@@ -15,6 +15,16 @@ AKeyItem::AKeyItem()
 		StaticMeshComp->SetStaticMesh(StaticMeshAsset.Object);
 	}
 
+	GlowEffect = CreateDefaultSubobject<UNiagaraComponent>(TEXT("GlowEffect"));
+	GlowEffect->SetupAttachment(StaticMeshComp);
+	static ConstructorHelpers::FObjectFinder<UNiagaraSystem>NiagaraEffect(TEXT("/Game/Yujin/FX/DrapEffet/VFX/NE_drop_effects03"));
+	if (NiagaraEffect.Succeeded())
+	{
+		GlowEffect->SetAsset(NiagaraEffect.Object);
+	}
+	GlowEffect->SetRelativeLocation(FVector(0.0f, 0.0f, 0.0f));
+
+
 	InteractionBox = CreateDefaultSubobject<UBoxComponent>(TEXT("BoxCollision"));
 	InteractionBox->SetupAttachment(StaticMeshComp);
 	InteractionBox->SetBoxExtent(FVector(3000.f, 3000.f, 3000.f));

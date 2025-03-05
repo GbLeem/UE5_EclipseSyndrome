@@ -16,8 +16,12 @@ public:
 	//num of bullet
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
 	float NumOfBullet;
-	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
+	UNiagaraComponent* GlowEffect;
 
+
+	UFUNCTION()
 	virtual void ActivateItem(AActor* Activator) override;
-	
+	UFUNCTION()
+	virtual void BeginPlay() override;
 };

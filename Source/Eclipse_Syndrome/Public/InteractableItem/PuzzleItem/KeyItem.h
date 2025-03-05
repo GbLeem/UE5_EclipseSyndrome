@@ -23,6 +23,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UBoxComponent* InteractionBox;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
+	UNiagaraComponent* GlowEffect;
+
 	AGarageDoor* TargetGarageDoor;
 
 	bool bPlayerInRange = false;
