@@ -9,7 +9,7 @@ UBTTask_FollowWithAvoidance::UBTTask_FollowWithAvoidance()
 	: DesiredTarget(FVector::ZeroVector)
 	, bEndFollowPath(true)
 	, bCanFindPath(true)
-	, NextNodeIgnoreRadius(80.0f)
+	, NextNodeIgnoreRadius(60.0f)
 {
 	NodeName = "FollowWithAvoidance";
 	bNotifyTick = true;
@@ -32,6 +32,7 @@ EBTNodeResult::Type UBTTask_FollowWithAvoidance::ExecuteTask(UBehaviorTreeCompon
 			bEndFollowPath = true;
 			TObjectPtr<ADroneAIController> DroneAIController = Cast<ADroneAIController>(AIController);
 			UpdateDesiredTarget(Player, DroneAIController);
+			DroneAIController->SetPIDDefaultSpeed();
 			if (DroneAIController->GetShowDebug())
 			{
 				DrawDebugSphere(GetWorld(), DesiredTarget, 30, 30, FColor::Green);
