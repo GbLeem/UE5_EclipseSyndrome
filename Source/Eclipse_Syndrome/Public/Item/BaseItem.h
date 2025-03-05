@@ -60,4 +60,6 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Item Settings")
 	int32 ItemNumber; //for ui [TEST - 2/25]
 	int32 ItemAmount;
+
+	bool bIsPuzzleBlock;
 };

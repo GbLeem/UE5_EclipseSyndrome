@@ -31,7 +31,7 @@ public:
 	void UseAmmo(int32 Amount);
 	//[YJfixing]
 	UFUNCTION()
-	void AddItem(int32 ItemIdx, int32 ItemAmount, EItemType ItemType = EItemType::None);
+	void AddItem(int32 ItemIdx, int32 ItemAmount, EItemType ItemType = EItemType::None, int32 BlockID = -1);
 	UFUNCTION()
 	void AddWeapon(int32 WeaponIdx);
 	UFUNCTION()
@@ -61,10 +61,9 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "PlayerData")
 	TArray<int32> WeaponInventoryItem;
 
-
-	//[YJ fixing] delete if unecessary
+	//for block ID
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "PlayerData")
-	TArray<EItemType> SpecialItemSlot;
+	TMap<int32, int32> PuzzleBlockIDMap;
 
 	//health
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "PlayerData")
