@@ -23,6 +23,7 @@
 
 AWeapon::AWeapon()
     :WeaponNumber(0)
+    ,CurrentAmmo(0)
 {
     PrimaryActorTick.bCanEverTick = true;
 
@@ -74,6 +75,10 @@ AWeapon::AWeapon()
     static ConstructorHelpers::FObjectFinder<UNiagaraSystem>MuzzleAsset(TEXT("/Game/SH/NS_MuzzleFlash.NS_MuzzleFlash"));
     MuzzleNiagara = MuzzleAsset.Object;
 
+    static ConstructorHelpers::FObjectFinder<UNiagaraSystem>BulletAsset(TEXT("/Game/HJ/Material/NS_HJBullet2.NS_HJBullet2"));
+    BulletNiagara = BulletAsset.Object;
+
+
     Tags.Add("Weapon");
 }
 
@@ -104,8 +109,11 @@ void AWeapon::Fire()
     CurrentAmmo--;
 
     FVector MuzzleLocation = GunMesh->GetSocketLocation(TEXT("MuzzleSocket"));
+    FRotator MuzzleRotation = GunMesh->GetSocketRotation(TEXT("MuzzleSocket"));
 
     UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), MuzzleNiagara, MuzzleLocation, GetActorRotation());
+    UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), BulletNiagara, MuzzleLocation, MuzzleRotation);
+
     FVector FireDirection = CalculateDestination()- MuzzleLocation;
     FVector EndLocation = MuzzleLocation + FireDirection * FireRange;       
 
@@ -173,7 +181,7 @@ FVector AWeapon::CalculateDestination()
         if (PlayerCharacterController->DeprojectScreenPositionToWorld(ScreenCenter.X, ScreenCenter.Y, WorldLocation, WorldDirection))
         {
             FVector TraceStart = WorldLocation + WorldDirection;
-            FVector TraceEnd = TraceStart + WorldDirection * FireRange / 2;
+            FVector TraceEnd = TraceStart + WorldDirection * FireRange;
                     
             FHitResult HitResult;
             FCollisionQueryParams TraceParams;

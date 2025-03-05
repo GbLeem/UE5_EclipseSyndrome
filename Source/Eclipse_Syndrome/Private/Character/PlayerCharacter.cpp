@@ -9,6 +9,7 @@
 #include "Weapon/WeaponAR1.h"
 #include "Weapon/WeaponAR2.h"
 #include "Weapon/WeaponSR.h"
+#include "Weapon/WeaponShotgun.h"
 #include "InteractableItem/PuzzleItem/KeyItem.h"
 #include "InteractableItem/PuzzleItem/PuzzleBlock.h"
 
@@ -451,6 +452,7 @@ void APlayerCharacter::EquipWeaponBack(int32 WeaponIdx)
 		}
 		else if (WeaponIdx == 4)
 		{
+			PlayerWeaponInventory[WeaponIdx] = GetWorld()->SpawnActor<AWeaponShotgun>();
 		}	
 	}
 
