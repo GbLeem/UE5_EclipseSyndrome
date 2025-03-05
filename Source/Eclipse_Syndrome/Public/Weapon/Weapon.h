@@ -24,7 +24,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	virtual void Fire();
 	UFUNCTION(BlueprintCallable)
-	void Reload(int32 Amount);
+	virtual void Reload(int32 Amount);
 
 	//for shooting
 	FVector CalculateDestination();
@@ -123,4 +123,10 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player|Components")
 	TObjectPtr<UNiagaraSystem> BulletNiagara;
+
+	//for weapon sound
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
+	TArray<TObjectPtr<USoundBase>> ShootSound;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
+	TArray<TObjectPtr<USoundBase>> ReloadSound;
 };

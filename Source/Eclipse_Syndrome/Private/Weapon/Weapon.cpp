@@ -107,12 +107,20 @@ void AWeapon::Fire()
     }
 
     CurrentAmmo--;
+    
 
     FVector MuzzleLocation = GunMesh->GetSocketLocation(TEXT("MuzzleSocket"));
     FRotator MuzzleRotation = GunMesh->GetSocketRotation(TEXT("MuzzleSocket"));
 
+    //shoot sound
+    if (ShootSound.Num() > 0)
+    {
+        int RandIdx = FMath::RandRange(0, ShootSound.Num() - 1);
+        UGameplayStatics::PlaySoundAtLocation(GetWorld(), ShootSound[RandIdx], MuzzleLocation);
+    }
+
     UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), MuzzleNiagara, MuzzleLocation, GetActorRotation());
-    UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), BulletNiagara, MuzzleLocation, MuzzleRotation);
+    //UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), BulletNiagara, MuzzleLocation, MuzzleRotation);
 
     FVector FireDirection = CalculateDestination()- MuzzleLocation;
     FVector EndLocation = MuzzleLocation + FireDirection * FireRange;       
@@ -163,6 +171,12 @@ void AWeapon::Fire()
 void AWeapon::Reload(int32 Amount)
 {	
     CurrentAmmo += Amount;
+
+    if (ReloadSound.Num() > 0)
+    {
+        int RandIdx = FMath::RandRange(0, ReloadSound.Num() - 1);
+        UGameplayStatics::PlaySoundAtLocation(GetWorld(), ReloadSound[RandIdx], GetActorLocation());
+    }
 }
 
 FVector AWeapon::CalculateDestination()

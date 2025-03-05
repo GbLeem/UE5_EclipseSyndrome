@@ -55,6 +55,10 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void UsePuzzleBlockItem();
 
+	//foot step
+	UFUNCTION(BlueprintCallable)
+	void CheckFootStep();
+
 
 	//getter
 	int32 GetCurrentWeaponAmmo();
@@ -137,6 +141,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
 	TObjectPtr<UAnimMontage> ReloadAnimMontage;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
+	TObjectPtr<UAnimMontage> ShotgunReloadAnimMontage;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
 	TObjectPtr<UAnimMontage> DamageAnimMontage;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
 	TObjectPtr<UAnimMontage> RollingAnimMontage;
@@ -146,6 +152,18 @@ public:
 	TObjectPtr<AWeapon> CurrentWeapon;	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon")
 	TMap<int32, AWeapon*> PlayerWeaponInventory;
+
+	//for foot step
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
+	TArray<TObjectPtr<USoundBase>> FootStepSound;
+	int32 FooStepIdx;
+
+	//for equip sound
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
+	TObjectPtr<USoundBase> EquipSound;
+
+	float LastFootStepTime = 0.f;
+	float FootStepCoolDown = 0.3f;
 
 	//for reloading notify
 	bool bIsReloading;

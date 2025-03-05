@@ -8,7 +8,7 @@ void UPlayerReloadAnimNotify::Notify(USkeletalMeshComponent* MeshComp, UAnimSequ
         APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(MeshComp->GetOwner());
         if (PlayerCharacter && PlayerCharacter->CurrentWeapon)
         {            
-            PlayerCharacter->bIsReloading = false;          
+            PlayerCharacter->bIsReloading = false;            
         }
     }
 }

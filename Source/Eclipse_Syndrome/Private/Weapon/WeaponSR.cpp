@@ -22,5 +22,18 @@ AWeaponSR::AWeaponSR()
         GunMesh->SetStaticMesh(StaticMeshAsset.Object);
     }   
 
+    //sound asset
+    static ConstructorHelpers::FObjectFinder<USoundBase>ShootAsset1(TEXT("/Game/HJ/Assets/Sound/fire.fire"));
+    if (ShootAsset1.Succeeded())
+    {
+        ShootSound.Add(ShootAsset1.Object);
+    }
+
+    static ConstructorHelpers::FObjectFinder<USoundBase>ReloadAsset(TEXT("/Game/HJ/Assets/Sound/reload.reload"));
+    if (ReloadAsset.Succeeded())
+    {
+        ReloadSound.Add(ReloadAsset.Object);
+    }
+ 
     WeaponSpringArmComp->SocketOffset = FVector(10.f, 0.f, 15.f);
 }

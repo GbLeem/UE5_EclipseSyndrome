@@ -44,6 +44,7 @@ APlayerCharacter::APlayerCharacter()
 	, bIsCrouch(false)
 	, bMoveForward(true)
 	, bIsRolling(false)
+	, FooStepIdx(0)
 {
 	PrimaryActorTick.bCanEverTick = true;
 
@@ -81,6 +82,13 @@ APlayerCharacter::APlayerCharacter()
 		ReloadAnimMontage = ReloadAsset.Object;
 	}
 
+	//anim montage
+	static ConstructorHelpers::FObjectFinder<UAnimMontage>ShotGunReloadAnimAsset(TEXT("/Game/HJ/Animation/AM_ReloadShotgun.AM_ReloadShotgun"));
+	if (ShotGunReloadAnimAsset.Succeeded())
+	{
+		ShotgunReloadAnimMontage = ShotGunReloadAnimAsset.Object;
+	}
+
 	static ConstructorHelpers::FObjectFinder<UAnimMontage>DamageAsset(TEXT("/Game/HJ/Animation/AM_Damaged.AM_Damaged"));
 	if (DamageAsset.Succeeded())
 	{
@@ -98,6 +106,23 @@ APlayerCharacter::APlayerCharacter()
 	{
 		CableComp->SetMaterial(0, CableMat.Object);
 	}
+
+	static ConstructorHelpers::FObjectFinder<USoundBase>FootSound1(TEXT("/Game/HJ/Assets/Sound/Foot.Foot"));
+	if (FootSound1.Succeeded())
+	{
+		FootStepSound.Add(FootSound1.Object);
+	}
+	static ConstructorHelpers::FObjectFinder<USoundBase>FootSound2(TEXT("/Game/HJ/Assets/Sound/Foot2.Foot2"));
+	if (FootSound2.Succeeded())
+	{
+		FootStepSound.Add(FootSound2.Object);
+	}
+	static ConstructorHelpers::FObjectFinder<USoundBase>EquipSoundAsset(TEXT("/Game/HJ/Assets/Sound/cocked.cocked"));
+	if (EquipSoundAsset.Succeeded())
+	{
+		EquipSound = EquipSoundAsset.Object;
+	}
+
 	/*static ConstructorHelpers::FClassFinder<UAnimInstance> AnimClass(TEXT("/Game/HJ/Animation/ABP_PlayerCharacter.ABP_PlayerCharacter_C"));
 	if (AnimClass.Succeeded())
 	{
@@ -233,6 +258,8 @@ void APlayerCharacter::Tick(float DeltaTime)
 
 	}
 	
+	//CheckFootStep();
+
 	if (bIsSwinging)
 	{
 		HandleSwingMovement(DeltaTime);
@@ -323,7 +350,10 @@ void APlayerCharacter::Reloading()
 			UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 			if (AnimInstance)
 			{								
-				AnimInstance->Montage_Play(ReloadAnimMontage);
+				if (CurrentWeapon->GetWeaponNumber() == 4)
+					AnimInstance->Montage_Play(ShotgunReloadAnimMontage);
+				else
+					AnimInstance->Montage_Play(ReloadAnimMontage);
 			}
 
 			CurrentInventoryAmmos -= PlusAmmo;
@@ -562,6 +592,39 @@ void APlayerCharacter::UsePuzzleBlockItem()
 	}
 }
 
+void APlayerCharacter::CheckFootStep()
+{	
+	if (GetWorld()->GetTimeSeconds() - LastFootStepTime < FootStepCoolDown)
+	{
+		return;
+	}
+
+	if (bIsCrouch || bIsRolling)
+	{
+		return;
+	}
+	
+	FVector Start = GetActorLocation();
+	FVector End = Start - FVector(0.f, 0.f, 100.f);
+
+	FHitResult Hit;
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(this);
+	FooStepIdx = 0;
+
+	//DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 2.f, 0.f, 2.f);
+	if (GetWorld()->LineTraceSingleByChannel(Hit, Start, End, ECC_Visibility, Params))
+	{
+		//DrawDebugSphere(GetWorld(), Hit.Location, 10.0f, 12, FColor::Blue, false, 2.0f);
+
+		UGameplayStatics::PlaySoundAtLocation(this, FootStepSound[FooStepIdx], Hit.Location);
+		FooStepIdx++;
+		FooStepIdx %= 2;
+	}
+
+	LastFootStepTime = GetWorld()->GetTimeSeconds();
+}
+
 
 int32 APlayerCharacter::GetCurrentWeaponAmmo()
 {
@@ -589,7 +652,9 @@ void APlayerCharacter::Move(const FInputActionValue& value)
 	}
 	else
 	{
-		// 일반 이동
+		// 일반 이동		
+		CheckFootStep();
+
 		if (!FMath::IsNearlyZero(MoveInput.X))
 		{
 			AddMovementInput(GetActorForwardVector(), MoveInput.X);
@@ -611,17 +676,6 @@ void APlayerCharacter::Look(const FInputActionValue& value)
 	
 	AddControllerYawInput(LookInput.X);
 	AddControllerPitchInput(LookInput.Y);
-
-	/*if (GetController())
-	{
-		APlayerCharacterController* PlayerCharacterController = Cast<APlayerCharacterController>(GetController());
-		if (PlayerCharacterController)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("%f")				
-					, PlayerCharacterController->GetControlRotation().Pitch));
-		}
-	}*/
-	//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("%f, %f"), LookInput.X, LookInput.Y));
 }
 
 void APlayerCharacter::StartJump(const FInputActionValue& value)
@@ -656,6 +710,7 @@ void APlayerCharacter::StartSprint(const FInputActionValue& value)
 {
 	if (GetCharacterMovement() && bMoveForward)
 	{
+		FootStepCoolDown = 0.25f;
 		GetCharacterMovement()->MaxWalkSpeed = SprintSpeed;
 	}
 }
@@ -664,6 +719,7 @@ void APlayerCharacter::StopSprint(const FInputActionValue& value)
 {
 	if (GetCharacterMovement())
 	{
+		FootStepCoolDown = 0.3f;
 		GetCharacterMovement()->MaxWalkSpeed = NormalSpeed;		
 	}
 }
@@ -790,6 +846,8 @@ void APlayerCharacter::EquipWeapon1(const FInputActionValue& value)
 	//idle->equip
 	if(!bIsWeaponEquipped && IsValid(CurrentWeapon))
 	{
+		UGameplayStatics::PlaySoundAtLocation(this, EquipSound, GetActorLocation());
+
 		BlendPoseVariable = 1; //for animation
 		bCanFire = true; // for attack
 		bIsWeaponEquipped = true;
