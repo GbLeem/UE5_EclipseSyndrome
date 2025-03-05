@@ -28,9 +28,6 @@ public:
 
 	APuzzleManager* PuzzleManager;
 
-	
-	
-
 
 	float CurrentLerpTime = 0.0f;
 	float LerpDuration = 1.0f;
@@ -45,6 +42,11 @@ public:
 		bool bFromSweep, const FHitResult& SweepResult
 	);
 
+	//UFUNCTION()
+	//void OnBlockOverlapEnd(
+	//	UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
+	//	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex
+	//);
 
 	bool PlaceBlock(APuzzleBlock* Block);
 	

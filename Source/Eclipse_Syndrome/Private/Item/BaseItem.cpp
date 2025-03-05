@@ -17,8 +17,12 @@ ABaseItem::ABaseItem()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
+	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootComponent"));
+
 	StaticMeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMesh"));
 	StaticMeshComp->SetupAttachment(RootComponent);
+	StaticMeshComp->SetSimulatePhysics(false);
+
 
 	ItemHoverUI = CreateDefaultSubobject<UWidgetComponent>(TEXT("Hover UI"));
 	ItemHoverUI->SetupAttachment(StaticMeshComp);

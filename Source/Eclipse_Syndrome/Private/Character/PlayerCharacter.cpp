@@ -590,7 +590,9 @@ void APlayerCharacter::UsePuzzleBlockItem()
 					UE_LOG(LogTemp, Warning, TEXT("PuzzleBlock spawned in front of player"));
 					
 					DefaultGameInstance->InventoryItem[3] = 0;
+					DefaultGameInstance->SpecialSlotItemID = -1;
 					PuzzleBlock->ActivateItem(this);
+					
 				}
 				else
 				{
@@ -786,7 +788,7 @@ void APlayerCharacter::PickUp(const FInputActionValue& value)
 				{
 					ABaseItem* BaseItem = Cast<ABaseItem>(PeekingItem);
 					if (BaseItem)
-					{
+					{//key
 
 						if (Cast<AKeyItem>(BaseItem))
 						{
@@ -797,13 +799,12 @@ void APlayerCharacter::PickUp(const FInputActionValue& value)
 							PeekingItem->Destroy();
 						}
 						else if (Cast<APuzzleBlock>(BaseItem))
-						{
+						{//puzzle block
 							if (DefaultGameInstance->InventoryItem[3] == 0)//if inventory[3] is free
 							{
 								int32 ItemIdx = BaseItem->GetItemNumber();
 								int32 ItemAmount = BaseItem->GetItemAmount();
 								int32 BlockID = Cast<APuzzleBlock>(BaseItem)->GetBlockID();
-
 								DefaultGameInstance->AddItem(ItemIdx, ItemAmount, EItemType::PuzzleBlock, BlockID);
 								UE_LOG(LogTemp, Warning, TEXT("Picked Up Item: %d / BlockID: %d"), ItemIdx, BlockID);
 								PeekingItem->Destroy();

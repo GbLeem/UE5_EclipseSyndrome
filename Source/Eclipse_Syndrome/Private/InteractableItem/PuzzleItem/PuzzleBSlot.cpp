@@ -12,6 +12,19 @@ APuzzleBSlot::APuzzleBSlot()
 	CollisionBox->SetCollisionProfileName(TEXT("Trigger"));
 	RootComponent = CollisionBox;
 	CollisionBox->OnComponentBeginOverlap.AddDynamic(this, &APuzzleBSlot::OnBlockOverlap);
+	//CollisionBox->OnComponentEndOverlap.AddDynamic(this, &APuzzleBSlot::OnBlockOverlapEnd);
+	
+
+	///////
+	CollisionBox->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	CollisionBox->SetCollisionObjectType(ECC_WorldDynamic);
+
+	CollisionBox->SetCollisionResponseToAllChannels(ECR_Ignore);
+	CollisionBox->SetCollisionResponseToChannel(ECC_PhysicsBody, ECR_Overlap);
+	CollisionBox->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Overlap);
+	CollisionBox->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Overlap);
+	//////
+
 	CollisionBox->SetGenerateOverlapEvents(true);
 	
 }
@@ -20,6 +33,7 @@ void APuzzleBSlot::BeginPlay()
 {
 	Super::BeginPlay();
 
+	UE_LOG(LogTemp, Warning, TEXT("PuzzleBSlot CollisionBox Overlap Events: %d"), CollisionBox->OnComponentBeginOverlap.IsBound());
 	if (!PuzzleManager)
 	{
 		PuzzleManager = Cast<APuzzleManager>(UGameplayStatics::GetActorOfClass(GetWorld(), APuzzleManager::StaticClass()));
@@ -69,11 +83,12 @@ void APuzzleBSlot::OnBlockOverlap(
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
 	bool bFromSweep, const FHitResult& SweepResult)
 {
-	
+	UE_LOG(LogTemp, Warning, TEXT("OnBlockOverlap called! Overlapping actor: %s"), *OtherActor->GetName());
+
 	APuzzleBlock* OverlappingBlock = Cast<APuzzleBlock>(OtherActor);
 	//if otherActor type == APuzzleBlock, OverlappingBlock / else nullptr
 	if (!OverlappingBlock) return;
-	
+	UE_LOG(LogTemp, Warning, TEXT("[!]Overlapping Block Set: %s"), *OverlappingBlock->GetName());
 	//if current block exists, and overlapping block is not current block,
 	//push back the overlapping block
 	if (CurrentBlock && OverlappingBlock != CurrentBlock)
@@ -119,6 +134,21 @@ void APuzzleBSlot::OnBlockOverlap(
 }
 
 
+//void APuzzleBSlot::OnBlockOverlapEnd(
+//	UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
+//	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex
+//)
+//{
+//	APuzzleBlock* OverlappingBlock = Cast<APuzzleBlock>(OtherActor);
+//	if (!OverlappingBlock) return;
+//	UE_LOG(LogTemp, Warning, TEXT("Block %s exited slot %d"), *OverlappingBlock->GetName(), CorrectBlockID);
+//	if (CurrentBlock == OverlappingBlock)
+//	{
+//		RemoveBlock();
+//	}
+//}
+
+
 bool APuzzleBSlot::PlaceBlock(APuzzleBlock* Block)
 {
 	if (!Block) return false;
@@ -155,10 +185,11 @@ bool APuzzleBSlot::PlaceBlock(APuzzleBlock* Block)
 
 void APuzzleBSlot::RemoveBlock()
 {
+	UE_LOG(LogTemp, Warning, TEXT("RemoveBlock called on Slot ID %d"), CorrectBlockID);
 	//if current block exists, remove block when called
 	if (CurrentBlock)
 	{
-		CurrentBlock->SlotCollision->SetSimulatePhysics(true);
+		CurrentBlock->SlotCollision->SetSimulatePhysics(false);
 		
 		UE_LOG(LogTemp, Warning, TEXT("Block ID %d removed from Slot ID %d"), CurrentBlock->BlockID, CorrectBlockID);
 		CurrentBlock = nullptr;
