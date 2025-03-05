@@ -1,6 +1,9 @@
 #include "InteractableItem/PuzzleItem/PuzzleBSlot.h"
 #include "InteractableItem/PuzzleItem/PuzzleManager.h"
 #include "Kismet/GameplayStatics.h"
+#include "Sound/SoundBase.h"
+#include "Character/PlayerCharacter.h"
+
 
 APuzzleBSlot::APuzzleBSlot()
 {
@@ -27,6 +30,19 @@ APuzzleBSlot::APuzzleBSlot()
 
 	CollisionBox->SetGenerateOverlapEvents(true);
 	
+
+
+	//sound effect
+	static ConstructorHelpers::FObjectFinder<USoundBase> SoundAsset(TEXT("/Game/Yujin/Audio/GearAddSlot.GearAddSlot"));
+	if (SoundAsset.Succeeded())
+	{
+		GAddSlotSound = SoundAsset.Object;
+		UE_LOG(LogTemp, Error, TEXT("[!]Succeeded to load GAddSlotSound sound!"));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("[!]Failed to load GAddSlotSound sound!"));
+	}
 }
 
 void APuzzleBSlot::BeginPlay()
@@ -103,7 +119,21 @@ void APuzzleBSlot::OnBlockOverlap(
 	/*FVector SnapOffset = FVector(0.0f, 30.0f, 5.0f);*/
 	TargetLocation = GetActorLocation();
 	TargetRotation = GetActorRotation();
-		
+	
+	//add sound here
+	APlayerCharacter* Player = Cast<APlayerCharacter>(UGameplayStatics::GetPlayerPawn(GetWorld(), 0));
+
+	if (Player && GAddSlotSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(GetWorld(), GAddSlotSound, Player->GetActorLocation());
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("GAddSlotSound failed"));
+	}
+
+
+
 	CurrentLerpTime = 0.0f;
 	LerpDuration = 1.0f;
 
@@ -117,9 +147,7 @@ void APuzzleBSlot::OnBlockOverlap(
 	CurrentBlock->CurrentSlot = this;
 
 	SetAllCurrentBlock();
-	///original code
 
-	/*CurrentBlock = OverlappingBlock;*/
 	if (CurrentBlock->BlockID == CorrectBlockID)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Gear was placed correctly, slot: %d, block:%d placed"), CorrectBlockID, OverlappingBlock->BlockID);
@@ -151,6 +179,7 @@ void APuzzleBSlot::OnBlockOverlap(
 
 bool APuzzleBSlot::PlaceBlock(APuzzleBlock* Block)
 {
+	UE_LOG(LogTemp, Warning, TEXT("[!]PlaceBlock called"));
 	if (!Block) return false;
 		// if no block or block already exists -> return false
 	if(CurrentBlock)
@@ -159,6 +188,7 @@ bool APuzzleBSlot::PlaceBlock(APuzzleBlock* Block)
 		FVector PushBackLocation = CurrentBlock->GetActorLocation() + FVector(20.0f, 0.0f, 0.0f);
 		CurrentBlock->SetActorLocation(PushBackLocation);
 		UE_LOG(LogTemp, Warning, TEXT("Slot already occupied"));
+
 		
 	}
 

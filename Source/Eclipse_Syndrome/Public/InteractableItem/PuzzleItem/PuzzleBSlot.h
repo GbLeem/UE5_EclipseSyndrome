@@ -26,6 +26,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UBoxComponent* CollisionBox;
 
+	UPROPERTY(EditAnywhere, Category = "Sound")
+	USoundBase* GAddSlotSound;
+
+
 	APuzzleManager* PuzzleManager;
 
 

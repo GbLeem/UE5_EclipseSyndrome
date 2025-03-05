@@ -17,6 +17,10 @@ public:
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UStaticMeshComponent* StaticMeshComp;
+	UPROPERTY(EditAnywhere, Category = "Sound")
+	USoundBase* IDoorOpeningSound;
+
+
 
 	virtual void BeginPlay() override;
 
@@ -29,7 +33,7 @@ public:
 private:
 	FVector ClosedPosition;
 	FVector OpenPosition;
-	float MoveSpeed = 20.0f;
+	float MoveSpeed = 1.0f;
 	bool bIsOpening = false;
 	
 };

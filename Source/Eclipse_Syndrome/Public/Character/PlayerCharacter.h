@@ -237,6 +237,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
 	bool bIsCrouch;
 
+	//[YJ]Sound when picking up item from chest
+	UPROPERTY(EditAnywhere, Category = "Sound")
+	USoundBase* PickupItemSound;
+
 	//sprint only forward 
 	bool bMoveForward;
 };

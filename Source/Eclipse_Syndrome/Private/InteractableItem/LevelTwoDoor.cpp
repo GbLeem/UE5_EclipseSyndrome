@@ -1,5 +1,6 @@
 #include "InteractableItem/LevelTwoDoor.h"
-
+#include "Kismet/GameplayStatics.h"
+#include "Sound/SoundBase.h"
 
 ALevelTwoDoor::ALevelTwoDoor()
 {
@@ -13,13 +14,26 @@ ALevelTwoDoor::ALevelTwoDoor()
 	}
 	PrimaryActorTick.bCanEverTick = true;
 	
+	//sound effect
+	static ConstructorHelpers::FObjectFinder<USoundBase> SoundAsset(TEXT("/Game/Yujin/Audio/IronDoorOpen.IronDoorOpen"));
+	if (SoundAsset.Succeeded())
+	{
+		IDoorOpeningSound = SoundAsset.Object;
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Failed to load IDoorOpeningSound sound!"));
+	}
+
+
+
 }
 
 void ALevelTwoDoor::BeginPlay()
 {
 	Super::BeginPlay();
 	ClosedPosition = GetActorLocation();
-	OpenPosition = ClosedPosition + FVector(0.0f, 130.0f, 0.0f);
+	OpenPosition = ClosedPosition + FVector(0.0f, 330.0f, 0.0f);
 }
 
 void ALevelTwoDoor::Tick(float DeltaTime)
@@ -39,5 +53,13 @@ void ALevelTwoDoor::Tick(float DeltaTime)
 void ALevelTwoDoor::OpenLevelTwoDoor()
 {
 	bIsOpening = true;
+	if (IDoorOpeningSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			GetWorld(),
+			IDoorOpeningSound,
+			GetActorLocation()
+		);
+	}
 }
 

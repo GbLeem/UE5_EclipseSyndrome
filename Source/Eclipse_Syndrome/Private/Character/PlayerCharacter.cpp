@@ -24,6 +24,7 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Materials/MaterialInterface.h"
+#include "Sound/SoundBase.h"
 
 APlayerCharacter::APlayerCharacter()
 	:SprintSpeed(800.f)
@@ -146,6 +147,17 @@ APlayerCharacter::APlayerCharacter()
 	PlayerWeaponInventory.Add(4, nullptr);
 
 	Tags.Add("Player");
+
+	//[YJ] for pick up item
+	static ConstructorHelpers::FObjectFinder<USoundBase> SoundAsset(TEXT("/Game/Yujin/Audio/PickUpItem.PickUpItem"));
+	if (SoundAsset.Succeeded())
+	{
+		PickupItemSound = SoundAsset.Object;
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Failed to load pickup sound!"));
+	}
 }
 
 void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -790,6 +802,14 @@ void APlayerCharacter::PickUp(const FInputActionValue& value)
 					if (BaseItem)
 					{//key
 
+						if (PickupItemSound)
+						{
+							UGameplayStatics::PlaySoundAtLocation(
+								GetWorld(),
+								PickupItemSound,
+								GetActorLocation()
+							);
+						}
 						if (Cast<AKeyItem>(BaseItem))
 						{
 							int32 ItemIdx = BaseItem->GetItemNumber();
