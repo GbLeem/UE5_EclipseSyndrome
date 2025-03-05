@@ -6,8 +6,6 @@
 #include "GameFramework/Actor.h"
 #include "PatrolPath.generated.h"
 
-class USphereComponent;
-
 UCLASS()
 class ECLIPSE_SYNDROME_API APatrolPath : public AActor
 {

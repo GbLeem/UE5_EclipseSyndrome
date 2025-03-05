@@ -11,26 +11,31 @@ ABaseItem::ABaseItem()
 	:bIsPeeking(false)
 	,ItemNumber(0)
 	,ItemAmount(0)
+	,bIsPuzzleBlock(false)
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	StaticMeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMesh"));
-	StaticMeshComp->SetupAttachment(RootComponent);
-	
-
-	GlowEffect = CreateDefaultSubobject<UNiagaraComponent>(TEXT("GlowEffect"));
-	GlowEffect->SetupAttachment(RootComponent);
-
-	ItemHoverUI = CreateDefaultSubobject<UWidgetComponent>(TEXT("Hover UI"));
-	ItemHoverUI->SetupAttachment(StaticMeshComp);
-	ItemHoverUI->SetWidgetSpace(EWidgetSpace::Screen);
-	ItemHoverUI->SetVisibility(false);
-
-	static ConstructorHelpers::FClassFinder<UUserWidget>ItemUIClass(TEXT("/Game/HJ/UI/WBP_Item.WBP_Item_C"));
-	if (ItemUIClass.Succeeded())
+	if (!bIsPuzzleBlock)
 	{
-		ItemHoverUI->SetWidgetClass(ItemUIClass.Class);
+		StaticMeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMesh"));
+		StaticMeshComp->SetupAttachment(RootComponent);
+
+
+		GlowEffect = CreateDefaultSubobject<UNiagaraComponent>(TEXT("GlowEffect"));
+		GlowEffect->SetupAttachment(RootComponent);
+
+		ItemHoverUI = CreateDefaultSubobject<UWidgetComponent>(TEXT("Hover UI"));
+		ItemHoverUI->SetupAttachment(StaticMeshComp);
+		ItemHoverUI->SetWidgetSpace(EWidgetSpace::Screen);
+		ItemHoverUI->SetVisibility(false);
+
+		static ConstructorHelpers::FClassFinder<UUserWidget>ItemUIClass(TEXT("/Game/HJ/UI/WBP_Item.WBP_Item_C"));
+		if (ItemUIClass.Succeeded())
+		{
+			ItemHoverUI->SetWidgetClass(ItemUIClass.Class);
+		}
 	}
+	
 
 	Tags.Add("Item");
 }
