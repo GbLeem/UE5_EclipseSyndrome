@@ -99,7 +99,11 @@ void UBTTask_FollowWithAvoidance::UpdateDesiredTarget(const TObjectPtr<AActor>& 
 	FCollisionQueryParams CollisionParams;
 	CollisionParams.AddIgnoredActor(PlayerPawn);
 	CollisionParams.AddIgnoredActor(DroneAIController->GetPawn());
-	if (!GetWorld()->LineTraceSingleByChannel(Hit, PlayerPawn->GetActorLocation() + FVector(0.0f, 0.0f, 100.0f), PlayerPawn->GetActorLocation() + RotatedOffset * 1.5f, ECC_Visibility, CollisionParams))
+	
+	TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
+	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_Visibility));
+	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_WorldStatic));
+	if (!GetWorld()->LineTraceSingleByObjectType(Hit, PlayerPawn->GetActorLocation() + FVector(0.0f, 0.0f, 100.0f), PlayerPawn->GetActorLocation() + RotatedOffset * 1.5f, ObjectTypes, CollisionParams))
 	{
 		DesiredTarget = PlayerPawn->GetActorLocation() + RotatedOffset;
 	}
@@ -112,7 +116,11 @@ void UBTTask_FollowWithAvoidance::UpdatePath(const TObjectPtr<ADroneAIController
 	FCollisionQueryParams CollisionParams;
 	CollisionParams.AddIgnoredActor(DroneAIController->GetPawn());
 	
-	if (GetWorld()->LineTraceSingleByChannel(HitResult, DroneLocation, DesiredTarget, ECC_Visibility, CollisionParams))
+	TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
+	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_Visibility));
+	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_WorldStatic));
+	
+	if (GetWorld()->LineTraceSingleByObjectType(HitResult, DroneLocation, DesiredTarget, FCollisionObjectQueryParams(ObjectTypes), CollisionParams))
 	{
 		if (bCanFindPath && bEndFollowPath)
 		{
@@ -128,6 +136,7 @@ void UBTTask_FollowWithAvoidance::FindPath(const TObjectPtr<ADroneAIController>&
 	{
 		TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
 		ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_Visibility));
+		ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_WorldStatic));
 
 		FVector DroneLocation = DroneAIController->GetPawn()->GetActorLocation();
 		PathPoints.Empty();
