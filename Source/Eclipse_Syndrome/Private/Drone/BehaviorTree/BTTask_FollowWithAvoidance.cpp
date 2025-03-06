@@ -102,8 +102,10 @@ void UBTTask_FollowWithAvoidance::UpdateDesiredTarget(const TObjectPtr<AActor>& 
 	CollisionParams.AddIgnoredActor(DroneAIController->GetPawn());
 	
 	TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
-	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_Visibility));
+	//ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_Visibility));
 	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_WorldStatic));
+	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_GameTraceChannel1));
+	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_GameTraceChannel2));
 	if (!GetWorld()->LineTraceSingleByObjectType(Hit, PlayerPawn->GetActorLocation() + FVector(0.0f, 0.0f, 100.0f), PlayerPawn->GetActorLocation() + RotatedOffset * 1.5f, ObjectTypes, CollisionParams))
 	{
 		DesiredTarget = PlayerPawn->GetActorLocation() + RotatedOffset;
@@ -118,8 +120,10 @@ void UBTTask_FollowWithAvoidance::UpdatePath(const TObjectPtr<ADroneAIController
 	CollisionParams.AddIgnoredActor(DroneAIController->GetPawn());
 	
 	TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
-	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_Visibility));
+	//ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_Visibility));
 	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_WorldStatic));
+	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_GameTraceChannel1));
+	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_GameTraceChannel2));
 	
 	if (GetWorld()->LineTraceSingleByObjectType(HitResult, DroneLocation, DesiredTarget, FCollisionObjectQueryParams(ObjectTypes), CollisionParams))
 	{
@@ -136,8 +140,10 @@ void UBTTask_FollowWithAvoidance::FindPath(const TObjectPtr<ADroneAIController>&
 	if (IsValid(CurOctreeVolume))
 	{
 		TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
-		ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_Visibility));
+		//ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_Visibility));
 		ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_WorldStatic));
+		ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_GameTraceChannel1));
+		ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_GameTraceChannel2));
 
 		FVector DroneLocation = DroneAIController->GetPawn()->GetActorLocation();
 		PathPoints.Empty();

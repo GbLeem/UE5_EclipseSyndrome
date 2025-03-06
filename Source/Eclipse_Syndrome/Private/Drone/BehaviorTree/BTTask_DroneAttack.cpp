@@ -4,8 +4,6 @@
 #include "Drone/Drone.h"
 #include "Drone/DroneAIController.h"
 #include "Enemy/EnemyBase.h"
-#include "Engine/DamageEvents.h"
-#include "Kismet/GameplayStatics.h"
 #include "Volume/AOctreeVolume.h"
 
 
@@ -26,9 +24,16 @@ EBTNodeResult::Type UBTTask_DroneAttack::ExecuteTask(UBehaviorTreeComponent& Own
 
 	AEnemyBase* Target = Cast<AEnemyBase>(OwnerComp.GetBlackboardComponent()->GetValueAsObject(TEXT("TargetEnemy")));
 	if (!Target || !IsValid(Target)) return EBTNodeResult::Failed;
+	
+	if (PrevTarget != Target || bEndFollowPath)
+	{
+		CanFindPath();
+		bEndFollowPath = true;
+		CurIndex = 0;
+		PathPoints.Empty();
+	}
 
-	CanFindPath();
-	bEndFollowPath = true;
+	PrevTarget = Target;
 	
 	return EBTNodeResult::InProgress;
 }
@@ -62,7 +67,7 @@ void UBTTask_DroneAttack::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* Nod
 			UpdateDesiredTarget(Target, DroneAIController);
 			if (DroneAIController->GetShowDebug())
 			{
-				DrawDebugSphere(GetWorld(), DesiredTarget, 30, 30, FColor::Green);
+				DrawDebugSphere(GetWorld(), DesiredTarget, 30, 30, FColor::Silver);
 			}
 
 			UpdatePath(DroneAIController);
@@ -81,14 +86,10 @@ void UBTTask_DroneAttack::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* Nod
 			FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
 			return;
 		}
-		return;
 	}
-	else
-	{
-		OwnerComp.GetBlackboardComponent()->SetValueAsInt(TEXT("AttackType"), 2);
-		FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
-		return;
-	}
+
+	OwnerComp.GetBlackboardComponent()->SetValueAsInt(TEXT("AttackType"), 2);
+	FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
 }
 
 void UBTTask_DroneAttack::UpdateDesiredTarget(const TObjectPtr<AActor>& TargetPawn,
@@ -101,8 +102,10 @@ void UBTTask_DroneAttack::UpdateDesiredTarget(const TObjectPtr<AActor>& TargetPa
 	CollisionParams.AddIgnoredActor(TargetPawn);
 	CollisionParams.AddIgnoredActor(DroneAIController->GetPawn());
 	TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
-	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_Visibility));
+	//ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_Visibility));
 	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_WorldStatic));
+	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_GameTraceChannel1));
+	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_GameTraceChannel2));
 	if (!GetWorld()->LineTraceSingleByObjectType(Hit, TargetPawn->GetActorLocation() + FVector(0.0f, 0.0f, 100.0f), TargetPawn->GetActorLocation() + RotatedOffset * 1.5f, ObjectTypes, CollisionParams))
 	{
 		DesiredTarget = TargetPawn->GetActorLocation() + RotatedOffset;
@@ -117,8 +120,10 @@ void UBTTask_DroneAttack::UpdatePath(const TObjectPtr<ADroneAIController>& Drone
 	CollisionParams.AddIgnoredActor(DroneAIController->GetPawn());
 	
 	TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
-	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_Visibility));
+	//ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_Visibility));
 	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_WorldStatic));
+	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_GameTraceChannel1));
+	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_GameTraceChannel2));
 	
 	if (GetWorld()->LineTraceSingleByObjectType(HitResult, DroneLocation, DesiredTarget, FCollisionObjectQueryParams(ObjectTypes), CollisionParams))
 	{
@@ -135,11 +140,13 @@ void UBTTask_DroneAttack::FindPath(const TObjectPtr<ADroneAIController>& DroneAI
 	if (IsValid(CurOctreeVolume))
 	{
 		TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
-		ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_Visibility));
+		//ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_Visibility));
 		ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_WorldStatic));
+		ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_GameTraceChannel1));
+		ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_GameTraceChannel2));
 
 		FVector DroneLocation = DroneAIController->GetPawn()->GetActorLocation();
-		PathPoints.Empty();
+		//PathPoints.Empty();
 		if (CurOctreeVolume->FindPath(DroneLocation, DesiredTarget, ObjectTypes, AActor::StaticClass(), PathPoints))
 		{
 			bEndFollowPath = false;
