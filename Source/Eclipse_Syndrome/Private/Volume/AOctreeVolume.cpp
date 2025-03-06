@@ -467,7 +467,7 @@ NavNode* AAOctreeVolume::FindNearestValidNode(const FVector& location, const TAr
 
 	if (nearestNode)
 	{
-		DrawDebugSphere(GetWorld(), ConvertCoordinatesToLocation(nearestNode->Coordinates), 30, 30, FColor::Orange, false , 100.f);
+		DrawDebugSphere(GetWorld(), ConvertCoordinatesToLocation(nearestNode->Coordinates), 30, 30, FColor::Cyan, false , 100.f);
 	}
 	
 	return nearestNode;
