@@ -22,9 +22,9 @@ AChest::AChest()
 	InteractionBox->OnComponentBeginOverlap.AddDynamic(this, &AChest::OnPlayerOverlapBegin);
 	InteractionBox->OnComponentEndOverlap.AddDynamic(this, &AChest::OnPlayerOverlapEnd);
 
-	//Only for test
-	InteractionBox->SetHiddenInGame(false);
-	InteractionBox->SetVisibility(true);
+	////Only for test
+	InteractionBox->SetHiddenInGame(true);
+	InteractionBox->SetVisibility(false);
 
 
 	SkeletalMeshComp = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SkeletalMesh"));
