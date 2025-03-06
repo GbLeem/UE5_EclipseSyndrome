@@ -263,7 +263,7 @@ void APlayerCharacterController::StartGame()
 		DefaultGameState->UpdateHUD();
 	}
 
-	UGameplayStatics::OpenLevel(GetWorld(), FName("Lv1"));
+	UGameplayStatics::OpenLevel(GetWorld(), FName("MainLevel_2"));
 	SetPause(false);
 }
 
