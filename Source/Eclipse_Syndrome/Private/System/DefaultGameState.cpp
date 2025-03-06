@@ -16,13 +16,13 @@ ADefaultGameState::ADefaultGameState()
 	:CurrentLevelIndex(0)
 	, MaxLevelIndex(3)
 {
-	// LevelMapNames.Push(FName("Lv1"));
-	// LevelMapNames.Push(FName("Lv2"));
-	// LevelMapNames.Push(FName("Lv3"));
+	 LevelMapNames.Push(FName("Lv1"));
+	 LevelMapNames.Push(FName("Lv2"));
+	 LevelMapNames.Push(FName("Lv3"));
 
 	//LevelMapNames.Push(FName("MainLevelTest"));
-	LevelMapNames.Push(FName("MainLevel_2"));
-	LevelMapNames.Push(FName("MainLevel_4"));
+	/*LevelMapNames.Push(FName("MainLevel_2"));
+	LevelMapNames.Push(FName("MainLevel_4"));*/
 }
 
 void ADefaultGameState::BeginPlay()
@@ -274,7 +274,7 @@ void ADefaultGameState::GameClear()
 			PlayerCharacterController->SetInputMode(FInputModeUIOnly());
 			PlayerCharacterController->ShowGameClearUI();
 
-			GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Blue, FString::Printf(TEXT("Game Clear")));
+			//GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Blue, FString::Printf(TEXT("Game Clear")));
 		}
 	}
 }
