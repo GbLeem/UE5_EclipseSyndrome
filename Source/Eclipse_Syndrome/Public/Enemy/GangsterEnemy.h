@@ -46,6 +46,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
 	USoundAttenuation* SAGangsterSound;
 
+	bool bIsCalled;
+
 
 	UFUNCTION(BlueprintCallable)
 	void ChangeSpeedAim();

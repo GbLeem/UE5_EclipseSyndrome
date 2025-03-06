@@ -25,6 +25,7 @@ AGangsterEnemy::AGangsterEnemy()
 	AimSpeed = 200.0f;
 	ChaseSeed = 600.0f;
 	PatrolSpeed = 150.0f;
+	bIsCalled = false;
 
 	// AI
 	AIControllerClass = AGangsterAIController::StaticClass();
@@ -50,46 +51,55 @@ void AGangsterEnemy::ChangeSpeedAim()
 
 void AGangsterEnemy::CallNearbyGangster()
 {
-	if (!SphereComp) return;
-
-	
-	
-	TArray<AActor*> OverlappingActors;
-
-	SphereComp->GetOverlappingActors(OverlappingActors, AGangsterEnemy::StaticClass());
-	
-	ADefaultGameState* DefaultGameState = Cast<ADefaultGameState>(GetWorld()->GetGameState());
-	
-	for (AActor* Enemy : OverlappingActors)
+	if (Health > 0)
 	{
-		if (AGangsterEnemy* Gangster = Cast<AGangsterEnemy>(Enemy))
+		if (!bIsCalled)
 		{
-			// Sound Play
-			FVector Location = this->GetActorLocation();
-			if (CallSound)
-			{
-				UGameplayStatics::SpawnSoundAtLocation(
-					this,                  // WorldContextObject
-					CallSound,           // Sound
-					Location,              // Location
-					FRotator::ZeroRotator, // Rotation
-					0.1f,                  // VolumeMultiplier
-					1.0f,                   // PitchMultiplier
-					0.0f,
-					SAGangsterSound
-				);
-			}
+			if (!SphereComp) return;
 
-			if (AGangsterAIController* GangsterAIController = Cast<AGangsterAIController>(Gangster->GetController()))
+			TArray<AActor*> OverlappingActors;
+
+			SphereComp->GetOverlappingActors(OverlappingActors, AGangsterEnemy::StaticClass());
+
+			ADefaultGameState* DefaultGameState = Cast<ADefaultGameState>(GetWorld()->GetGameState());
+
+			for (AActor* Enemy : OverlappingActors)
 			{
-				GangsterAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("PlayerDetected"), true);
-				if (DefaultGameState)
+				if (AGangsterEnemy* Gangster = Cast<AGangsterEnemy>(Enemy))
 				{
-					APlayerCharacter* Player = DefaultGameState->GetPlayerCharacter();
-					GangsterAIController->GetBlackboardComponent()->SetValueAsObject(TEXT("TargetActor"), Player);
-					GangsterAIController->GetBlackboardComponent()->SetValueAsObject(TEXT("PatrolPath"), nullptr);
+					// Sound Play
+					FVector Location = this->GetActorLocation();
+					if (CallSound)
+					{
+						UGameplayStatics::SpawnSoundAtLocation(
+							this,                  // WorldContextObject
+							CallSound,           // Sound
+							Location,              // Location
+							FRotator::ZeroRotator, // Rotation
+							0.1f,                  // VolumeMultiplier
+							1.0f,                   // PitchMultiplier
+							0.0f,
+							SAGangsterSound
+						);
+					}
+
+					if (AGangsterAIController* GangsterAIController = Cast<AGangsterAIController>(Gangster->GetController()))
+					{
+						GangsterAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("PlayerDetected"), true);
+						if (DefaultGameState)
+						{
+							APlayerCharacter* Player = DefaultGameState->GetPlayerCharacter();
+							GangsterAIController->GetBlackboardComponent()->SetValueAsObject(TEXT("TargetActor"), Player);
+							GangsterAIController->GetBlackboardComponent()->SetValueAsObject(TEXT("PatrolPath"), nullptr);
+							Gangster->bIsCalled = true;
+						}
+					}
 				}
 			}
+		}
+		else
+		{
+			bIsCalled = false;
 		}
 	}
 }
