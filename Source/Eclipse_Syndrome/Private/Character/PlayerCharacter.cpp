@@ -16,6 +16,7 @@
 
 #include "CableComponent.h"
 #include "Camera/CameraComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "Components/MeshComponent.h"
 #include "EnhancedInputComponent.h"
 #include "BehaviorTree/BlackboardComponent.h"
@@ -123,6 +124,11 @@ APlayerCharacter::APlayerCharacter()
 	if (EquipSoundAsset.Succeeded())
 	{
 		EquipSound = EquipSoundAsset.Object;
+	}
+	static ConstructorHelpers::FObjectFinder<UNiagaraSystem> HealNiagaraAsset(TEXT("/Game/SH/MixedVFX/MoveNS/NS_HealingAura.NS_HealingAura"));
+	if (HealNiagaraAsset.Succeeded())
+	{
+		HealNiagara = HealNiagaraAsset.Object;
 	}
 
 	/*static ConstructorHelpers::FClassFinder<UAnimInstance> AnimClass(TEXT("/Game/HJ/Animation/ABP_PlayerCharacter.ABP_PlayerCharacter_C"));
@@ -543,7 +549,9 @@ void APlayerCharacter::UseHealthItem()
 		{
 			if (DefaultGameInstance->InventoryItem[1] > 0)
 			{				
-				//[TODO] how to get health amount?
+				
+				UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), HealNiagara, GetActorLocation(), GetActorRotation(), FVector(0.7f, 0.7f, 0.7f));
+
 				DefaultGameInstance->PlusHealth(20.f);
 				DefaultGameInstance->InventoryItem[1] -= 1;
 			}
@@ -1220,6 +1228,8 @@ void APlayerCharacter::ChangeView(const FInputActionValue& value)
 	if (bMoveForward && !bIsReloading && !bIsRolling)
 	{
 		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+
 		if (AnimInstance)
 		{
 			bIsRolling = true;

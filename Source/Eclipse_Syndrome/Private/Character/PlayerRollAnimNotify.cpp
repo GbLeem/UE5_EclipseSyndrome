@@ -1,5 +1,6 @@
 #include "Character/PlayerRollAnimNotify.h"
 #include "Character/PlayerCharacter.h"
+#include "Components/CapsuleComponent.h"
 
 void UPlayerRollAnimNotify::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation)
 {
@@ -9,6 +10,7 @@ void UPlayerRollAnimNotify::Notify(USkeletalMeshComponent* MeshComp, UAnimSequen
 		if (PlayerCharacter)
 		{
 			PlayerCharacter->bIsRolling = false;
+			PlayerCharacter->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
 		}
 	}
 }
