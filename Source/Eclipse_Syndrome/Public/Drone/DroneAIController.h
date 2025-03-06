@@ -30,6 +30,7 @@ private:
 	float Ki; //5000.f;
 	UPROPERTY(EditAnywhere, Category="PID")
 	float Kd; //10000.f;
+	float DefaultKd;
 	UPROPERTY(EditAnywhere, Category="PID")
 	float MaxSpeed;
 	float DefaultMaxSpeed;
@@ -108,6 +109,7 @@ public:
 	void SetPIDKp(float NewKp) { Kp = NewKp; }
 	void SetPIDKi(float NewKi) { Ki = NewKi; }
 	void SetPIDKd(float NewKd) { Kd = NewKd; }
+	void SetDefaultKd() { Kd = DefaultKd; }
 	void SetPIDMaxSpeed(float NewMaxSpeed) { MaxSpeed = NewMaxSpeed; }
 	void SetPIDDefaultSpeed() { MaxSpeed = DefaultMaxSpeed; }
 
