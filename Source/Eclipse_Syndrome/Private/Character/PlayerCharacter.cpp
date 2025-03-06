@@ -9,6 +9,7 @@
 #include "Weapon/WeaponAR1.h"
 #include "Weapon/WeaponAR2.h"
 #include "Weapon/WeaponSR.h"
+#include "Weapon/NewWeapon.h"
 #include "Weapon/WeaponShotgun.h"
 #include "InteractableItem/PuzzleItem/KeyItem.h"
 #include "InteractableItem/PuzzleItem/PuzzleBlock.h"
@@ -145,6 +146,7 @@ APlayerCharacter::APlayerCharacter()
 	PlayerWeaponInventory.Add(2, nullptr);
 	PlayerWeaponInventory.Add(3, nullptr);
 	PlayerWeaponInventory.Add(4, nullptr);
+	PlayerWeaponInventory.Add(5, nullptr);
 
 	Tags.Add("Player");
 
@@ -504,6 +506,10 @@ void APlayerCharacter::EquipWeaponBack(int32 WeaponIdx)
 		{
 			PlayerWeaponInventory[WeaponIdx] = GetWorld()->SpawnActor<AWeaponShotgun>();
 		}	
+		else if (WeaponIdx == 5)
+		{
+			PlayerWeaponInventory[WeaponIdx] = GetWorld()->SpawnActor<ANewWeapon>();
+		}
 	}
 
 	if (IsValid(CurrentWeapon))
@@ -908,7 +914,16 @@ void APlayerCharacter::EquipWeapon1(const FInputActionValue& value)
 		bIsWeaponEquipped = true;
 
 		FName WeaponSocket(TEXT("hand_socket"));
-		CurrentWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponSocket);
+		FName SRWeaponSocekt(TEXT("hand_SR_Socket"));
+
+		if (CurrentWeapon->GetWeaponNumber() == 5)
+		{
+			CurrentWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, SRWeaponSocekt);
+		}
+		else
+		{
+			CurrentWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponSocket);
+		}
 	}
 }
 
