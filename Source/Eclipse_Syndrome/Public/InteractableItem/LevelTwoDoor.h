@@ -33,7 +33,7 @@ public:
 private:
 	FVector ClosedPosition;
 	FVector OpenPosition;
-	float MoveSpeed = 1.0f;
+	float MoveSpeed = 0.05f;
 	bool bIsOpening = false;
 	
 };

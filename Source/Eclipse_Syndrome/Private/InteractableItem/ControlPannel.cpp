@@ -37,6 +37,21 @@ AControlPannel::AControlPannel()
 	CollisionBox->SetHiddenInGame(false);
 	CollisionBox->SetVisibility(true);
 
+
+	//ConstructorHelpers::FObjectFinder<UMaterialInterface> MatFinder(TEXT("/Game/Yujin/Materials/M_ChestOutliner.M_ChestOutliner"));
+
+	//if (MatFinder.Succeeded())
+	//{
+	//	OutlineMaterial = MatFinder.Object;
+	//}
+
+
+	//if (ControlPanelMesh && OutlineMaterial)
+	//{
+	//	ControlPanelMesh->SetMaterial(25, OutlineMaterial);
+	//}
+
+
 	static ConstructorHelpers::FObjectFinder<UNiagaraSystem> NiagaraEffectAsset(TEXT("/Game/Vefects/Zap_VFX/VFX/Zap/Particles/NS_Zap_02_Blue.NS_Zap_02_Blue"));
 	if (NiagaraEffectAsset.Succeeded())
 	{
@@ -99,16 +114,26 @@ void AControlPannel::OnOverlapBegin(
 		bIsPlugConnected = true;
 		ActivatePanel(true);
 
+		
+
 		if (NiagaraEffect)
 		{
-			UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+			FVector ForwardOffset = GetActorForwardVector() * 200.0f;
+
+			NiagaraComp = UNiagaraFunctionLibrary::SpawnSystemAtLocation(
 				GetWorld(),
 				NiagaraEffect,
-				GetActorLocation(),  // ÀÌÆåÆ® À§Ä¡
-				GetActorRotation()   // ÀÌÆåÆ® ¹æÇâ
+				GetActorLocation() + ForwardOffset,
+				GetActorRotation()
 			);
-		}
+			
 
+		}
+		if (NiagaraComp)
+		{
+			NiagaraComp->SetFloatParameter(TEXT("Floor Scorch Lifetime"), 20.0f);
+		}
+		
 
 	}
 }

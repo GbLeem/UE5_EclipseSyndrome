@@ -24,6 +24,19 @@ class ECLIPSE_SYNDROME_API AControlPannel : public AActor
 public:	
 	AControlPannel();
 
+	UPROPERTY(EditAnywhere, Category = "Effects")
+	UNiagaraSystem* NiagaraEffect;
+	UPROPERTY()
+	UNiagaraComponent* NiagaraComp;
+
+	//UPROPERTY(EditAnywhere)
+	//UMaterialInterface* OutlineMaterial;
+
+	bool bIsPlugConnected = false;
+
+
+
+
 	UFUNCTION()
 	void ActivatePanel(bool IsActivated);
 
@@ -33,7 +46,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	FQuat GetPlugRotation() const;
 
-	bool bIsPlugConnected = false;
+
 protected:
 	virtual void BeginPlay() override;
 	
@@ -67,9 +80,6 @@ protected:
 		AActor* OtherActor,
 		UPrimitiveComponent* OtherComp,
 		int32 OtherBodyIndex);
-private:
-	UPROPERTY(EditAnywhere, Category = "Effects")
-	UNiagaraSystem* NiagaraEffect;
 
 
 };
