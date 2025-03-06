@@ -30,8 +30,10 @@ public:
 	void StartLevel();
 	void LevelChange();
 	void GameClear();
+	UFUNCTION(BlueprintCallable)
 	void GameOver();
-
+	UFUNCTION(BlueprintCallable)
+	void OpenCurrentLevel();
 
 //variables
 public:

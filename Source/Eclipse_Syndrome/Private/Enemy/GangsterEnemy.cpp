@@ -52,6 +52,8 @@ void AGangsterEnemy::CallNearbyGangster()
 {
 	if (!SphereComp) return;
 
+	
+	
 	TArray<AActor*> OverlappingActors;
 
 	SphereComp->GetOverlappingActors(OverlappingActors, AGangsterEnemy::StaticClass());
@@ -62,6 +64,22 @@ void AGangsterEnemy::CallNearbyGangster()
 	{
 		if (AGangsterEnemy* Gangster = Cast<AGangsterEnemy>(Enemy))
 		{
+			// Sound Play
+			FVector Location = this->GetActorLocation();
+			if (CallSound)
+			{
+				UGameplayStatics::SpawnSoundAtLocation(
+					this,                  // WorldContextObject
+					CallSound,           // Sound
+					Location,              // Location
+					FRotator::ZeroRotator, // Rotation
+					0.1f,                  // VolumeMultiplier
+					1.0f,                   // PitchMultiplier
+					0.0f,
+					SAGangsterSound
+				);
+			}
+
 			if (AGangsterAIController* GangsterAIController = Cast<AGangsterAIController>(Gangster->GetController()))
 			{
 				GangsterAIController->GetBlackboardComponent()->SetValueAsBool(TEXT("PlayerDetected"), true);

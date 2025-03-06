@@ -2,6 +2,7 @@
 
 #include "Weapon/WeaponShell.h"
 
+#include "GameFramework/SpringArmComponent.h"
 #include "Components/DecalComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
@@ -50,6 +51,11 @@ AWeaponShotgun::AWeaponShotgun()
     {
         NoAmmoSound = NoAmmoAsset.Object;
     }
+
+    static ConstructorHelpers::FObjectFinder<UNiagaraSystem>BulletAsset(TEXT("/Game/HJ/Material/NS_HJBullet3.NS_HJBullet3"));
+    BulletNiagara = BulletAsset.Object;
+
+    WeaponSpringArmComp->SocketOffset = FVector(10.f, 0.f, 15.f);
 }
 
 void AWeaponShotgun::Fire()
@@ -76,8 +82,7 @@ void AWeaponShotgun::Fire()
         UGameplayStatics::PlaySoundAtLocation(GetWorld(), ShootSound[RandIdx], MuzzleLocation);
     }
 
-    UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), MuzzleNiagara, MuzzleLocation, GetActorRotation());
-    //UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), BulletNiagara, MuzzleLocation, MuzzleRotation);
+    UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), MuzzleNiagara, MuzzleLocation, GetActorRotation(), FVector(0.5f, 0.5f, 0.5f));
 
     FVector FireDirection = CalculateDestination() - MuzzleLocation;
     FVector EndLocation = MuzzleLocation + FireDirection * FireRange;
@@ -101,12 +106,15 @@ void AWeaponShotgun::Fire()
 
     for (int i = 0; i < 10; ++i)
     {        
+        //bullet niagara
+
         FVector Offset = FVector::ZeroVector;
         Offset.X = FMath::RandRange(-4000., 4000.);
         Offset.Y = FMath::RandRange(-4000., 4000.);
         Offset.Z = FMath::RandRange(-4000., 4000.);
 
         EndLocation += Offset;
+        UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), BulletNiagara, MuzzleLocation, UKismetMathLibrary::MakeRotFromY(EndLocation));
 
         bool bHit = GetWorld()->LineTraceSingleByChannel(HitResult, MuzzleLocation, EndLocation, ECC_Visibility, Params);
         if (bHit)
@@ -129,8 +137,8 @@ void AWeaponShotgun::Fire()
 
 
         }
-        FColor DrawColor = bHit ? FColor::Green : FColor::Red;
-        DrawDebugLine(GetWorld(), MuzzleLocation, EndLocation, DrawColor, false, 1.0f, 0, 2.0f);
+        /*FColor DrawColor = bHit ? FColor::Green : FColor::Red;
+        DrawDebugLine(GetWorld(), MuzzleLocation, EndLocation, DrawColor, false, 1.0f, 0, 2.0f);*/
         //GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Blue, FString::Printf(TEXT("%f %f %f"), EndLocation.X, EndLocation.Y, EndLocation.Z));
     }
 }

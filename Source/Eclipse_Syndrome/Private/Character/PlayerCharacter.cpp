@@ -9,6 +9,7 @@
 #include "Weapon/WeaponAR1.h"
 #include "Weapon/WeaponAR2.h"
 #include "Weapon/WeaponSR.h"
+#include "Weapon/NewWeapon.h"
 #include "Weapon/WeaponShotgun.h"
 #include "InteractableItem/PuzzleItem/KeyItem.h"
 #include "InteractableItem/PuzzleItem/PuzzleBlock.h"
@@ -145,6 +146,7 @@ APlayerCharacter::APlayerCharacter()
 	PlayerWeaponInventory.Add(2, nullptr);
 	PlayerWeaponInventory.Add(3, nullptr);
 	PlayerWeaponInventory.Add(4, nullptr);
+	PlayerWeaponInventory.Add(5, nullptr);
 
 	Tags.Add("Player");
 
@@ -342,6 +344,12 @@ void APlayerCharacter::Shoot()
 
 void APlayerCharacter::Reloading()
 {
+	UDefaultGameInstance* DefaultGameInstance = Cast<UDefaultGameInstance>(GetGameInstance());
+	if (DefaultGameInstance)
+	{
+		CurrentInventoryAmmos = DefaultGameInstance->GetCurrentInventoryAmmo();
+	}
+	
 	if (CurrentWeapon)
 	{
 		int PlusAmmo = CurrentWeapon->GetMaxAmmo() - CurrentWeapon->GetCurrentAmmo();
@@ -352,6 +360,7 @@ void APlayerCharacter::Reloading()
 		}
 		if (bIsRolling)
 			return;
+
 		if (PlusAmmo > 0 && bIsWeaponEquipped)
 		{
 			PlusAmmo = FMath::Min(PlusAmmo, CurrentInventoryAmmos);
@@ -371,14 +380,14 @@ void APlayerCharacter::Reloading()
 
 			CurrentInventoryAmmos -= PlusAmmo;
 
-			if (UGameInstance* GameInstance = GetGameInstance())
+			if (DefaultGameInstance)
+			{
+				DefaultGameInstance->UseAmmo(PlusAmmo);
+			}
+			/*if (UGameInstance* GameInstance = GetGameInstance())
 			{
 				UDefaultGameInstance* DefaultGameInstance = Cast<UDefaultGameInstance>(GameInstance);
-				if (DefaultGameInstance)
-				{
-					DefaultGameInstance->UseAmmo(PlusAmmo);
-				}
-			}		
+			}*/		
 		}
 	}	
 }
@@ -497,6 +506,10 @@ void APlayerCharacter::EquipWeaponBack(int32 WeaponIdx)
 		{
 			PlayerWeaponInventory[WeaponIdx] = GetWorld()->SpawnActor<AWeaponShotgun>();
 		}	
+		else if (WeaponIdx == 5)
+		{
+			PlayerWeaponInventory[WeaponIdx] = GetWorld()->SpawnActor<ANewWeapon>();
+		}
 	}
 
 	if (IsValid(CurrentWeapon))
@@ -659,6 +672,15 @@ int32 APlayerCharacter::GetCurrentWeaponAmmo()
 	return 0;
 }
 
+FTransform APlayerCharacter::GetWeaponHandSocket()
+{
+	if (CurrentWeapon)
+	{
+		return CurrentWeapon->GetHandSocket();
+	}	
+	return FTransform::Identity;
+}
+
 void APlayerCharacter::Move(const FInputActionValue& value)
 {
 	if (!Controller)
@@ -750,7 +772,14 @@ void APlayerCharacter::StopSprint(const FInputActionValue& value)
 
 void APlayerCharacter::Reload(const FInputActionValue& value)
 {
-	Reloading();		
+	UDefaultGameInstance* DefaultGameInstance = Cast<UDefaultGameInstance>(GetGameInstance());
+	if (DefaultGameInstance)
+	{
+		if (DefaultGameInstance->GetCurrentInventoryAmmo() > 0)
+		{
+			Reloading();
+		}
+	}
 }
 
 void APlayerCharacter::StartShoot(const FInputActionValue& value)
@@ -885,7 +914,16 @@ void APlayerCharacter::EquipWeapon1(const FInputActionValue& value)
 		bIsWeaponEquipped = true;
 
 		FName WeaponSocket(TEXT("hand_socket"));
-		CurrentWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponSocket);
+		FName SRWeaponSocekt(TEXT("hand_SR_Socket"));
+
+		if (CurrentWeapon->GetWeaponNumber() == 5)
+		{
+			CurrentWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, SRWeaponSocekt);
+		}
+		else
+		{
+			CurrentWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponSocket);
+		}
 	}
 }
 
@@ -910,7 +948,8 @@ void APlayerCharacter::Grapple(const FInputActionValue& value)
 			float Distance = FVector::Dist(GetActorLocation(), AnchorLocation);
 			CableComp->CableLength = FVector::Dist(GetMesh()->GetSocketLocation(TEXT("hand_l_socket")), AnchorLocation); // CableComp->NumSegments;
 			MaxWebLength = Distance;
-			
+
+			GetCharacterMovement()->Velocity *= 0.7;
 			bIsSwinging = true;
 		}
 	}
@@ -1194,6 +1233,8 @@ void APlayerCharacter::ZoomInOut(const FInputActionValue& value)
 {	
 	if (bIsWeaponEquipped && !bIsRolling)
 	{
+		if (CurrentWeapon->GetWeaponNumber() == 4)
+			return;
 		if (GetController())
 		{
 			APlayerCharacterController* PlayerCharacterController = Cast<APlayerCharacterController>(GetController());
@@ -1261,8 +1302,11 @@ float APlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Damag
 				}
 
 				//Damage Animation
-				UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-				AnimInstance->Montage_Play(DamageAnimMontage);
+				if (bIsTPSMode)
+				{
+					UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+					AnimInstance->Montage_Play(DamageAnimMontage);
+				}
 				bIsReloading = false;
 			}
 		}

@@ -33,6 +33,7 @@ AWeapon::AWeapon()
     CollisionComp = CreateDefaultSubobject<USphereComponent>(TEXT("Sphere Collision"));
     CollisionComp->SetupAttachment(RootComponent);
     CollisionComp->SetCollisionProfileName(TEXT("OverlapAllDynamics"));
+    CollisionComp->SetCollisionObjectType(ECollisionChannel::ECC_PhysicsBody);
     CollisionComp->SetSphereRadius(200.f);   
 
     CollisionComp->OnComponentBeginOverlap.AddDynamic(this, &AWeapon::OnItemOverlap);
@@ -135,11 +136,12 @@ void AWeapon::Fire()
         UGameplayStatics::PlaySoundAtLocation(GetWorld(), ShootSound[RandIdx], MuzzleLocation);
     }
 
-    UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), MuzzleNiagara, MuzzleLocation, GetActorRotation());
-    //UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), BulletNiagara, MuzzleLocation, MuzzleRotation);
+    UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), MuzzleNiagara, MuzzleLocation, GetActorRotation(), FVector(0.7f, 0.7f, 0.7f));
 
     FVector FireDirection = CalculateDestination()- MuzzleLocation;
     FVector EndLocation = MuzzleLocation + FireDirection * FireRange;       
+    UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), BulletNiagara, MuzzleLocation, UKismetMathLibrary::MakeRotFromY(FireDirection));
+
 
     //shell effect    
     FVector ShellLocation = GunMesh->GetSocketLocation(TEXT("ShellSocket"));
@@ -179,8 +181,8 @@ void AWeapon::Fire()
         }                    
     }
 
-    FColor DrawColor = bHit ? FColor::Green : FColor::Red;
-    DrawDebugLine(GetWorld(), MuzzleLocation, EndLocation, DrawColor, false, 1.0f, 0, 2.0f);
+    /*FColor DrawColor = bHit ? FColor::Green : FColor::Red;
+    DrawDebugLine(GetWorld(), MuzzleLocation, EndLocation, DrawColor, false, 1.0f, 0, 2.0f);*/
 }
 
 // Reload
@@ -233,6 +235,17 @@ void AWeapon::ShowUI()
 void AWeapon::StopUI()
 {
     ItemHoverUI->SetVisibility(false);
+}
+
+FTransform AWeapon::GetHandSocket()
+{
+    if (GunMesh)
+    {
+        FTransform Result;
+        Result = GunMesh->GetSocketTransform(FName("Hand"));
+        return Result;
+    }
+    return FTransform::Identity;
 }
 
 void AWeapon::OnItemOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)

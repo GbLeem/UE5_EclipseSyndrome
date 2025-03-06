@@ -40,7 +40,6 @@ EBTNodeResult::Type UBTTask_RangeCheck::ExecuteTask(UBehaviorTreeComponent& Owne
 		{
 			// Move to Target
 			OwnerComp.GetBlackboardComponent()->SetValueAsVector(TEXT("MoveCommandLocation"), Target->GetActorLocation() + FVector(0, 0, 100));
-			DrawDebugPoint(GetWorld(), Target->GetActorLocation() + FVector(0, 0, 100), 10, FColor::Cyan);
 			OwnerComp.GetBlackboardComponent()->SetValueAsInt(TEXT("AttackType"), 3);
 			return EBTNodeResult::Succeeded;
 		}

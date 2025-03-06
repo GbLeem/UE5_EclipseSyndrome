@@ -51,6 +51,8 @@ public:
 	void RemoveSpecialItem();
 	UFUNCTION()
 	float GetCurrentHealth() { return PlayerCurrentHealth; }
+	UFUNCTION()
+	int32 GetCurrentInventoryAmmo() { return InventoryAmmo; }
 
 public:
 	//for HUD ammo text ui

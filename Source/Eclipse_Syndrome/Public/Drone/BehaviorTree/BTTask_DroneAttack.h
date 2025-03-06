@@ -4,6 +4,7 @@
 #include "BehaviorTree/BTTaskNode.h"
 #include "BTTask_DroneAttack.generated.h"
 
+class AEnemyBase;
 class ADroneAIController;
 
 UCLASS()
@@ -20,6 +21,7 @@ protected:
 
 private:
 	FTimerHandle AttackCooldownTimer;
+	TObjectPtr<AEnemyBase> PrevTarget;
 	
 	FVector DesiredTarget;
 	bool bCanFindPath = true;
