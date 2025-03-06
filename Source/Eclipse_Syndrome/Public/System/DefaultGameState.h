@@ -27,6 +27,7 @@ public:
 	const TObjectPtr<APlayerCharacter>& GetPlayerCharacter() const { return PlayerPawn; }
 	
 	//level
+	void StartLevel();
 	void LevelChange();
 	void GameClear();
 	void GameOver();

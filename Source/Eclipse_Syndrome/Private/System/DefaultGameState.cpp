@@ -16,12 +16,12 @@ ADefaultGameState::ADefaultGameState()
 	:CurrentLevelIndex(0)
 	, MaxLevelIndex(3)
 {
-	/*LevelMapNames.Push(FName("Lv1"));
+	LevelMapNames.Push(FName("Lv1"));
 	LevelMapNames.Push(FName("Lv2"));
-	LevelMapNames.Push(FName("Lv3"));*/
+	LevelMapNames.Push(FName("Lv3"));
 
-	LevelMapNames.Push(FName("MainLevelTest"));
-	LevelMapNames.Push(FName("MainLevel_2"));
+	/*LevelMapNames.Push(FName("MainLevelTest"));
+	LevelMapNames.Push(FName("MainLevel_2"));*/
 }
 
 void ADefaultGameState::BeginPlay()
@@ -29,6 +29,7 @@ void ADefaultGameState::BeginPlay()
 	Super::BeginPlay();
 	
 	UpdateHUD();
+	StartLevel();
 
 	GetWorldTimerManager().SetTimer
 	(
@@ -194,12 +195,34 @@ void ADefaultGameState::UpdateHUD()
 							}
 						}
 					}
-				}
-			
-				
+				}					
 			}
 		}
 	}
+}
+
+void ADefaultGameState::StartLevel()
+{
+	if (APlayerController* PlayerController = GetWorld()->GetFirstPlayerController())
+	{
+		if (APlayerCharacterController* PlayerCharacterController = Cast<APlayerCharacterController>(PlayerController))
+		{
+			if (PlayerCharacterController)
+			{
+				PlayerCharacterController->ShowHUD();
+			}
+		}
+	}
+	if (UGameInstance* GameInstance = GetGameInstance())
+	{
+		UDefaultGameInstance* DefaultGameInstance = Cast<UDefaultGameInstance>(GameInstance);
+
+		if (DefaultGameInstance)
+		{
+			CurrentLevelIndex = DefaultGameInstance->CurrentLevel;				
+		}
+	}
+	UpdateHUD();
 }
 
 void ADefaultGameState::LevelChange()
@@ -235,7 +258,16 @@ void ADefaultGameState::LevelChange()
 
 void ADefaultGameState::GameClear()
 {
-	GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Blue, FString::Printf(TEXT("Game Clear")));
+	if (APlayerController* PlayerController = GetWorld()->GetFirstPlayerController())
+	{
+		if (APlayerCharacterController* PlayerCharacterController = Cast<APlayerCharacterController>(PlayerController))
+		{
+			PlayerCharacterController->SetInputMode(FInputModeUIOnly());
+			PlayerCharacterController->ShowGameClearUI();
+
+			GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Blue, FString::Printf(TEXT("Game Clear")));
+		}
+	}
 }
 
 //[TODO] when player dead, go to Main Menu
@@ -245,8 +277,10 @@ void ADefaultGameState::GameOver()
 	{
 		if (APlayerCharacterController* PlayerCharacterController = Cast<APlayerCharacterController>(PlayerController))
 		{
-			//PlayerCharacterController->ShowMainMenu(true);
-			PlayerCharacterController->SetPause(true);
+			//PlayerCharacterController->SetInputMode(FInputModeUIOnly());
+			PlayerCharacterController->ShowGameOverUI();
+
+			//GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Black, FString::Printf(TEXT("Game Over")));
 		}
 	}
 }

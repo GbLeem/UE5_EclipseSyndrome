@@ -78,6 +78,16 @@ AWeapon::AWeapon()
     static ConstructorHelpers::FObjectFinder<UNiagaraSystem>BulletAsset(TEXT("/Game/HJ/Material/NS_HJBullet2.NS_HJBullet2"));
     BulletNiagara = BulletAsset.Object;
 
+    static ConstructorHelpers::FObjectFinder<UNiagaraSystem> LandNiagaraAsset(TEXT("/Game/HJ/Assets/NS_Steam1.NS_Steam1"));
+    LandNiagara = LandNiagaraAsset.Object;
+
+    //sound asset
+    static ConstructorHelpers::FObjectFinder<USoundBase>NoAmmoAsset(TEXT("/Game/HJ/Assets/Sound/Smith_Wesson_Handling_1.Smith_Wesson_Handling_1"));
+    if (NoAmmoAsset.Succeeded())
+    {
+        NoAmmoSound = NoAmmoAsset.Object;
+    }
+   
 
     Tags.Add("Weapon");
 }
@@ -101,6 +111,14 @@ void AWeapon::BeginPlay()
 
 void AWeapon::Fire()
 {
+    FVector MuzzleLocation = GunMesh->GetSocketLocation(TEXT("MuzzleSocket"));
+    FRotator MuzzleRotation = GunMesh->GetSocketRotation(TEXT("MuzzleSocket"));
+    
+    if (CurrentAmmo == 0)
+    {
+        UGameplayStatics::PlaySoundAtLocation(GetWorld(), NoAmmoSound, MuzzleLocation);
+    }
+
     if (CurrentAmmo <= 0)
     {
         return;
@@ -109,8 +127,6 @@ void AWeapon::Fire()
     CurrentAmmo--;
     
 
-    FVector MuzzleLocation = GunMesh->GetSocketLocation(TEXT("MuzzleSocket"));
-    FRotator MuzzleRotation = GunMesh->GetSocketRotation(TEXT("MuzzleSocket"));
 
     //shoot sound
     if (ShootSound.Num() > 0)
@@ -150,17 +166,17 @@ void AWeapon::Fire()
         {                    
             if (HitResult.GetActor()->ActorHasTag("Enemy"))
             {
-                GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("blood")));
+                //blood effect only enemy
+                UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), BloodNiagara, HitResult.Location, UKismetMathLibrary::MakeRotFromX(HitResult.ImpactNormal), FVector(0.5f, 0.5f, 0.5f));
+                UGameplayStatics::ApplyDamage(HitResult.GetActor(), Damage, nullptr, this, UDamageType::StaticClass());                   
+            }            
+            else
+            {
+                UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), LandNiagara, HitResult.Location, UKismetMathLibrary::MakeRotFromX(HitResult.ImpactNormal), FVector(0.2f, 0.2f, 0.2f));
+                UGameplayStatics::SpawnDecalAtLocation(GetWorld(), BulletDecal, FVector(5.f, 5.f, 5.f),
+                    HitResult.Location, UKismetMathLibrary::MakeRotFromX(HitResult.ImpactNormal), 4.f)->SetFadeScreenSize(0.f);            
             }
-            UGameplayStatics::ApplyDamage(HitResult.GetActor(), Damage, nullptr, this, UDamageType::StaticClass());                   
-
-            //blood effect -> only enemy
-            UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), BloodNiagara, HitResult.Location, UKismetMathLibrary::MakeRotFromX(HitResult.ImpactNormal), FVector(0.5f, 0.5f, 0.5f));
         }                    
-
-        UGameplayStatics::SpawnDecalAtLocation(GetWorld(), BulletDecal, FVector(5.f, 5.f, 5.f),
-            HitResult.Location, UKismetMathLibrary::MakeRotFromX(HitResult.ImpactNormal), 4.f)->SetFadeScreenSize(0.f);
-            
     }
 
     FColor DrawColor = bHit ? FColor::Green : FColor::Red;
