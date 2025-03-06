@@ -54,6 +54,8 @@ public:
 	UFUNCTION()
 	int32 GetCurrentInventoryAmmo() { return InventoryAmmo; }
 
+	UFUNCTION()
+	void InitializeInstance();
 public:
 	//for HUD ammo text ui
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "PlayerData")
