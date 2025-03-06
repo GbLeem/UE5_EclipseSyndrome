@@ -4,7 +4,10 @@
 
 APuzzleBlock::APuzzleBlock()
 {
-
+	if (!RootComponent)
+	{
+		RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootComponent"));
+	}
 	PrimaryActorTick.bCanEverTick = false;
 	
 	ItemType = "PuzzleBlock";
@@ -15,7 +18,7 @@ APuzzleBlock::APuzzleBlock()
 	InteractionCollision = for collision with player*/
 	
 	
-	SlotCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("SlotCollision"));
+	/*SlotCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("SlotCollision"));
 	RootComponent = SlotCollision;
 	
 	SlotCollision->SetBoxExtent(FVector(25.0f, 25.0f, 25.0f));
@@ -48,8 +51,58 @@ APuzzleBlock::APuzzleBlock()
 	
 	StaticMeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMeshComp"));
 	StaticMeshComp->SetupAttachment(RootComponent);
-	StaticMeshComp->SetRelativeLocation(FVector(10.f, 30.f, 0.f));
+	StaticMeshComp->SetRelativeLocation(FVector(10.f, 30.f, 0.f));*/
+	
 
+	
+
+	SlotCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("SlotCollision"));
+	SlotCollision->SetupAttachment(RootComponent);
+
+
+	SlotCollision->SetBoxExtent(FVector(25.0f, 25.0f, 25.0f));
+	SlotCollision->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	SlotCollision->SetCollisionObjectType(ECC_WorldDynamic);
+	SlotCollision->SetRelativeLocation(FVector(0.f, 0.f, 0.f));
+
+	SlotCollision->SetCollisionResponseToAllChannels(ECR_Ignore);
+	SlotCollision->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Overlap);
+	//SlotCollision->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Ignore);
+	////
+	SlotCollision->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Overlap);
+	SlotCollision->SetCollisionResponseToChannel(ECC_PhysicsBody, ECR_Overlap);
+	////
+	SlotCollision->SetSimulatePhysics(false);
+	SlotCollision->SetHiddenInGame(false);
+	SlotCollision->SetVisibility(true);
+
+	StaticMeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMeshComp"));
+	StaticMeshComp->SetupAttachment(SlotCollision);
+	StaticMeshComp->SetRelativeLocation(FVector(0.f, 0.f, 0.f));
+	StaticMeshComp->SetSimulatePhysics(false);
+	//StaticMeshComp->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	//StaticMeshComp->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Ignore);
+	//StaticMeshComp->SetCollisionResponseToChannel(ECC_PhysicsBody, ECR_Ignore);
+
+
+
+	InteractionCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("InteractionCollision"));
+	InteractionCollision->SetBoxExtent(FVector(200.f, 200.f, 200.f));
+	InteractionCollision->SetCollisionProfileName(TEXT("OverlapAllDynamic"));
+	InteractionCollision->SetupAttachment(RootComponent);
+	InteractionCollision->SetRelativeLocation(FVector(0.f, 0.f, 0.f));
+
+
+	InteractionCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	InteractionCollision->SetCollisionObjectType(ECC_WorldDynamic);
+	InteractionCollision->SetCollisionResponseToAllChannels(ECR_Ignore);
+	InteractionCollision->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+
+	InteractionCollision->OnComponentBeginOverlap.AddDynamic(this, &APuzzleBlock::OnPlayerOverlapBegin);
+	InteractionCollision->OnComponentEndOverlap.AddDynamic(this, &APuzzleBlock::OnPlayerOverlapEnd);
+
+	InteractionCollision->SetHiddenInGame(false);
+	InteractionCollision->SetVisibility(true);
 	
 	BlockID = -1; //starting num
 }
@@ -63,7 +116,11 @@ void APuzzleBlock::BeginPlay()
 
 	UE_LOG(LogTemp, Warning, TEXT("%s SlotCollision: SimulatePhysics=%d, CollisionEnabled=%d"),
 		*GetName(), SlotCollision->IsSimulatingPhysics(), SlotCollision->GetCollisionEnabled());
-
+	//if (SlotCollision)
+	//{
+	//	SlotCollision->SetSimulatePhysics(true);
+	//	UE_LOG(LogTemp, Warning, TEXT("[!] PuzzleBlock Physics Enabled on Spawn"));
+	//}
 }
 
 
@@ -156,9 +213,8 @@ void APuzzleBlock::SetBlockID(int32 NewID)
 void APuzzleBlock::ActivateItem(AActor* Activator)
 {
 	APlayerCharacter* Player = Cast<APlayerCharacter>(Activator);
-	//if (!Player) return;
-	//need to be fixed 
-
+	UE_LOG(LogTemp, Warning, TEXT("SlotCollision Location: %s"), *SlotCollision->GetComponentLocation().ToString());
+	UE_LOG(LogTemp, Warning, TEXT("StaticMeshComp Location Before: %s"), *StaticMeshComp->GetComponentLocation().ToString());
 
 	if (Player)
 	{
@@ -166,11 +222,25 @@ void APuzzleBlock::ActivateItem(AActor* Activator)
 
 		if (CurrentSlot)
 		{
+			
+			/*FVector TargetLocation = CurrentSlot->GetActorLocation();
+			SetActorLocation(TargetLocation);
+
+			SetActorEnableCollision(false);
+
+			FVector SlotCenter = SlotCollision->GetComponentLocation();
+			StaticMeshComp->SetWorldLocation(SlotCenter);
+
+			UE_LOG(LogTemp, Warning, TEXT("PuzzleBlock moved to Slot! TargetLocation: %s, SlotCenter: %s"),
+				*TargetLocation.ToString(), *SlotCenter.ToString());*/
+
+			////
 			SetActorLocation(CurrentSlot->GetActorLocation());
+			UE_LOG(LogTemp, Warning, TEXT("StaticMeshComp Location After: %s"), *StaticMeshComp->GetComponentLocation().ToString());
 
 			SlotCollision->SetSimulatePhysics(false);
 			UE_LOG(LogTemp, Warning, TEXT("SetSimulatePhysics(false) called for puzzleblock"));
-			SetActorEnableCollision(false);
+			
 
 			UE_LOG(LogTemp, Warning, TEXT("PuzzleBlock placed in slot!"));
 		}

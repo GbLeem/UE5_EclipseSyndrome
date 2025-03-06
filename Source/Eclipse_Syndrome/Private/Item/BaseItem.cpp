@@ -5,39 +5,42 @@
 #include "Components/TextBlock.h"
 #include "Character/PlayerCharacter.h"
 #include "GameFramework/PlayerController.h"
+#include "NiagaraSystem.h"
+#include "UObject/ConstructorHelpers.h"
+#include "InteractableItem/PuzzleItem/PuzzleBlock.h"
 #include "GameFramework/InputSettings.h"
 
 ABaseItem::ABaseItem()
 	:bIsPeeking(false)
 	,ItemNumber(0)
 	,ItemAmount(0)
-	,bIsPuzzleBlock(false)
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	if (!bIsPuzzleBlock)
+	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootComponent"));
+
+	StaticMeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMesh"));
+	StaticMeshComp->SetupAttachment(RootComponent);
+	StaticMeshComp->SetSimulatePhysics(false);
+
+
+	ItemHoverUI = CreateDefaultSubobject<UWidgetComponent>(TEXT("Hover UI"));
+	ItemHoverUI->SetupAttachment(StaticMeshComp);
+	ItemHoverUI->SetWidgetSpace(EWidgetSpace::Screen);
+	ItemHoverUI->SetVisibility(false);
+
+	static ConstructorHelpers::FClassFinder<UUserWidget>ItemUIClass(TEXT("/Game/HJ/UI/WBP_Item.WBP_Item_C"));
+	if (ItemUIClass.Succeeded())
 	{
-		StaticMeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMesh"));
-		StaticMeshComp->SetupAttachment(RootComponent);
-
-
-		GlowEffect = CreateDefaultSubobject<UNiagaraComponent>(TEXT("GlowEffect"));
-		GlowEffect->SetupAttachment(RootComponent);
-
-		ItemHoverUI = CreateDefaultSubobject<UWidgetComponent>(TEXT("Hover UI"));
-		ItemHoverUI->SetupAttachment(StaticMeshComp);
-		ItemHoverUI->SetWidgetSpace(EWidgetSpace::Screen);
-		ItemHoverUI->SetVisibility(false);
-
-		static ConstructorHelpers::FClassFinder<UUserWidget>ItemUIClass(TEXT("/Game/HJ/UI/WBP_Item.WBP_Item_C"));
-		if (ItemUIClass.Succeeded())
-		{
-			ItemHoverUI->SetWidgetClass(ItemUIClass.Class);
-		}
+		ItemHoverUI->SetWidgetClass(ItemUIClass.Class);
 	}
-	
 
 	Tags.Add("Item");
+}
+
+void ABaseItem::BeginPlay()
+{
+	Super::BeginPlay();
 }
 
 void ABaseItem::Tick(float DeltaTime)

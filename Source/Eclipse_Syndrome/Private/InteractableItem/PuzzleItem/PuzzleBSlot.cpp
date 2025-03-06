@@ -1,6 +1,9 @@
 #include "InteractableItem/PuzzleItem/PuzzleBSlot.h"
 #include "InteractableItem/PuzzleItem/PuzzleManager.h"
 #include "Kismet/GameplayStatics.h"
+#include "Sound/SoundBase.h"
+#include "Character/PlayerCharacter.h"
+
 
 APuzzleBSlot::APuzzleBSlot()
 {
@@ -12,14 +15,41 @@ APuzzleBSlot::APuzzleBSlot()
 	CollisionBox->SetCollisionProfileName(TEXT("Trigger"));
 	RootComponent = CollisionBox;
 	CollisionBox->OnComponentBeginOverlap.AddDynamic(this, &APuzzleBSlot::OnBlockOverlap);
+	//CollisionBox->OnComponentEndOverlap.AddDynamic(this, &APuzzleBSlot::OnBlockOverlapEnd);
+	
+
+	///////
+	CollisionBox->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	CollisionBox->SetCollisionObjectType(ECC_WorldDynamic);
+
+	CollisionBox->SetCollisionResponseToAllChannels(ECR_Ignore);
+	CollisionBox->SetCollisionResponseToChannel(ECC_PhysicsBody, ECR_Overlap);
+	CollisionBox->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Overlap);
+	CollisionBox->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Overlap);
+	//////
+
 	CollisionBox->SetGenerateOverlapEvents(true);
 	
+
+
+	//sound effect
+	static ConstructorHelpers::FObjectFinder<USoundBase> SoundAsset(TEXT("/Game/Yujin/Audio/GearAddSlot.GearAddSlot"));
+	if (SoundAsset.Succeeded())
+	{
+		GAddSlotSound = SoundAsset.Object;
+		UE_LOG(LogTemp, Error, TEXT("[!]Succeeded to load GAddSlotSound sound!"));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("[!]Failed to load GAddSlotSound sound!"));
+	}
 }
 
 void APuzzleBSlot::BeginPlay()
 {
 	Super::BeginPlay();
 
+	UE_LOG(LogTemp, Warning, TEXT("PuzzleBSlot CollisionBox Overlap Events: %d"), CollisionBox->OnComponentBeginOverlap.IsBound());
 	if (!PuzzleManager)
 	{
 		PuzzleManager = Cast<APuzzleManager>(UGameplayStatics::GetActorOfClass(GetWorld(), APuzzleManager::StaticClass()));
@@ -69,11 +99,12 @@ void APuzzleBSlot::OnBlockOverlap(
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
 	bool bFromSweep, const FHitResult& SweepResult)
 {
-	
+	UE_LOG(LogTemp, Warning, TEXT("OnBlockOverlap called! Overlapping actor: %s"), *OtherActor->GetName());
+
 	APuzzleBlock* OverlappingBlock = Cast<APuzzleBlock>(OtherActor);
 	//if otherActor type == APuzzleBlock, OverlappingBlock / else nullptr
 	if (!OverlappingBlock) return;
-	
+	UE_LOG(LogTemp, Warning, TEXT("[!]Overlapping Block Set: %s"), *OverlappingBlock->GetName());
 	//if current block exists, and overlapping block is not current block,
 	//push back the overlapping block
 	if (CurrentBlock && OverlappingBlock != CurrentBlock)
@@ -88,7 +119,21 @@ void APuzzleBSlot::OnBlockOverlap(
 	/*FVector SnapOffset = FVector(0.0f, 30.0f, 5.0f);*/
 	TargetLocation = GetActorLocation();
 	TargetRotation = GetActorRotation();
-		
+	
+	//add sound here
+	APlayerCharacter* Player = Cast<APlayerCharacter>(UGameplayStatics::GetPlayerPawn(GetWorld(), 0));
+
+	if (Player && GAddSlotSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(GetWorld(), GAddSlotSound, Player->GetActorLocation());
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("GAddSlotSound failed"));
+	}
+
+
+
 	CurrentLerpTime = 0.0f;
 	LerpDuration = 1.0f;
 
@@ -102,9 +147,7 @@ void APuzzleBSlot::OnBlockOverlap(
 	CurrentBlock->CurrentSlot = this;
 
 	SetAllCurrentBlock();
-	///original code
 
-	/*CurrentBlock = OverlappingBlock;*/
 	if (CurrentBlock->BlockID == CorrectBlockID)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Gear was placed correctly, slot: %d, block:%d placed"), CorrectBlockID, OverlappingBlock->BlockID);
@@ -119,8 +162,24 @@ void APuzzleBSlot::OnBlockOverlap(
 }
 
 
+void APuzzleBSlot::OnBlockOverlapEnd(
+	UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex
+)
+{
+	APuzzleBlock* OverlappingBlock = Cast<APuzzleBlock>(OtherActor);
+	if (!OverlappingBlock) return;
+	UE_LOG(LogTemp, Warning, TEXT("Block %s exited slot %d"), *OverlappingBlock->GetName(), CorrectBlockID);
+	if (CurrentBlock == OverlappingBlock)
+	{
+		RemoveBlock();
+	}
+}
+
+
 bool APuzzleBSlot::PlaceBlock(APuzzleBlock* Block)
 {
+	UE_LOG(LogTemp, Warning, TEXT("[!]PlaceBlock called"));
 	if (!Block) return false;
 		// if no block or block already exists -> return false
 	if(CurrentBlock)
@@ -129,6 +188,7 @@ bool APuzzleBSlot::PlaceBlock(APuzzleBlock* Block)
 		FVector PushBackLocation = CurrentBlock->GetActorLocation() + FVector(20.0f, 0.0f, 0.0f);
 		CurrentBlock->SetActorLocation(PushBackLocation);
 		UE_LOG(LogTemp, Warning, TEXT("Slot already occupied"));
+
 		
 	}
 
@@ -155,10 +215,11 @@ bool APuzzleBSlot::PlaceBlock(APuzzleBlock* Block)
 
 void APuzzleBSlot::RemoveBlock()
 {
+	UE_LOG(LogTemp, Warning, TEXT("RemoveBlock called on Slot ID %d"), CorrectBlockID);
 	//if current block exists, remove block when called
 	if (CurrentBlock)
 	{
-		CurrentBlock->SlotCollision->SetSimulatePhysics(true);
+		CurrentBlock->SlotCollision->SetSimulatePhysics(false);
 		
 		UE_LOG(LogTemp, Warning, TEXT("Block ID %d removed from Slot ID %d"), CurrentBlock->BlockID, CorrectBlockID);
 		CurrentBlock = nullptr;

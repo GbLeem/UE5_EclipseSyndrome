@@ -16,6 +16,8 @@ public:
 	//힐 아이템 사용시, 힐 정도
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
 	float HealAmount;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
+	UNiagaraComponent* GlowEffect;
 
 
 	virtual void ActivateItem(AActor* Activator) override;

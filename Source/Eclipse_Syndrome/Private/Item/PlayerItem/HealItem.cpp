@@ -13,6 +13,15 @@ AHealItem::AHealItem()
 		StaticMeshComp->SetStaticMesh(StaticMeshAsset.Object);
 	}
 	StaticMeshComp->SetRelativeScale3D(FVector(0.4f, 0.4f, 0.4f));
+
+	GlowEffect = CreateDefaultSubobject<UNiagaraComponent>(TEXT("GlowEffect"));
+	GlowEffect->SetupAttachment(StaticMeshComp);
+	static ConstructorHelpers::FObjectFinder<UNiagaraSystem>NiagaraEffect(TEXT("/Game/Yujin/FX/DrapEffet/VFX/NE_drop_effects03"));
+	if (NiagaraEffect.Succeeded())
+	{
+		GlowEffect->SetAsset(NiagaraEffect.Object);
+	}
+	GlowEffect->SetRelativeLocation(FVector(0.0f, 0.0f, 10.0f));
 }
 
 

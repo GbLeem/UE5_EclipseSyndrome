@@ -19,6 +19,7 @@ class ECLIPSE_SYNDROME_API ABaseItem : public AActor, public IItemInterface
 public:	
 	ABaseItem();
 	virtual void Tick(float DeltaTime) override;
+	virtual void BeginPlay() override;
 
 	virtual FName GetItemType() const override;
 	void ShowUI();
@@ -42,18 +43,13 @@ protected:
 	//for picking up item after pressing key
 	bool bCanPickUp = false;
 
-	//Collision Box for line tracing
-	/*UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Item")
-	USceneComponent* SceneRootComp;*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
 	UStaticMeshComponent* StaticMeshComp;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
-	UNiagaraComponent* GlowEffect;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
 	TObjectPtr<UWidgetComponent> ItemHoverUI;
 	
-	
+	bool bIsPuzzleBlock = false;
 
 public:
 	bool bIsPeeking;
@@ -61,5 +57,4 @@ public:
 	int32 ItemNumber; //for ui [TEST - 2/25]
 	int32 ItemAmount;
 
-	bool bIsPuzzleBlock;
 };

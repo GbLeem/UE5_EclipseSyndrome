@@ -1,5 +1,8 @@
 #include "InteractableItem/PowerPlug.h"
 #include "CableComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "Sound/SoundBase.h"
+
 
 APowerPlug::APowerPlug()
 {
@@ -17,6 +20,17 @@ APowerPlug::APowerPlug()
 
 	StaticMeshCompo->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	StaticMeshCompo->SetGenerateOverlapEvents(true);
+
+	static ConstructorHelpers::FObjectFinder<USoundBase> SoundAsset(TEXT("/Game/Yujin/Audio/CodeConnecting.CodeConnecting"));
+	if (SoundAsset.Succeeded())
+	{
+		CodePlugSound = SoundAsset.Object;
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Failed to load CodePlugSound sound!"));
+	}
+
 
 }
 
@@ -49,7 +63,14 @@ void APowerPlug::AttachToPanel(AControlPannel* ControlPannel)
 {
 	if (!ControlPannel) return;
 
-
+	if (CodePlugSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			GetWorld(),
+			CodePlugSound,
+			GetActorLocation()
+		);
+	}
 	FVector SocketLocation = ControlPannel->GetPlugPosition();
 	FQuat TargetRotation = ControlPannel->GetPlugRotation();
 
