@@ -30,7 +30,9 @@ public:
 	UPROPERTY(EditAnywhere, Category="Door Rotation")
 	float MoveSpeed;
 	UPROPERTY(EditAnywhere, Category = "Door Rotation")
-	float RotationSpeed;
+	float RotationSpeed; 
+	UPROPERTY(EditAnywhere, Category = "Sound")
+	USoundBase* IDoorOpeningSound;
 
 	bool bIsOpening = false;
 	
