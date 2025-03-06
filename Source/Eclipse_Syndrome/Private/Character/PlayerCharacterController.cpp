@@ -345,6 +345,8 @@ void APlayerCharacterController::ChangePossess(const TObjectPtr<APawn>& NewPawn)
 	else if (const TObjectPtr<APlayerCharacter> NewPlayerPawn = Cast<APlayerCharacter>(NewPawn))
 	{
 		HandlePlayerPossess(NewPlayerPawn, PrevPawn);
+		SetViewTargetWithBlend(NewPlayerPawn->TPSCamera->GetChildActor(), 0.0f);
+		NewPlayerPawn->bIsTPSMode = true;
 	}
 }
 

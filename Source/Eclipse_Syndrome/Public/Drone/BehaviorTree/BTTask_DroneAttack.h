@@ -20,6 +20,7 @@ protected:
 	virtual void TickTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds) override;
 
 private:
+	FTimerHandle PathTimerHandle;
 	FTimerHandle AttackCooldownTimer;
 	TObjectPtr<AEnemyBase> PrevTarget;
 	

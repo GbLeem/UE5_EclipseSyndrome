@@ -1,15 +1,10 @@
 #include "Drone/DroneAIController.h"
-
-#include "EngineUtils.h"
 #include "BehaviorTree/BehaviorTree.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Drone/Drone.h"
-#include "Enemy/EnemyBase.h"
 #include "System/DefaultGameState.h"
-#include "Volume/AOctreeVolume.h"
-#include "Volume/NavNode.h"
 
 ADroneAIController::ADroneAIController()
 	: BaseDroneOffset(FVector(25, 80, 100))
@@ -22,6 +17,7 @@ ADroneAIController::ADroneAIController()
 	, PathFindModeAcceleration(20.0f)
 {
 	DefaultMaxSpeed = MaxSpeed;
+	DefaultKd = Kd;
 }
 void ADroneAIController::BeginPlay()
 {
