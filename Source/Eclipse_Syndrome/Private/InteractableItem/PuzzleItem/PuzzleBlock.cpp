@@ -32,8 +32,8 @@ APuzzleBlock::APuzzleBlock()
 	SlotCollision->SetCollisionResponseToChannel(ECC_PhysicsBody, ECR_Overlap);
 	////
 	SlotCollision->SetSimulatePhysics(false);
-	SlotCollision->SetHiddenInGame(false);
-	SlotCollision->SetVisibility(true);
+	SlotCollision->SetHiddenInGame(true);
+	SlotCollision->SetVisibility(false);
 
 	StaticMeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMeshComp"));
 	StaticMeshComp->SetupAttachment(SlotCollision);
@@ -60,8 +60,8 @@ APuzzleBlock::APuzzleBlock()
 	InteractionCollision->OnComponentBeginOverlap.AddDynamic(this, &APuzzleBlock::OnPlayerOverlapBegin);
 	InteractionCollision->OnComponentEndOverlap.AddDynamic(this, &APuzzleBlock::OnPlayerOverlapEnd);
 
-	InteractionCollision->SetHiddenInGame(false);
-	InteractionCollision->SetVisibility(true);
+	InteractionCollision->SetHiddenInGame(true);
+	InteractionCollision->SetVisibility(false);
 	
 	BlockID = -1; //starting num
 }

@@ -10,6 +10,7 @@ struct FInputActionValue;
 class ABaseItem;
 class AWeapon;
 class UCableComponent;
+class UNiagaraSystem;
 
 UCLASS()
 class ECLIPSE_SYNDROME_API APlayerCharacter : public ACharacter
@@ -173,7 +174,7 @@ public:
 
 	//for rolling notify
 	bool bIsRolling;
-
+	
 private:
 	bool bCanFire;  //character flag
 	bool bCanReload; //for reloading animation
@@ -246,4 +247,7 @@ public:
 
 	//sprint only forward 
 	bool bMoveForward;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effect")
+	TObjectPtr<UNiagaraSystem> HealNiagara;
 };

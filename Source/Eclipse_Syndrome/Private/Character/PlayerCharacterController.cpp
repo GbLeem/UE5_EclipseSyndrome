@@ -145,6 +145,11 @@ APlayerCharacterController::APlayerCharacterController()
 	{
 		GameOverUIClass = GameOverWidgetBP.Class;
 	}
+	static ConstructorHelpers::FClassFinder<UUserWidget>GameClearWidgetBP(TEXT("/Game/Yujin/EndingCredit/WB_Credits.WB_Credits_C"));
+	if (GameClearWidgetBP.Succeeded())
+	{
+		GameClearUIClass = GameClearWidgetBP.Class;
+	}
 }
 
 void APlayerCharacterController::ShowHUD()
@@ -245,16 +250,39 @@ void APlayerCharacterController::ShowGameOverUI()
 
 void APlayerCharacterController::ShowGameClearUI()
 {
-	SetPause(true);
+	if (HUDWidgetInstance)
+	{
+		HUDWidgetInstance->RemoveFromParent();
+		HUDWidgetInstance = nullptr;
+	}
+	if (MainMenuInstance)
+	{
+		MainMenuInstance->RemoveFromParent();
+		MainMenuInstance = nullptr;
+	}
+	//SetPause(true);
+	if (GameClearUIClass)
+	{
+		GameClearUIInstance = CreateWidget<UUserWidget>(this, GameClearUIClass);
+
+		GameClearUIInstance->AddToViewport();
+		bShowMouseCursor = true;
+		SetInputMode(FInputModeUIOnly());
+
+		UFunction* GameClearUIAnim = GameClearUIInstance->FindFunction(FName("GameClearAnim"));
+		if (GameClearUIAnim)
+		{
+			GameClearUIInstance->ProcessEvent(GameClearUIAnim, nullptr);
+		}
+		SetPause(true);
+	}
 }
 
 void APlayerCharacterController::StartGame()
 {
 	if (UDefaultGameInstance* DefaultGameInstance = Cast<UDefaultGameInstance>(UGameplayStatics::GetGameInstance(this)))
 	{
-		DefaultGameInstance->CurrentLevel = 0;
-		DefaultGameInstance->PlusHealth(DefaultGameInstance->PlayerMaxHealth);
-		DefaultGameInstance->InventoryAmmo = 100;		
+		DefaultGameInstance->InitializeInstance();		
 	}
 	
 	ADefaultGameState* DefaultGameState = Cast<ADefaultGameState>(GetWorld()->GetGameState());
@@ -263,7 +291,8 @@ void APlayerCharacterController::StartGame()
 		DefaultGameState->UpdateHUD();
 	}
 
-	UGameplayStatics::OpenLevel(GetWorld(), FName("MainLevel_2"));
+	//UGameplayStatics::OpenLevel(GetWorld(), FName("MainLevel_2"));
+	UGameplayStatics::OpenLevel(GetWorld(), FName("Lv1"));
 	SetPause(false);
 }
 

@@ -8,7 +8,7 @@ ANewWeapon::ANewWeapon()
 	FireRate = 10.f;
 	FireRange = 8000.f;
 	Damage = 100.f;
-	MaxAmmo = 15;
+	MaxAmmo = 10;
 	bAutoFire = false;
 	bIsPeeking = false;
 	WeaponNumber = 5;

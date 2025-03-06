@@ -110,6 +110,21 @@ void UDefaultGameInstance::RemoveSpecialItem()
 	}
 }
 
+void UDefaultGameInstance::InitializeInstance()
+{
+	InventoryAmmo = 100;
+	PlayerMaxHealth = 100;
+	PlayerCurrentHealth = 100;
+	CurrentLevel = 0;
+	SpecialSlotItemID = -1;
+
+	InventoryItem.Add(1, 0);
+	InventoryItem.Add(2, InventoryAmmo);
+	InventoryItem.Add(3, 0);
+	
+	WeaponInventoryItem.Empty();
+}
+
 
 void UDefaultGameInstance::PlusHealth(int32 Amount)
 {
