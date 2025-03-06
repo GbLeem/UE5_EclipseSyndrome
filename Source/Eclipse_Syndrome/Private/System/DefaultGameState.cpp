@@ -121,18 +121,28 @@ void ADefaultGameState::UpdateHUD()
 						}
 					}
 				}
-				if (UImage* WeaponUI3Image = Cast<UImage>(InventoryWidget->GetWidgetFromName(TEXT("Weapon4Image"))))
+				if (UImage* WeaponUI4Image = Cast<UImage>(InventoryWidget->GetWidgetFromName(TEXT("Weapon4Image"))))
 				{
 					if (UGameInstance* GameInstance = GetGameInstance())
 					{
 						if (UDefaultGameInstance* DefaultGameInstance = Cast<UDefaultGameInstance>(GameInstance))
 						{
 							if (DefaultGameInstance->FindWeaponByIdx(4))
-								WeaponUI3Image->SetOpacity(1.f);
+								WeaponUI4Image->SetOpacity(1.f);
 						}
 					}
 				}
-
+				if (UImage* WeaponUI5Image = Cast<UImage>(InventoryWidget->GetWidgetFromName(TEXT("SubWeaponImage"))))
+				{
+					if (UGameInstance* GameInstance = GetGameInstance())
+					{
+						if (UDefaultGameInstance* DefaultGameInstance = Cast<UDefaultGameInstance>(GameInstance))
+						{
+							if (DefaultGameInstance->FindWeaponByIdx(5))
+								WeaponUI5Image->SetOpacity(1.f);
+						}
+					}
+				}
 
 				//Item UI
 				if (UTextBlock* CurrentInventoryHealthText = Cast<UTextBlock>(InventoryWidget->GetWidgetFromName(TEXT("Item1Text"))))
@@ -277,10 +287,15 @@ void ADefaultGameState::GameOver()
 	{
 		if (APlayerCharacterController* PlayerCharacterController = Cast<APlayerCharacterController>(PlayerController))
 		{
-			//PlayerCharacterController->SetInputMode(FInputModeUIOnly());
 			PlayerCharacterController->ShowGameOverUI();
-
-			//GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Black, FString::Printf(TEXT("Game Over")));
 		}
+	}
+}
+
+void ADefaultGameState::OpenCurrentLevel()
+{
+	if (LevelMapNames.IsValidIndex(CurrentLevelIndex))
+	{
+		UGameplayStatics::OpenLevel(GetWorld(), LevelMapNames[CurrentLevelIndex]);
 	}
 }

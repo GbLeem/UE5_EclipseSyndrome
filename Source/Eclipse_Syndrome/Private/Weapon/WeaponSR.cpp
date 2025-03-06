@@ -3,7 +3,7 @@
 
 AWeaponSR::AWeaponSR()
 {
-    FireRate = 10.f;
+    FireRate = 1.f;
     FireRange = 6000.f;
     Damage = 35.f;
     MaxAmmo = 15;
@@ -11,10 +11,10 @@ AWeaponSR::AWeaponSR()
     bIsPeeking = false;
     WeaponNumber = 3;
 
-    MinPitchRecoil = 3.5f;
-    MaxPitchRecoil = 5.5f;
-    MinYawRecoil = 2.2f;
-    MaxYawRecoil = 4.2f;
+    MinPitchRecoil = 2.5f;
+    MaxPitchRecoil = 4.5f;
+    MinYawRecoil = 1.2f;
+    MaxYawRecoil = 3.2f;
 
     static ConstructorHelpers::FObjectFinder<UStaticMesh>StaticMeshAsset(TEXT("/Game/HJ/Assets/FPS_Weapon_Bundle/Weapons/Meshes/KA_Val/SM_KA_Val_Y.SM_KA_Val_Y"));
     if (StaticMeshAsset.Succeeded())
