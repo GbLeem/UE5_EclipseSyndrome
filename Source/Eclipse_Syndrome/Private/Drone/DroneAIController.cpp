@@ -18,7 +18,7 @@ ADroneAIController::ADroneAIController()
 	, Kd(31000.0f)
 	, MaxSpeed(300000.f)
 	, DesiredDistance(15.0f)
-	, bShowDebug(true)
+	, bShowDebug(false)
 	, PathFindModeAcceleration(20.0f)
 {
 	DefaultMaxSpeed = MaxSpeed;
