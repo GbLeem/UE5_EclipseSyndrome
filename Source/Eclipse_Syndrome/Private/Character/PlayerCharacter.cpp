@@ -104,11 +104,11 @@ APlayerCharacter::APlayerCharacter()
 		RollingAnimMontage = RollingAsset.Object;
 	}
 
-	static ConstructorHelpers::FObjectFinder<UMaterialInterface>CableMat(TEXT("/Game/SH/MT_Rope.MT_Rope"));
-	if (CableMat.Succeeded())
-	{
-		CableComp->SetMaterial(0, CableMat.Object);
-	}
+	// static ConstructorHelpers::FObjectFinder<UMaterialInterface>CableMat(TEXT("/Game/SH/MT_Rope.MT_Rope"));
+	// if (CableMat.Succeeded())
+	// {
+	// 	CableComp->SetMaterial(0, CableMat.Object);
+	// }
 
 	static ConstructorHelpers::FObjectFinder<USoundBase>FootSound1(TEXT("/Game/HJ/Assets/Sound/Foot.Foot"));
 	if (FootSound1.Succeeded())
@@ -944,8 +944,11 @@ void APlayerCharacter::Grapple(const FInputActionValue& value)
 		TArray<AActor*> ActorsToIgnore;
 		auto Channel = UEngineTypes::ConvertToTraceType(ECollisionChannel::ECC_GameTraceChannel1);
 		
+		// bool bHit = UKismetSystemLibrary::SphereTraceSingle(GetWorld(), Start, End, 25.f, Channel, false,
+		// 	ActorsToIgnore, EDrawDebugTrace::Type::ForDuration, GrappleHitPoint, true);
+		
 		bool bHit = UKismetSystemLibrary::SphereTraceSingle(GetWorld(), Start, End, 25.f, Channel, false,
-			ActorsToIgnore, EDrawDebugTrace::Type::ForDuration, GrappleHitPoint, true);
+			ActorsToIgnore, EDrawDebugTrace::None, GrappleHitPoint, true);
 
 		if (bHit)
 		{
