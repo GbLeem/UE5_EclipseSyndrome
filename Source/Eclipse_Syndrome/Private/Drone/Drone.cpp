@@ -6,11 +6,13 @@
 #include "EnhancedInputComponent.h"
 #include "InputActionValue.h"
 #include "NiagaraComponent.h"
+#include "NiagaraFunctionLibrary.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Character/PlayerCharacterController.h"
 #include "Components/SphereComponent.h"
 #include "Enemy/EnemyBase.h"
 #include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "System/DefaultGameState.h"
 #include "Weapon/DefaultBullet.h"
 
@@ -29,6 +31,9 @@ ADrone::ADrone()
 {
 	PrimaryActorTick.bCanEverTick = true;
 	ComponentInit();
+
+	static ConstructorHelpers::FObjectFinder<UNiagaraSystem>BloodAsset(TEXT("/Game/SH/NS_Splash.NS_Splash")); 
+	BloodNiagara = BloodAsset.Object;
 }
 
 void ADrone::BeginPlay()
@@ -319,6 +324,9 @@ void ADrone::AttackSingleArm(AEnemyBase* Target, const FName BoneName)
 	if (bHit && HitResult.GetActor() == Target)
 	{
 		UGameplayStatics::ApplyDamage(Target, AttackDamage, nullptr, this, UDamageType::StaticClass());
+
+		//blood effect -> only enemy
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), BloodNiagara, HitResult.Location, UKismetMathLibrary::MakeRotFromX(HitResult.ImpactNormal), FVector(0.5f, 0.5f, 0.5f));
 	}
 	//DrawDebugLine(GetWorld(), MuzzleLocation, EndLocation, bHit ? FColor::Red : FColor::Blue, false, 1.0f, 0, 2.0f);
 

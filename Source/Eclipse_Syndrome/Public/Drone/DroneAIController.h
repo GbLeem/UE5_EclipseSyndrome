@@ -32,6 +32,7 @@ private:
 	float Kd; //10000.f;
 	UPROPERTY(EditAnywhere, Category="PID")
 	float MaxSpeed;
+	float DefaultMaxSpeed;
 	UPROPERTY(EditAnywhere, Category="PID")
 	float DesiredDistance;
 	UPROPERTY(EditAnywhere, Category="PID")
@@ -103,6 +104,12 @@ public:
 	void DroneAttack();
 
 	void EndExecuteCommand() { bExecuteCommand = false; }
+
+	void SetPIDKp(float NewKp) { Kp = NewKp; }
+	void SetPIDKi(float NewKi) { Ki = NewKi; }
+	void SetPIDKd(float NewKd) { Kd = NewKd; }
+	void SetPIDMaxSpeed(float NewMaxSpeed) { MaxSpeed = NewMaxSpeed; }
+	void SetPIDDefaultSpeed() { MaxSpeed = DefaultMaxSpeed; }
 
 private:
 	float TargetRollSpeed = 0.0f;

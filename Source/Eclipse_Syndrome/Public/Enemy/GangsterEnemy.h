@@ -6,8 +6,10 @@
 #include "Enemy/EnemyBase.h"
 #include "GangsterEnemy.generated.h"
 
+
 class USphereComponent;
 class UNiagaraComponent;
+class ADefaultBullet;
 
 UCLASS()
 class ECLIPSE_SYNDROME_API AGangsterEnemy : public AEnemyBase
@@ -37,6 +39,8 @@ public:
 	UNiagaraComponent* MuzzleFlashComp;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Component")
 	USphereComponent* SphereComp;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Drone|Property")
+	TSubclassOf<ADefaultBullet> BulletClass;
 
 	UFUNCTION(BlueprintCallable)
 	void ChangeSpeedAim();

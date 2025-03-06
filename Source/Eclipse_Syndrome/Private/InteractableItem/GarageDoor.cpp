@@ -1,6 +1,9 @@
 #include "InteractableItem/GarageDoor.h"
 #include "Character/PlayerCharacter.h"
 
+#include "Kismet/GameplayStatics.h"
+#include "Sound/SoundBase.h"
+
 AGarageDoor::AGarageDoor()
 {
 
@@ -22,6 +25,18 @@ AGarageDoor::AGarageDoor()
 
 	InteractionZone->SetHiddenInGame(false);
 	InteractionZone->SetVisibility(true);
+
+	//sound effect
+	static ConstructorHelpers::FObjectFinder<USoundBase> SoundAsset(TEXT("/Game/Yujin/Audio/GarageDoorOpening.GarageDoorOpening"));
+	if (SoundAsset.Succeeded())
+	{
+		GDoorOpeningSound = SoundAsset.Object;
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Failed to load GDoorOpeningSound sound!"));
+	}
+
 
 }
 
@@ -103,6 +118,15 @@ void AGarageDoor::OpenGarageDoor()
 	if (!GDoorMesh) return;
 
 	bIsOpening = true;
+
+	if (GDoorOpeningSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			GetWorld(),
+			GDoorOpeningSound,
+			GetActorLocation()
+		);
+	}
 }
 
 void AGarageDoor::MoveDoorUp(float DeltaTime)

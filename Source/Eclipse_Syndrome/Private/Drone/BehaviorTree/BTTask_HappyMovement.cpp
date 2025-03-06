@@ -21,6 +21,7 @@ EBTNodeResult::Type UBTTask_HappyMovement::ExecuteTask(UBehaviorTreeComponent& O
 	const TObjectPtr<ADroneAIController> AIDroneController = Cast<ADroneAIController>(OwnerComp.GetAIOwner());
 	PrevDroneAIDesiredDistance = AIDroneController->GetDesiredDistance();
 	AIDroneController->SetDesiredDistance(0.0f);
+	AIDroneController->SetPIDMaxSpeed(150000.0f);
 	return EBTNodeResult::InProgress;
 }
 

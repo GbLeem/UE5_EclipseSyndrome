@@ -23,11 +23,12 @@ EBTNodeResult::Type UBTTask_CircleAroundPlayer::ExecuteTask(UBehaviorTreeCompone
 	{
 		const TObjectPtr<AActor> Player = Cast<AActor>(OwnerComp.GetBlackboardComponent()->GetValueAsObject("PlayerActor"));
 		const TObjectPtr<ADrone> Drone = Cast<ADrone>(AIController->GetPawn());
-
+		
 		if (Player && Drone)
 		{
 			AccumulateAngle = 0.0f;
 			CalculateStartAngle(Player, AIController);
+			Cast<ADroneAIController>(AIController)->SetPIDMaxSpeed(150000.0f);
 			return EBTNodeResult::InProgress;
 		}
 	}

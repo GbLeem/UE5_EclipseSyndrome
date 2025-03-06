@@ -33,6 +33,10 @@ public:
 
 	bool bPlayerInRange = false;
 
+
+
+
+
 	UFUNCTION()
 	void SetBlockID(int32 NewID);
 
@@ -56,5 +60,7 @@ public:
 
 	UFUNCTION()
 	virtual void ActivateItem(AActor* Activator) override;
+
+
 
 };

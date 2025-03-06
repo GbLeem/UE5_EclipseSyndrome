@@ -28,20 +28,6 @@ void UDefaultGameInstance::UseAmmo(int32 Amount)
 	InventoryItem[2] = InventoryAmmo;
 }
 
-//original code(delete if below code works)
-//void UDefaultGameInstance::AddItem(int32 ItemIdx, int32 ItemAmount)
-//{
-//	if (InventoryItem.Contains(ItemIdx))
-//	{
-//		InventoryItem[ItemIdx] += ItemAmount;
-//		if (ItemIdx == 2)
-//			AddAmmo(ItemAmount);
-//	}
-//	else
-//	{
-//		InventoryItem.Add(ItemIdx, ItemAmount);
-//	}
-//}
 //[YJfixing]
 void UDefaultGameInstance::AddItem(int32 ItemIdx, int32 ItemAmount, EItemType ItemType, int32 BlockID)
 {
@@ -54,7 +40,7 @@ void UDefaultGameInstance::AddItem(int32 ItemIdx, int32 ItemAmount, EItemType It
 			if (ItemType == EItemType::PuzzleBlock)
 			{//if puzzleblock,
 				InventoryItem.Add(ItemIdx, ItemAmount);
-
+				SpecialSlotItemID = BlockID;
 				PuzzleBlockIDMap.Add(ItemIdx, BlockID);
 				UE_LOG(LogTemp, Warning, TEXT("PuzzleBlock Added: %d with BlockID: %d"), ItemIdx, BlockID);
 			}

@@ -6,6 +6,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "CableActor.h"
 
+
 AControlPannel::AControlPannel()
 {
 
@@ -35,6 +36,13 @@ AControlPannel::AControlPannel()
 
 	CollisionBox->SetHiddenInGame(false);
 	CollisionBox->SetVisibility(true);
+
+	static ConstructorHelpers::FObjectFinder<UNiagaraSystem> NiagaraEffectAsset(TEXT("/Game/Vefects/Zap_VFX/VFX/Zap/Particles/NS_Zap_02_Blue.NS_Zap_02_Blue"));
+	if (NiagaraEffectAsset.Succeeded())
+	{
+		NiagaraEffect = NiagaraEffectAsset.Object;
+	}
+
 }
 
 
@@ -90,6 +98,18 @@ void AControlPannel::OnOverlapBegin(
 
 		bIsPlugConnected = true;
 		ActivatePanel(true);
+
+		if (NiagaraEffect)
+		{
+			UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+				GetWorld(),
+				NiagaraEffect,
+				GetActorLocation(),  // ¿Ã∆Â∆Æ ¿ßƒ°
+				GetActorRotation()   // ¿Ã∆Â∆Æ πÊ«‚
+			);
+		}
+
+
 	}
 }
 

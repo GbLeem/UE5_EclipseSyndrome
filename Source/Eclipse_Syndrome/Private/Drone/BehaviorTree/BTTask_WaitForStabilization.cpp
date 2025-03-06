@@ -19,7 +19,7 @@ EBTNodeResult::Type UBTTask_WaitForStabilization::ExecuteTask(UBehaviorTreeCompo
 
 	AccumulateTime = 0.0f;
 	bLocationStable = false;
-
+	//WaitTime = 5.0f;
 	WaitTime = OwnerComp.GetBlackboardComponent()->GetValueAsEnum("CurrentState") == 3 ? 5.0f : 1.0f;
 
 	return EBTNodeResult::InProgress;
