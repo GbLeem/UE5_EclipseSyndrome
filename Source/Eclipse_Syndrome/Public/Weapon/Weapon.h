@@ -117,16 +117,19 @@ public:
 	//for effect
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player|Components")
 	TObjectPtr<UNiagaraSystem> BloodNiagara;
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player|Components")
 	TObjectPtr<UNiagaraSystem> MuzzleNiagara;
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player|Components")
 	TObjectPtr<UNiagaraSystem> BulletNiagara;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player|Components")
+	TObjectPtr<UNiagaraSystem> LandNiagara;
+
 
 	//for weapon sound
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
 	TArray<TObjectPtr<USoundBase>> ShootSound;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
 	TArray<TObjectPtr<USoundBase>> ReloadSound;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
+	TObjectPtr<USoundBase> NoAmmoSound;
 };

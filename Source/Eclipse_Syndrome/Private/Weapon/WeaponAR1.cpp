@@ -3,6 +3,7 @@
 
 #include "Weapon/WeaponAR1.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Camera/CameraComponent.h"
 
 AWeaponAR1::AWeaponAR1()
 {

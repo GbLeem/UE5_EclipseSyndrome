@@ -49,6 +49,8 @@ public:
 	bool AddSpecialItem(int32 ItemID);
 	UFUNCTION()
 	void RemoveSpecialItem();
+	UFUNCTION()
+	float GetCurrentHealth() { return PlayerCurrentHealth; }
 
 public:
 	//for HUD ammo text ui
