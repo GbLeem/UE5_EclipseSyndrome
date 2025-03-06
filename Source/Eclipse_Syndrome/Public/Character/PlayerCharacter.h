@@ -173,7 +173,7 @@ public:
 
 	//for rolling notify
 	bool bIsRolling;
-
+	
 private:
 	bool bCanFire;  //character flag
 	bool bCanReload; //for reloading animation
