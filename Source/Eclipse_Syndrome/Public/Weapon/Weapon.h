@@ -39,6 +39,7 @@ public:
 	int32 GetMaxAmmo() { return MaxAmmo; }
 	float GetFireRate() { return FireRate; }
 	int32 GetWeaponNumber() { return WeaponNumber; }
+	FTransform GetHandSocket();
 
 	//setter
 	//void SetCurrentAmmo(int32 Amount) { CurrentAmmo = Amount; }

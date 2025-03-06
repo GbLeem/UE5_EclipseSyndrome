@@ -63,6 +63,9 @@ public:
 	//getter
 	int32 GetCurrentWeaponAmmo();
 
+	UFUNCTION(BlueprintCallable)
+	FTransform GetWeaponHandSocket();
+
 	//for possess drone
 	void SetEnhancedInput();
 
