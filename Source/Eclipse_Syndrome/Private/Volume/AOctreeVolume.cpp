@@ -8,6 +8,8 @@
 #include <set>
 #include <unordered_map>
 
+#include "System/DefaultGameState.h"
+
 static UMaterial* GridMaterial = nullptr;
 
 // Sets default values
@@ -296,6 +298,11 @@ bool AAOctreeVolume::FindPath(const FVector& start, const FVector& destination, 
 	gScores[startNode] = 0.0f;
 	while (openSet.empty() == false)
 	{
+		if (openSet.size() > 1000.0f)
+		{
+			return false; // 탐색 중단
+		}
+		
 		NavNode* current = *openSet.begin();
 		if (current == endNode)
 		{
