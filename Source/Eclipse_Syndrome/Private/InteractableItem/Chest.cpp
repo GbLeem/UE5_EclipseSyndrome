@@ -2,7 +2,7 @@
 #include "Components/BoxComponent.h"
 #include "Character/PlayerCharacter.h"
 #include "Components/TimelineComponent.h"
-
+#include "Item/PlayerItem/BulletItem.h"
 
 AChest::AChest()
 {
@@ -51,10 +51,6 @@ void AChest::OnPlayerOverlapBegin(
 		bCanOpenChest = true;
 		UE_LOG(LogTemp, Warning, TEXT("Press F"));
 
-		//Only for test
-		//For Player Test
-		//( When player enters Box Collision of the Chest, 
-		//  OpenChest function will activate and random items will be spawned )
 		OpenChest();
 
 		//[HJ add]
@@ -160,7 +156,6 @@ void AChest::SpawnRandomItem()
 
 					FVector BulletSpawnLocation = SpawnLocation + FVector(i*Spacing, 0, 0);
 					AActor* SpawnedBullet = GetWorld()->SpawnActor<AActor>(SelectedItemClass, BulletSpawnLocation, SpawnRotation);
-				
 				}
 				UE_LOG(LogTemp, Warning, TEXT("Spawned %d BulletItems"), BulletCount);
 			}

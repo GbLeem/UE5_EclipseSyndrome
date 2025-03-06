@@ -26,6 +26,9 @@ EBTNodeResult::Type UBTTask_DroneAttack::ExecuteTask(UBehaviorTreeComponent& Own
 
 	AEnemyBase* Target = Cast<AEnemyBase>(OwnerComp.GetBlackboardComponent()->GetValueAsObject(TEXT("TargetEnemy")));
 	if (!Target || !IsValid(Target)) return EBTNodeResult::Failed;
+
+	CanFindPath();
+	bEndFollowPath = true;
 	
 	return EBTNodeResult::InProgress;
 }

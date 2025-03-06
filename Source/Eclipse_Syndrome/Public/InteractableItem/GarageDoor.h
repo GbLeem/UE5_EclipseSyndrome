@@ -30,6 +30,14 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Door")
 	UBoxComponent* InteractionZone;
 
+	UPROPERTY(EditAnywhere)
+	float Speed = 2.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Sound")
+	USoundBase* GDoorOpeningSound;
+
+
+
 	FVector ClosedPosition;
 	FVector TargetPosition;
 
@@ -37,8 +45,7 @@ public:
 	bool bCanUseKey = false;
 
 
-	UPROPERTY(EditAnywhere)
-	float Speed = 2.0f;
+	
 
 	UFUNCTION()
 	void OnOverlapBegin(

@@ -24,6 +24,7 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Materials/MaterialInterface.h"
+#include "Sound/SoundBase.h"
 
 APlayerCharacter::APlayerCharacter()
 	:SprintSpeed(800.f)
@@ -146,6 +147,17 @@ APlayerCharacter::APlayerCharacter()
 	PlayerWeaponInventory.Add(4, nullptr);
 
 	Tags.Add("Player");
+
+	//[YJ] for pick up item
+	static ConstructorHelpers::FObjectFinder<USoundBase> SoundAsset(TEXT("/Game/Yujin/Audio/PickUpItem.PickUpItem"));
+	if (SoundAsset.Succeeded())
+	{
+		PickupItemSound = SoundAsset.Object;
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Failed to load pickup sound!"));
+	}
 }
 
 void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -590,7 +602,9 @@ void APlayerCharacter::UsePuzzleBlockItem()
 					UE_LOG(LogTemp, Warning, TEXT("PuzzleBlock spawned in front of player"));
 					
 					DefaultGameInstance->InventoryItem[3] = 0;
+					DefaultGameInstance->SpecialSlotItemID = -1;
 					PuzzleBlock->ActivateItem(this);
+					
 				}
 				else
 				{
@@ -786,8 +800,16 @@ void APlayerCharacter::PickUp(const FInputActionValue& value)
 				{
 					ABaseItem* BaseItem = Cast<ABaseItem>(PeekingItem);
 					if (BaseItem)
-					{
+					{//key
 
+						if (PickupItemSound)
+						{
+							UGameplayStatics::PlaySoundAtLocation(
+								GetWorld(),
+								PickupItemSound,
+								GetActorLocation()
+							);
+						}
 						if (Cast<AKeyItem>(BaseItem))
 						{
 							int32 ItemIdx = BaseItem->GetItemNumber();
@@ -797,13 +819,12 @@ void APlayerCharacter::PickUp(const FInputActionValue& value)
 							PeekingItem->Destroy();
 						}
 						else if (Cast<APuzzleBlock>(BaseItem))
-						{
+						{//puzzle block
 							if (DefaultGameInstance->InventoryItem[3] == 0)//if inventory[3] is free
 							{
 								int32 ItemIdx = BaseItem->GetItemNumber();
 								int32 ItemAmount = BaseItem->GetItemAmount();
 								int32 BlockID = Cast<APuzzleBlock>(BaseItem)->GetBlockID();
-
 								DefaultGameInstance->AddItem(ItemIdx, ItemAmount, EItemType::PuzzleBlock, BlockID);
 								UE_LOG(LogTemp, Warning, TEXT("Picked Up Item: %d / BlockID: %d"), ItemIdx, BlockID);
 								PeekingItem->Destroy();

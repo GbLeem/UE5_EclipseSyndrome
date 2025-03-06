@@ -1,5 +1,6 @@
 #include "InteractableItem/Door.h"
-
+#include "Kismet/GameplayStatics.h"
+#include "Sound/SoundBase.h"
 
 ADoor::ADoor()
 {
@@ -13,6 +14,17 @@ ADoor::ADoor()
 	
 	MoveSpeed = 2.0f;
 	RotationSpeed = 90.0f;
+
+
+	static ConstructorHelpers::FObjectFinder<USoundBase> SoundAsset(TEXT("/Game/Yujin/Audio/LvOneDoorOpen.LvOneDoorOpen"));
+	if (SoundAsset.Succeeded())
+	{
+		IDoorOpeningSound = SoundAsset.Object;
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Failed to load IDoorOpeningSound sound!"));
+	}
 }
 
 
@@ -22,7 +34,7 @@ void ADoor::BeginPlay()
 	ClosedLocation = DoorMesh->GetRelativeLocation();
 	ClosedRotation = DoorMesh->GetRelativeRotation();
 
-	OpenLocation = ClosedLocation + FVector(-60.0f, 60.0f, 0.0f);
+	OpenLocation = ClosedLocation + FVector(-100.0f, 90.0f, 0.0f);
 	OpenRotation = ClosedRotation + FRotator(0.0f, 90.0f, 0.0f);
 }
 
@@ -39,6 +51,14 @@ void ADoor::Tick(float DeltaTime)
 void ADoor::OpenDoor()
 {
 	bIsOpening = true;
+	if (IDoorOpeningSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			GetWorld(),
+			IDoorOpeningSound,
+			GetActorLocation()
+		);
+	}
 }
 
 void ADoor::MoveAndRotateDoor(float DeltaTime)

@@ -17,7 +17,8 @@ public:
 	TObjectPtr<UStaticMeshComponent> StaticMeshCompo;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "PowerPlug|Components")
 	TObjectPtr<UCableComponent> CableCompo;
-	
+	UPROPERTY(EditAnywhere, Category = "Sound")
+	USoundBase* CodePlugSound;
 
 	APowerPlug();
 
