@@ -7,10 +7,13 @@
 ATime_TriggerVolimeActor::ATime_TriggerVolimeActor()
 {
 	PrimaryActorTick.bCanEverTick = false;
-
+    
 	TriggerBox = CreateDefaultSubobject<UBoxComponent>(TEXT("TriggerBox"));
 	RootComponent = TriggerBox;
 
+    TargetMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("TargetMesh"));
+    TargetMesh->SetSimulatePhysics(false);
+    
 	TriggerBox->OnComponentBeginOverlap.AddDynamic(this, &ATime_TriggerVolimeActor::OnOverlapBegin);
 }
 
@@ -27,9 +30,9 @@ void ATime_TriggerVolimeActor::OnOverlapBegin(UPrimitiveComponent* OverlappedCom
     if (OtherActor && TargetMesh)
     {
 
-        TargetMesh->SetSimulatePhysics(true);
+        //TargetMesh->SetSimulatePhysics(true);
 
-        // 2ÃÊ ÈÄ ¸Þ½Ã »èÁ¦
+        // 2ï¿½ï¿½ ï¿½ï¿½ ï¿½Þ½ï¿½ ï¿½ï¿½ï¿½ï¿½
         FTimerHandle TimerHandle;
         GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &ATime_TriggerVolimeActor::RemoveMesh, 3.0f, false);
     }
