@@ -4,11 +4,13 @@
 #include "Drone/Drone.h"
 #include "Drone/DroneAIController.h"
 #include "System/DefaultGameState.h"
+#include "System/DefaultGameInstance.h"
 
 #include "AIController.h"
 #include "Blueprint/UserWidget.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputMappingContext.h"
+#include "Kismet/GameplayStatics.h"
 
 APlayerCharacterController::APlayerCharacterController()
 	:bIsInventoryUIOpen(false)
@@ -133,22 +135,33 @@ APlayerCharacterController::APlayerCharacterController()
 	{
 		InventoryUIClass = InventoryWidgetBP.Class;
 	}
-	/*static ConstructorHelpers::FClassFinder<UUserWidget>DamageWidgetBP(TEXT("/Game/HJ/UI/WBP_Damage.WBP_Damage_C"));
-	if (DamageWidgetBP.Succeeded())
+	static ConstructorHelpers::FClassFinder<UUserWidget>MainMenuWidgetBP(TEXT("/Game/HJ/UI/WBP_MainMenu.WBP_MainMenu_C"));
+	if (MainMenuWidgetBP.Succeeded())
 	{
-		DamageUIClass = DamageWidgetBP.Class;
-	}*/
+		MainMenuClass = MainMenuWidgetBP.Class;
+	}
+	static ConstructorHelpers::FClassFinder<UUserWidget>GameOverWidgetBP(TEXT("/Game/HJ/UI/WBP_GameOver.WBP_GameOver_C"));
+	if (GameOverWidgetBP.Succeeded())
+	{
+		GameOverUIClass = GameOverWidgetBP.Class;
+	}
 }
 
 void APlayerCharacterController::ShowHUD()
 {
+	if (MainMenuInstance)
+	{
+		MainMenuInstance->RemoveFromParent();
+		MainMenuInstance = nullptr;
+	}
+
 	if (HUDWidgetInstance)
 	{
 		HUDWidgetInstance->RemoveFromParent();
 		HUDWidgetInstance = nullptr;	
 	}
 
-	if (HUDWidgetInstance)
+	if (InventoryUIInstance)
 	{
 		InventoryUIInstance->RemoveFromParent();
 		InventoryUIInstance = nullptr;
@@ -171,6 +184,87 @@ void APlayerCharacterController::ShowHUD()
 			}
 		}
 	}
+}
+
+void APlayerCharacterController::ShowMainMenu()
+{
+	if (HUDWidgetInstance)
+	{
+		HUDWidgetInstance->RemoveFromParent();
+		HUDWidgetInstance = nullptr;
+	}
+	if (MainMenuInstance)
+	{
+		MainMenuInstance->RemoveFromParent();
+		MainMenuInstance = nullptr;
+	}
+
+	if (MainMenuClass)
+	{
+		MainMenuInstance = CreateWidget<UUserWidget>(this, MainMenuClass);
+
+		if (MainMenuInstance)
+		{
+			MainMenuInstance->AddToViewport();
+			
+			bShowMouseCursor = true;
+			SetInputMode(FInputModeUIOnly());
+		}
+	}
+}
+
+void APlayerCharacterController::ShowGameOverUI()
+{
+	if (HUDWidgetInstance)
+	{
+		HUDWidgetInstance->RemoveFromParent();
+		HUDWidgetInstance = nullptr;
+	}
+	if (MainMenuInstance)
+	{
+		MainMenuInstance->RemoveFromParent();
+		MainMenuInstance = nullptr;
+	}
+	//SetPause(true);
+	if (GameOverUIClass)
+	{
+		GameOverUIInstance = CreateWidget<UUserWidget>(this, GameOverUIClass);
+
+		GameOverUIInstance->AddToViewport();
+		bShowMouseCursor = true;
+		SetInputMode(FInputModeUIOnly());
+
+		UFunction* GameOverUIAnim = GameOverUIInstance->FindFunction(FName("GameOverAnim"));
+		if (GameOverUIAnim)
+		{
+			GameOverUIInstance->ProcessEvent(GameOverUIAnim, nullptr);
+		}
+		SetPause(true);
+	}
+}
+
+void APlayerCharacterController::ShowGameClearUI()
+{
+	SetPause(true);
+}
+
+void APlayerCharacterController::StartGame()
+{
+	if (UDefaultGameInstance* DefaultGameInstance = Cast<UDefaultGameInstance>(UGameplayStatics::GetGameInstance(this)))
+	{
+		DefaultGameInstance->CurrentLevel = 0;
+		DefaultGameInstance->PlusHealth(DefaultGameInstance->PlayerMaxHealth);
+		DefaultGameInstance->InventoryAmmo = 100;		
+	}
+	
+	ADefaultGameState* DefaultGameState = Cast<ADefaultGameState>(GetWorld()->GetGameState());
+	if (DefaultGameState)
+	{
+		DefaultGameState->UpdateHUD();
+	}
+
+	UGameplayStatics::OpenLevel(GetWorld(), FName("Lv1"));
+	SetPause(false);
 }
 
 void APlayerCharacterController::ShowInventoryUI()
@@ -226,7 +320,14 @@ void APlayerCharacterController::BeginPlay()
 		}
 	}
 
-	ShowHUD();	
+	FString CurrentMapName = GetWorld()->GetMapName();
+	if (CurrentMapName.Contains("MainMenuLevel"))
+	{
+		//GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, FString::Printf(TEXT("menu map")));
+		ShowMainMenu();
+	}
+
+	//ShowHUD();	
 }
 
 void APlayerCharacterController::ChangePossess(const TObjectPtr<APawn>& NewPawn)

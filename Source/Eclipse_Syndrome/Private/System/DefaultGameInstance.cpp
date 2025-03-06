@@ -1,6 +1,7 @@
 #include "System/DefaultGameInstance.h"
 
 #include "Character/PlayerCharacter.h"
+#include "System/DefaultGameState.h"
 
 UDefaultGameInstance::UDefaultGameInstance()
 	:InventoryAmmo(100)
@@ -135,7 +136,17 @@ void UDefaultGameInstance::PlusHealth(int32 Amount)
 void UDefaultGameInstance::MinusHealth(int32 Amount)
 {
 	if (PlayerCurrentHealth - Amount <= 0)
+	{
 		PlayerCurrentHealth = 0;
+
+		//death
+		ADefaultGameState* DefaultGameState = Cast<ADefaultGameState>(GetWorld()->GetGameState());
+		if (DefaultGameState)
+		{
+			DefaultGameState->GameOver();
+		}
+
+	}
 	else
 		PlayerCurrentHealth -= Amount;
 }

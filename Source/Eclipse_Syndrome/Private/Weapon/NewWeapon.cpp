@@ -7,6 +7,12 @@
 ANewWeapon::ANewWeapon()
 {
 	PrimaryActorTick.bCanEverTick = true;
+
+	Lens = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Lens mesh"));
+	Lens->SetupAttachment(RootComponent);
+	Scope = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Scope mesh"));
+	Scope->SetupAttachment(RootComponent);
+
 	static ConstructorHelpers::FObjectFinder<UStaticMesh>StaticMeshAsset(TEXT("/Game/HJ/Assets/Combined_DDA78210.Combined_DDA78210"));
 	if (StaticMeshAsset.Succeeded())
 	{
@@ -17,9 +23,12 @@ ANewWeapon::ANewWeapon()
 	if (LensAsset.Succeeded())
 	{
 		Lens->SetStaticMesh(LensAsset.Object);
-		Scope->SetStaticMesh(LensAsset.Object);
 	}
-
+	static ConstructorHelpers::FObjectFinder<UStaticMesh>ScopeAsset(TEXT("/Game/HJ/Material/sniper/Sniper_Lens.Sniper_Lens"));
+	if (ScopeAsset.Succeeded())
+	{
+		Scope->SetStaticMesh(ScopeAsset.Object);
+	}
 	static ConstructorHelpers::FObjectFinder<UMaterial>LensMat(TEXT("/Game/HJ/Material/sniper/M_Sniper.M_Sniper"));
 	if (LensMat.Succeeded())
 	{

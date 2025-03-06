@@ -23,11 +23,21 @@ private:
 	
 public:
 	APlayerCharacterController();
+
+
 	//for ui
 	UUserWidget* GetHUDWidget() { return HUDWidgetInstance; }
 	UUserWidget* GetInventoryWidget() { return InventoryUIInstance; }
 	UFUNCTION()
 	void ShowHUD();
+	UFUNCTION()
+	void ShowMainMenu();
+	UFUNCTION()
+	void ShowGameOverUI();
+	UFUNCTION()
+	void ShowGameClearUI();
+	UFUNCTION(BlueprintCallable)
+	void StartGame();
 	UFUNCTION()
 	void ShowInventoryUI();
 	UFUNCTION()
@@ -105,10 +115,14 @@ public:
 	TSubclassOf<UUserWidget> InventoryUIClass;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "HUD")
 	TObjectPtr<UUserWidget> InventoryUIInstance;
-	/*UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "HUD")
-	TSubclassOf<UUserWidget> DamageUIClass;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "HUD")
-	TObjectPtr<UUserWidget> DamageUIInstance;*/
+	TSubclassOf<UUserWidget> MainMenuClass;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "HUD")
+	TObjectPtr<UUserWidget> MainMenuInstance;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "HUD")
+	TSubclassOf<UUserWidget> GameOverUIClass;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "HUD")
+	TObjectPtr<UUserWidget> GameOverUIInstance;
 
 	//for UI
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Inventory UI")

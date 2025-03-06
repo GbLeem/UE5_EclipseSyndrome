@@ -1233,6 +1233,12 @@ float APlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Damag
 			{
 				DefaultGameInstance->MinusHealth(ActualDamage);
 
+				if (DefaultGameInstance->GetCurrentHealth() <= 0)
+				{
+					GetMesh()->SetSimulatePhysics(true);
+					GetMesh()->SetCollisionProfileName(TEXT("Ragdoll"));
+				}
+
 				//Damage Animation
 				UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 				AnimInstance->Montage_Play(DamageAnimMontage);
