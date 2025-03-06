@@ -34,7 +34,7 @@ void ADoor::BeginPlay()
 	ClosedLocation = DoorMesh->GetRelativeLocation();
 	ClosedRotation = DoorMesh->GetRelativeRotation();
 
-	OpenLocation = ClosedLocation + FVector(-100.0f, 90.0f, 0.0f);
+	OpenLocation = ClosedLocation + FVector(-170.0f, 150.0f, 0.0f);
 	OpenRotation = ClosedRotation + FRotator(0.0f, 90.0f, 0.0f);
 }
 

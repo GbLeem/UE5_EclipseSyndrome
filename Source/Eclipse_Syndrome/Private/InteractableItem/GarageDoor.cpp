@@ -23,8 +23,8 @@ AGarageDoor::AGarageDoor()
 	InteractionZone->OnComponentBeginOverlap.AddDynamic(this, &AGarageDoor::OnOverlapBegin);
 	InteractionZone->OnComponentEndOverlap.AddDynamic(this, &AGarageDoor::OnOverlapEnd);
 
-	InteractionZone->SetHiddenInGame(false);
-	InteractionZone->SetVisibility(true);
+	InteractionZone->SetHiddenInGame(true);
+	InteractionZone->SetVisibility(false);
 
 	//sound effect
 	static ConstructorHelpers::FObjectFinder<USoundBase> SoundAsset(TEXT("/Game/Yujin/Audio/GarageDoorOpening.GarageDoorOpening"));

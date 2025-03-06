@@ -37,8 +37,8 @@ AKeyItem::AKeyItem()
 	InteractionBox->OnComponentEndOverlap.AddDynamic(this, &AKeyItem::OnPlayerOverlapEnd);
 
 	//Only for test
-	InteractionBox->SetHiddenInGame(false);
-	InteractionBox->SetVisibility(true);
+	InteractionBox->SetHiddenInGame(true);
+	InteractionBox->SetVisibility(false);
 }
 
 
