@@ -41,6 +41,11 @@ public:
 	USphereComponent* SphereComp;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Drone|Property")
 	TSubclassOf<ADefaultBullet> BulletClass;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
+	USoundBase* CallSound;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
+	USoundAttenuation* SAGangsterSound;
+
 
 	UFUNCTION(BlueprintCallable)
 	void ChangeSpeedAim();
