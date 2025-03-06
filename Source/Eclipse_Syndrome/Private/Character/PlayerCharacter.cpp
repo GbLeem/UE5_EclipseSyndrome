@@ -1264,7 +1264,7 @@ void APlayerCharacter::CrouchCharacter(const FInputActionValue& value)
 {
 	if (!bIsCrouch)
 	{		
-		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, FString::Printf(TEXT("crouch")));
+		//GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, FString::Printf(TEXT("crouch")));
 		Crouch();
 		bIsCrouch = true;
 	}

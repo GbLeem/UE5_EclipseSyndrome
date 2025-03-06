@@ -252,9 +252,7 @@ void APlayerCharacterController::StartGame()
 {
 	if (UDefaultGameInstance* DefaultGameInstance = Cast<UDefaultGameInstance>(UGameplayStatics::GetGameInstance(this)))
 	{
-		DefaultGameInstance->CurrentLevel = 0;
-		DefaultGameInstance->PlusHealth(DefaultGameInstance->PlayerMaxHealth);
-		DefaultGameInstance->InventoryAmmo = 100;		
+		DefaultGameInstance->InitializeInstance();		
 	}
 	
 	ADefaultGameState* DefaultGameState = Cast<ADefaultGameState>(GetWorld()->GetGameState());
