@@ -67,6 +67,7 @@ APuzzleBlock::APuzzleBlock()
 
 	SlotCollision->SetCollisionResponseToAllChannels(ECR_Ignore);
 	SlotCollision->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Overlap);
+	//SlotCollision->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Ignore);
 	////
 	SlotCollision->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Overlap);
 	SlotCollision->SetCollisionResponseToChannel(ECC_PhysicsBody, ECR_Overlap);
@@ -79,6 +80,10 @@ APuzzleBlock::APuzzleBlock()
 	StaticMeshComp->SetupAttachment(SlotCollision);
 	StaticMeshComp->SetRelativeLocation(FVector(0.f, 0.f, 0.f));
 	StaticMeshComp->SetSimulatePhysics(false);
+	//StaticMeshComp->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	//StaticMeshComp->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Ignore);
+	//StaticMeshComp->SetCollisionResponseToChannel(ECC_PhysicsBody, ECR_Ignore);
+
 
 
 	InteractionCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("InteractionCollision"));
@@ -111,7 +116,11 @@ void APuzzleBlock::BeginPlay()
 
 	UE_LOG(LogTemp, Warning, TEXT("%s SlotCollision: SimulatePhysics=%d, CollisionEnabled=%d"),
 		*GetName(), SlotCollision->IsSimulatingPhysics(), SlotCollision->GetCollisionEnabled());
-
+	//if (SlotCollision)
+	//{
+	//	SlotCollision->SetSimulatePhysics(true);
+	//	UE_LOG(LogTemp, Warning, TEXT("[!] PuzzleBlock Physics Enabled on Spawn"));
+	//}
 }
 
 
@@ -204,6 +213,8 @@ void APuzzleBlock::SetBlockID(int32 NewID)
 void APuzzleBlock::ActivateItem(AActor* Activator)
 {
 	APlayerCharacter* Player = Cast<APlayerCharacter>(Activator);
+	UE_LOG(LogTemp, Warning, TEXT("SlotCollision Location: %s"), *SlotCollision->GetComponentLocation().ToString());
+	UE_LOG(LogTemp, Warning, TEXT("StaticMeshComp Location Before: %s"), *StaticMeshComp->GetComponentLocation().ToString());
 
 	if (Player)
 	{
@@ -211,11 +222,25 @@ void APuzzleBlock::ActivateItem(AActor* Activator)
 
 		if (CurrentSlot)
 		{
+			
+			/*FVector TargetLocation = CurrentSlot->GetActorLocation();
+			SetActorLocation(TargetLocation);
+
+			SetActorEnableCollision(false);
+
+			FVector SlotCenter = SlotCollision->GetComponentLocation();
+			StaticMeshComp->SetWorldLocation(SlotCenter);
+
+			UE_LOG(LogTemp, Warning, TEXT("PuzzleBlock moved to Slot! TargetLocation: %s, SlotCenter: %s"),
+				*TargetLocation.ToString(), *SlotCenter.ToString());*/
+
+			////
 			SetActorLocation(CurrentSlot->GetActorLocation());
+			UE_LOG(LogTemp, Warning, TEXT("StaticMeshComp Location After: %s"), *StaticMeshComp->GetComponentLocation().ToString());
 
 			SlotCollision->SetSimulatePhysics(false);
 			UE_LOG(LogTemp, Warning, TEXT("SetSimulatePhysics(false) called for puzzleblock"));
-			/*SetActorEnableCollision(false);*/
+			
 
 			UE_LOG(LogTemp, Warning, TEXT("PuzzleBlock placed in slot!"));
 		}

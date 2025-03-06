@@ -46,11 +46,11 @@ public:
 		bool bFromSweep, const FHitResult& SweepResult
 	);
 
-	//UFUNCTION()
-	//void OnBlockOverlapEnd(
-	//	UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
-	//	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex
-	//);
+	UFUNCTION()
+	void OnBlockOverlapEnd(
+		UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
+		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex
+	);
 
 	bool PlaceBlock(APuzzleBlock* Block);
 	

@@ -22,7 +22,7 @@ AKeyItem::AKeyItem()
 	{
 		GlowEffect->SetAsset(NiagaraEffect.Object);
 	}
-	GlowEffect->SetRelativeLocation(FVector(0.0f, 0.0f, 0.0f));
+	GlowEffect->SetRelativeLocation(FVector(0.0f, 0.0f, -10.0f));
 
 
 	InteractionBox = CreateDefaultSubobject<UBoxComponent>(TEXT("BoxCollision"));

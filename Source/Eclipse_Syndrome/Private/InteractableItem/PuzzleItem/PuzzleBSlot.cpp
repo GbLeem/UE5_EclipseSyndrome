@@ -162,19 +162,19 @@ void APuzzleBSlot::OnBlockOverlap(
 }
 
 
-//void APuzzleBSlot::OnBlockOverlapEnd(
-//	UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
-//	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex
-//)
-//{
-//	APuzzleBlock* OverlappingBlock = Cast<APuzzleBlock>(OtherActor);
-//	if (!OverlappingBlock) return;
-//	UE_LOG(LogTemp, Warning, TEXT("Block %s exited slot %d"), *OverlappingBlock->GetName(), CorrectBlockID);
-//	if (CurrentBlock == OverlappingBlock)
-//	{
-//		RemoveBlock();
-//	}
-//}
+void APuzzleBSlot::OnBlockOverlapEnd(
+	UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex
+)
+{
+	APuzzleBlock* OverlappingBlock = Cast<APuzzleBlock>(OtherActor);
+	if (!OverlappingBlock) return;
+	UE_LOG(LogTemp, Warning, TEXT("Block %s exited slot %d"), *OverlappingBlock->GetName(), CorrectBlockID);
+	if (CurrentBlock == OverlappingBlock)
+	{
+		RemoveBlock();
+	}
+}
 
 
 bool APuzzleBSlot::PlaceBlock(APuzzleBlock* Block)
