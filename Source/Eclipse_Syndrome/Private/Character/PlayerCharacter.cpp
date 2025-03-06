@@ -910,7 +910,8 @@ void APlayerCharacter::Grapple(const FInputActionValue& value)
 			float Distance = FVector::Dist(GetActorLocation(), AnchorLocation);
 			CableComp->CableLength = FVector::Dist(GetMesh()->GetSocketLocation(TEXT("hand_l_socket")), AnchorLocation); // CableComp->NumSegments;
 			MaxWebLength = Distance;
-			
+
+			GetCharacterMovement()->Velocity *= 0.7;
 			bIsSwinging = true;
 		}
 	}
