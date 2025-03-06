@@ -29,6 +29,7 @@ EBTNodeResult::Type UBTTask_FollowWithAvoidance::ExecuteTask(UBehaviorTreeCompon
 		{
 			PathPoints.Empty();
 			CanFindPath();
+			PathTimerHandle.Invalidate();
 			bEndFollowPath = true;
 			TObjectPtr<ADroneAIController> DroneAIController = Cast<ADroneAIController>(AIController);
 			UpdateDesiredTarget(Player, DroneAIController);
@@ -149,8 +150,14 @@ void UBTTask_FollowWithAvoidance::FindPath(const TObjectPtr<ADroneAIController>&
 		PathPoints.Empty();
 		if (CurOctreeVolume->FindPath(DroneLocation, DesiredTarget, ObjectTypes, AActor::StaticClass(), PathPoints))
 		{
+			DroneAIController->SetPIDKd(6000.0f);
 			bEndFollowPath = false;
 			CurIndex = 0;
+		}
+		else
+		{
+			bCanFindPath = false;
+			GetWorld()->GetTimerManager().SetTimer(PathTimerHandle, this, &UBTTask_FollowWithAvoidance::CanFindPath, 1.0f, false);
 		}
 	}
 }
@@ -175,6 +182,10 @@ void UBTTask_FollowWithAvoidance::FollowPath(const TObjectPtr<ADroneAIController
 			if (CurIndex < PathPoints.Num())
 			{
 				TargetLocation = PathPoints[CurIndex];
+			}
+			else if (CurIndex == PathPoints.Num() - 1)
+			{
+				DroneAIController->SetDefaultKd();
 			}
 			else
 			{

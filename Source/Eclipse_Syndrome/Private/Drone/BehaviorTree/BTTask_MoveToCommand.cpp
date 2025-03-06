@@ -88,6 +88,7 @@ void UBTTask_MoveToCommand::UpdateDesiredTarget(const UBehaviorTreeComponent& Ow
 	if (PrevTargetLocation != CommandLocation)
 	{
 		CanFindPath();
+		PathTimerHandle.Invalidate();
 		bEndFollowPath = true;
 	}
 	PrevTargetLocation = CommandLocation;
@@ -133,9 +134,15 @@ void UBTTask_MoveToCommand::FindPath(const TObjectPtr<ADroneAIController>& Drone
 		PathPoints.Empty();
 		if (CurOctreeVolume->FindPath(DroneLocation, DesiredTarget, ObjectTypes, AActor::StaticClass(), PathPoints))
 		{
+			DroneAIController->SetPIDKd(6000.0f);
 			bEndFollowPath = false;
 			bCanFindPath = false;
 			CurIndex = 0;
+		}
+		else
+		{
+			bCanFindPath = false;
+			GetWorld()->GetTimerManager().SetTimer(PathTimerHandle, this, &UBTTask_MoveToCommand::CanFindPath, 1.0f, false);
 		}
 	}
 }
@@ -160,6 +167,10 @@ void UBTTask_MoveToCommand::FollowPath(const TObjectPtr<ADroneAIController>& Dro
 			if (CurIndex < PathPoints.Num())
 			{
 				TargetLocation = PathPoints[CurIndex];
+			}
+			else if (CurIndex == PathPoints.Num() - 1)
+			{
+				DroneAIController->SetDefaultKd();
 			}
 			else
 			{

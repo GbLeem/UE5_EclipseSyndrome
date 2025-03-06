@@ -28,6 +28,7 @@ EBTNodeResult::Type UBTTask_DroneAttack::ExecuteTask(UBehaviorTreeComponent& Own
 	if (PrevTarget != Target || bEndFollowPath)
 	{
 		CanFindPath();
+		PathTimerHandle.Invalidate();
 		bEndFollowPath = true;
 		CurIndex = 0;
 		PathPoints.Empty();
@@ -106,9 +107,9 @@ void UBTTask_DroneAttack::UpdateDesiredTarget(const TObjectPtr<AActor>& TargetPa
 	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_WorldStatic));
 	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_GameTraceChannel1));
 	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_GameTraceChannel2));
-	if (!GetWorld()->LineTraceSingleByObjectType(Hit, TargetPawn->GetActorLocation() + FVector(0.0f, 0.0f, 100.0f), TargetPawn->GetActorLocation() + RotatedOffset * 1.5f, ObjectTypes, CollisionParams))
+	if (!GetWorld()->LineTraceSingleByObjectType(Hit, TargetPawn->GetActorLocation() + FVector(0.0f, 0.0f, 200.0f), TargetPawn->GetActorLocation() + RotatedOffset * 1.5f, ObjectTypes, CollisionParams))
 	{
-		DesiredTarget = TargetPawn->GetActorLocation() + RotatedOffset;
+		DesiredTarget = TargetPawn->GetActorLocation() + RotatedOffset + FVector(0.0f, 0.0f, 100.0f);
 	}
 }
 
@@ -151,6 +152,11 @@ void UBTTask_DroneAttack::FindPath(const TObjectPtr<ADroneAIController>& DroneAI
 		{
 			bEndFollowPath = false;
 			CurIndex = 0;
+		}
+		else
+		{
+			bCanFindPath = false;
+			GetWorld()->GetTimerManager().SetTimer(PathTimerHandle, this, &UBTTask_DroneAttack::CanFindPath, 1.0f, false);
 		}
 	}
 }
