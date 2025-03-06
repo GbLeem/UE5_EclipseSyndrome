@@ -257,7 +257,7 @@ bool AAOctreeVolume::FindPath(const FVector& start, const FVector& destination, 
 		if (NewNode == nullptr)
 			return false;
 		StartLocation = ConvertCoordinatesToLocation(NewNode->Coordinates);
-		DrawDebugSphere(GetWorld(), StartLocation, 20, 20, FColor::Purple, false , 100.f);
+		//DrawDebugSphere(GetWorld(), StartLocation, 20, 20, FColor::Purple, false , 100.f);
 	}
 	
 	FVector TargetLocation = destination;
@@ -267,7 +267,7 @@ bool AAOctreeVolume::FindPath(const FVector& start, const FVector& destination, 
 		if (NewNode == nullptr)
 			return false;
 		TargetLocation = ConvertCoordinatesToLocation(NewNode->Coordinates);
-		DrawDebugSphere(GetWorld(), TargetLocation, 20, 20, FColor::Purple, false , 100.f);
+		//DrawDebugSphere(GetWorld(), TargetLocation, 20, 20, FColor::Purple, false , 100.f);
 	}
 	
 	// Clear the out path
@@ -474,7 +474,7 @@ NavNode* AAOctreeVolume::FindNearestValidNode(const FVector& location, const TAr
 
 	if (nearestNode)
 	{
-		DrawDebugSphere(GetWorld(), ConvertCoordinatesToLocation(nearestNode->Coordinates), 30, 30, FColor::Cyan, false , 100.f);
+		//DrawDebugSphere(GetWorld(), ConvertCoordinatesToLocation(nearestNode->Coordinates), 30, 30, FColor::Cyan, false , 100.f);
 	}
 	
 	return nearestNode;

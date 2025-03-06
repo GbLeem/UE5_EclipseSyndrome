@@ -16,6 +16,7 @@
 
 #include "CableComponent.h"
 #include "Camera/CameraComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "Components/MeshComponent.h"
 #include "EnhancedInputComponent.h"
 #include "BehaviorTree/BlackboardComponent.h"
@@ -103,11 +104,11 @@ APlayerCharacter::APlayerCharacter()
 		RollingAnimMontage = RollingAsset.Object;
 	}
 
-	static ConstructorHelpers::FObjectFinder<UMaterialInterface>CableMat(TEXT("/Game/SH/MT_Rope.MT_Rope"));
-	if (CableMat.Succeeded())
-	{
-		CableComp->SetMaterial(0, CableMat.Object);
-	}
+	// static ConstructorHelpers::FObjectFinder<UMaterialInterface>CableMat(TEXT("/Game/SH/MT_Rope.MT_Rope"));
+	// if (CableMat.Succeeded())
+	// {
+	// 	CableComp->SetMaterial(0, CableMat.Object);
+	// }
 
 	static ConstructorHelpers::FObjectFinder<USoundBase>FootSound1(TEXT("/Game/HJ/Assets/Sound/Foot.Foot"));
 	if (FootSound1.Succeeded())
@@ -123,6 +124,11 @@ APlayerCharacter::APlayerCharacter()
 	if (EquipSoundAsset.Succeeded())
 	{
 		EquipSound = EquipSoundAsset.Object;
+	}
+	static ConstructorHelpers::FObjectFinder<UNiagaraSystem> HealNiagaraAsset(TEXT("/Game/SH/MixedVFX/MoveNS/NS_HealingAura.NS_HealingAura"));
+	if (HealNiagaraAsset.Succeeded())
+	{
+		HealNiagara = HealNiagaraAsset.Object;
 	}
 
 	/*static ConstructorHelpers::FClassFinder<UAnimInstance> AnimClass(TEXT("/Game/HJ/Animation/ABP_PlayerCharacter.ABP_PlayerCharacter_C"));
@@ -543,7 +549,9 @@ void APlayerCharacter::UseHealthItem()
 		{
 			if (DefaultGameInstance->InventoryItem[1] > 0)
 			{				
-				//[TODO] how to get health amount?
+				
+				UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), HealNiagara, GetActorLocation(), GetActorRotation(), FVector(0.7f, 0.7f, 0.7f));
+
 				DefaultGameInstance->PlusHealth(20.f);
 				DefaultGameInstance->InventoryItem[1] -= 1;
 			}
@@ -936,8 +944,11 @@ void APlayerCharacter::Grapple(const FInputActionValue& value)
 		TArray<AActor*> ActorsToIgnore;
 		auto Channel = UEngineTypes::ConvertToTraceType(ECollisionChannel::ECC_GameTraceChannel1);
 		
+		// bool bHit = UKismetSystemLibrary::SphereTraceSingle(GetWorld(), Start, End, 25.f, Channel, false,
+		// 	ActorsToIgnore, EDrawDebugTrace::Type::ForDuration, GrappleHitPoint, true);
+		
 		bool bHit = UKismetSystemLibrary::SphereTraceSingle(GetWorld(), Start, End, 25.f, Channel, false,
-			ActorsToIgnore, EDrawDebugTrace::Type::ForDuration, GrappleHitPoint, true);
+			ActorsToIgnore, EDrawDebugTrace::None, GrappleHitPoint, true);
 
 		if (bHit)
 		{
@@ -1220,6 +1231,8 @@ void APlayerCharacter::ChangeView(const FInputActionValue& value)
 	if (bMoveForward && !bIsReloading && !bIsRolling)
 	{
 		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+
 		if (AnimInstance)
 		{
 			bIsRolling = true;
@@ -1264,7 +1277,7 @@ void APlayerCharacter::CrouchCharacter(const FInputActionValue& value)
 {
 	if (!bIsCrouch)
 	{		
-		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, FString::Printf(TEXT("crouch")));
+		//GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, FString::Printf(TEXT("crouch")));
 		Crouch();
 		bIsCrouch = true;
 	}

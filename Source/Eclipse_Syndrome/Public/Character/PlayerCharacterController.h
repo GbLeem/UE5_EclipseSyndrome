@@ -123,6 +123,11 @@ public:
 	TSubclassOf<UUserWidget> GameOverUIClass;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "HUD")
 	TObjectPtr<UUserWidget> GameOverUIInstance;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "HUD")
+	TSubclassOf<UUserWidget> GameClearUIClass;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "HUD")
+	TObjectPtr<UUserWidget> GameClearUIInstance;
+
 
 	//for UI
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Inventory UI")
