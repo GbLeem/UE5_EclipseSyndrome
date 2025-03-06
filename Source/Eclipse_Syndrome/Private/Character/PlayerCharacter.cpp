@@ -342,6 +342,12 @@ void APlayerCharacter::Shoot()
 
 void APlayerCharacter::Reloading()
 {
+	UDefaultGameInstance* DefaultGameInstance = Cast<UDefaultGameInstance>(GetGameInstance());
+	if (DefaultGameInstance)
+	{
+		CurrentInventoryAmmos = DefaultGameInstance->GetCurrentInventoryAmmo();
+	}
+	
 	if (CurrentWeapon)
 	{
 		int PlusAmmo = CurrentWeapon->GetMaxAmmo() - CurrentWeapon->GetCurrentAmmo();
@@ -352,6 +358,7 @@ void APlayerCharacter::Reloading()
 		}
 		if (bIsRolling)
 			return;
+
 		if (PlusAmmo > 0 && bIsWeaponEquipped)
 		{
 			PlusAmmo = FMath::Min(PlusAmmo, CurrentInventoryAmmos);
@@ -371,14 +378,14 @@ void APlayerCharacter::Reloading()
 
 			CurrentInventoryAmmos -= PlusAmmo;
 
-			if (UGameInstance* GameInstance = GetGameInstance())
+			if (DefaultGameInstance)
+			{
+				DefaultGameInstance->UseAmmo(PlusAmmo);
+			}
+			/*if (UGameInstance* GameInstance = GetGameInstance())
 			{
 				UDefaultGameInstance* DefaultGameInstance = Cast<UDefaultGameInstance>(GameInstance);
-				if (DefaultGameInstance)
-				{
-					DefaultGameInstance->UseAmmo(PlusAmmo);
-				}
-			}		
+			}*/		
 		}
 	}	
 }
@@ -659,6 +666,15 @@ int32 APlayerCharacter::GetCurrentWeaponAmmo()
 	return 0;
 }
 
+FTransform APlayerCharacter::GetWeaponHandSocket()
+{
+	if (CurrentWeapon)
+	{
+		return CurrentWeapon->GetHandSocket();
+	}	
+	return FTransform::Identity;
+}
+
 void APlayerCharacter::Move(const FInputActionValue& value)
 {
 	if (!Controller)
@@ -750,7 +766,14 @@ void APlayerCharacter::StopSprint(const FInputActionValue& value)
 
 void APlayerCharacter::Reload(const FInputActionValue& value)
 {
-	Reloading();		
+	UDefaultGameInstance* DefaultGameInstance = Cast<UDefaultGameInstance>(GetGameInstance());
+	if (DefaultGameInstance)
+	{
+		if (DefaultGameInstance->GetCurrentInventoryAmmo() > 0)
+		{
+			Reloading();
+		}
+	}
 }
 
 void APlayerCharacter::StartShoot(const FInputActionValue& value)
@@ -1194,6 +1217,8 @@ void APlayerCharacter::ZoomInOut(const FInputActionValue& value)
 {	
 	if (bIsWeaponEquipped && !bIsRolling)
 	{
+		if (CurrentWeapon->GetWeaponNumber() == 4)
+			return;
 		if (GetController())
 		{
 			APlayerCharacterController* PlayerCharacterController = Cast<APlayerCharacterController>(GetController());
@@ -1261,8 +1286,11 @@ float APlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Damag
 				}
 
 				//Damage Animation
-				UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-				AnimInstance->Montage_Play(DamageAnimMontage);
+				if (bIsTPSMode)
+				{
+					UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+					AnimInstance->Montage_Play(DamageAnimMontage);
+				}
 				bIsReloading = false;
 			}
 		}
