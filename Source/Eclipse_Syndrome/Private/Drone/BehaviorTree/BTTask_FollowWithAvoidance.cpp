@@ -9,7 +9,7 @@ UBTTask_FollowWithAvoidance::UBTTask_FollowWithAvoidance()
 	: DesiredTarget(FVector::ZeroVector)
 	, bEndFollowPath(true)
 	, bCanFindPath(true)
-	, NextNodeIgnoreRadius(80.0f)
+	, NextNodeIgnoreRadius(60.0f)
 {
 	NodeName = "FollowWithAvoidance";
 	bNotifyTick = true;
@@ -32,6 +32,7 @@ EBTNodeResult::Type UBTTask_FollowWithAvoidance::ExecuteTask(UBehaviorTreeCompon
 			bEndFollowPath = true;
 			TObjectPtr<ADroneAIController> DroneAIController = Cast<ADroneAIController>(AIController);
 			UpdateDesiredTarget(Player, DroneAIController);
+			DroneAIController->SetPIDDefaultSpeed();
 			if (DroneAIController->GetShowDebug())
 			{
 				DrawDebugSphere(GetWorld(), DesiredTarget, 30, 30, FColor::Green);
@@ -99,7 +100,11 @@ void UBTTask_FollowWithAvoidance::UpdateDesiredTarget(const TObjectPtr<AActor>& 
 	FCollisionQueryParams CollisionParams;
 	CollisionParams.AddIgnoredActor(PlayerPawn);
 	CollisionParams.AddIgnoredActor(DroneAIController->GetPawn());
-	if (!GetWorld()->LineTraceSingleByChannel(Hit, PlayerPawn->GetActorLocation() + FVector(0.0f, 0.0f, 100.0f), PlayerPawn->GetActorLocation() + RotatedOffset * 1.5f, ECC_Visibility, CollisionParams))
+	
+	TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
+	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_Visibility));
+	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_WorldStatic));
+	if (!GetWorld()->LineTraceSingleByObjectType(Hit, PlayerPawn->GetActorLocation() + FVector(0.0f, 0.0f, 100.0f), PlayerPawn->GetActorLocation() + RotatedOffset * 1.5f, ObjectTypes, CollisionParams))
 	{
 		DesiredTarget = PlayerPawn->GetActorLocation() + RotatedOffset;
 	}
@@ -112,7 +117,11 @@ void UBTTask_FollowWithAvoidance::UpdatePath(const TObjectPtr<ADroneAIController
 	FCollisionQueryParams CollisionParams;
 	CollisionParams.AddIgnoredActor(DroneAIController->GetPawn());
 	
-	if (GetWorld()->LineTraceSingleByChannel(HitResult, DroneLocation, DesiredTarget, ECC_Visibility, CollisionParams))
+	TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
+	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_Visibility));
+	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_WorldStatic));
+	
+	if (GetWorld()->LineTraceSingleByObjectType(HitResult, DroneLocation, DesiredTarget, FCollisionObjectQueryParams(ObjectTypes), CollisionParams))
 	{
 		if (bCanFindPath && bEndFollowPath)
 		{
@@ -128,6 +137,7 @@ void UBTTask_FollowWithAvoidance::FindPath(const TObjectPtr<ADroneAIController>&
 	{
 		TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
 		ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_Visibility));
+		ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_WorldStatic));
 
 		FVector DroneLocation = DroneAIController->GetPawn()->GetActorLocation();
 		PathPoints.Empty();

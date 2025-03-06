@@ -19,7 +19,7 @@ ADefaultBullet::ADefaultBullet()
 	NiagaraComp->SetupAttachment(BoxComp);
 
 	ProjectileMovementComp = CreateDefaultSubobject<UProjectileMovementComponent>("ProjectileMovementComponent");
-	ProjectileMovementComp->InitialSpeed = 6000.0f;
+	ProjectileMovementComp->InitialSpeed = 4000.0f;
 	ProjectileMovementComp->MaxSpeed = 6000.0f;
 	ProjectileMovementComp->bInitialVelocityInLocalSpace = true;
 }
