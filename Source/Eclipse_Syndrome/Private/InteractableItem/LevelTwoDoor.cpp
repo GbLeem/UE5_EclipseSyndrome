@@ -58,7 +58,8 @@ void ALevelTwoDoor::OpenLevelTwoDoor()
 		UGameplayStatics::PlaySoundAtLocation(
 			GetWorld(),
 			IDoorOpeningSound,
-			GetActorLocation()
+			GetActorLocation(),
+			0.1f
 		);
 	}
 }

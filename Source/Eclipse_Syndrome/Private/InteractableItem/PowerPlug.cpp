@@ -68,7 +68,8 @@ void APowerPlug::AttachToPanel(AControlPannel* ControlPannel)
 		UGameplayStatics::PlaySoundAtLocation(
 			GetWorld(),
 			CodePlugSound,
-			GetActorLocation()
+			GetActorLocation(),
+			0.5f
 		);
 	}
 	FVector SocketLocation = ControlPannel->GetPlugPosition();
