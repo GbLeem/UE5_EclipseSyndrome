@@ -4,7 +4,7 @@
 #include "Enemy/EnemyBase.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
-
+#include "Components/CapsuleComponent.h"
 // Sets default values
 AEnemyBase::AEnemyBase()
 {
@@ -78,6 +78,9 @@ void AEnemyBase::OnDeath()
 	// Ragdoll Effect On
 	EnemyMesh->SetSimulatePhysics(true);
 	EnemyMesh->SetCollisionProfileName(TEXT("Ragdoll"));
+
+	// Inactive Capsule Component
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 	FTimerHandle DestoryHandle;
 	GetWorldTimerManager().SetTimer(DestoryHandle, this, &AEnemyBase::DestroyEnemy, 5.0f);
