@@ -292,7 +292,7 @@ void APlayerCharacterController::StartGame()
 	}
 
 	//UGameplayStatics::OpenLevel(GetWorld(), FName("MainLevel_2"));
-	UGameplayStatics::OpenLevel(GetWorld(), FName("Lv1"));
+	UGameplayStatics::OpenLevel(GetWorld(), FName("MainLevelTest"));
 	SetPause(false);
 }
 
