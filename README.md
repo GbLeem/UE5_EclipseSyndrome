@@ -34,3 +34,6 @@
   * WeaponSR
   * WeaponShell
   * WeaponShotgun
+
+### 4. 담당 부분 구현 영상
+https://youtu.be/kDptnSqdN7U?si=_dTPN-XDxfzDkBdl
